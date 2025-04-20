@@ -2,7 +2,8 @@ import React from 'react';
 import { Box, styled, Typography, useTheme, IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import CollectionsIcon from '@mui/icons-material/Collections';
+import logoLight from '../images/logo.png';
+import logoDark from '../images/logo-darkmode.png';
 
 // ===== BurgerMenu Component =====
 interface BurgerMenuProps {
@@ -27,19 +28,39 @@ interface DrawerHeaderMobileProps {
   onClose: () => void;
 }
 
-export const DrawerHeaderMobile: React.FC<DrawerHeaderMobileProps> = ({ onClose }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, pb: 0 }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <CollectionsIcon sx={{ color: 'primary.main', fontSize: '2rem' }} />
-      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-        GalleryFlow
-      </Typography>
+export const DrawerHeaderMobile: React.FC<DrawerHeaderMobileProps> = ({ onClose }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, pb: 0 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 1 }}>
+        <img
+          src={isDark ? logoDark : logoLight}
+          alt="Logo"
+          style={{ height: 32, width: 'auto', display: 'block' }}
+        />
+      </Box>
+      <IconButton onClick={onClose} aria-label="Close sidebar" sx={{ ml: 1 }}>
+        <CloseIcon />
+      </IconButton>
     </Box>
-    <IconButton onClick={onClose} aria-label="Close sidebar" sx={{ ml: 1 }}>
-      <CloseIcon />
-    </IconButton>
-  </Box>
-);
+  );
+};
+
+// ===== SidebarHeader Component =====
+export const SidebarHeader: React.FC = () => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2, pb: 4, width: '100%', mt: '4px' }}>
+      <img
+        src={isDark ? logoDark : logoLight}
+        alt="Logo"
+        style={{ height: 36, width: 'auto', display: 'block', margin: '0 auto' }}
+      />
+    </Box>
+  );
+};
 
 // ===== Sidebar Container =====
 export const SidebarContainer = styled(Box)(({ theme }) => ({

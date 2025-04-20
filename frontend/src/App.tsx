@@ -18,7 +18,7 @@ import {
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import CollectionsIcon from '@mui/icons-material/Collections';
-import { BurgerMenu, DrawerHeaderMobile } from './components/Navigation';
+import { BurgerMenu, DrawerHeaderMobile, SidebarHeader } from './components/Navigation';
 import SidebarFooter from './components/SidebarFooter';
 
 import { getTheme } from './theme/index';
@@ -249,15 +249,7 @@ function App() {
             >
               <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                 {/* Logo Area */}
-                <Box sx={{ p: spacing.md, display: 'flex', alignItems: 'center', gap: spacing.sm }}>
-                  <CollectionsIcon sx={{ color: 'primary.main', fontSize: typography.sizes['3xl'] }} />
-                  <Typography variant="h6" sx={{ fontWeight: typography.fontWeights.semibold }}>
-                    GalleryFlow
-                  </Typography>
-                </Box>
-
-                <Divider />
-
+                <SidebarHeader />
                 {/* Add Folder Section */}
                 <Box sx={{ p: spacing.md }}>
                   <AddFolderForm onAddFolder={handleAddFolder} />
