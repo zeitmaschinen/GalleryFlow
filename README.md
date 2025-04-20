@@ -18,6 +18,9 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 - 📂 Recursively reads all folders, so you never miss an image
 - 🔄 WebSocket support for real-time updates
 
+![Gallery screenshot](frontend/docs/images/gallery.jpg)
+![Metadata modal screenshot](frontend/docs/images/metadata.jpg)
+
 ## Tech Stack
 - **Frontend:** React 18, TypeScript, Material UI
 - **Backend:** FastAPI, SQLAlchemy, Python 3.10+
