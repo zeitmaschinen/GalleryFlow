@@ -1,0 +1,194 @@
+// File: frontend/src/services/api.ts
+import axios from 'axios';
+import { imageCache } from './cache';
+import type { Image, Folder, ScanProgress } from '../types/index';
+import { createErrorHandler } from '../utils/errorHandling';
+
+const handleError = createErrorHandler('API');
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// --- Interfaces for expected API data shapes ---
+// NEW: Interface for the paginated image list response
+export interface ImageListResponse {
+    images: Image[];
+    total_count: number;
+}
+
+// --- API Functions ---
+
+// Folders (Keep existing)
+export const getFolders = async (): Promise<Folder[]> => {
+  const response = await apiClient.get<Folder[]>('/folders');
+  return response.data;
+};
+
+export const addFolder = async (path: string): Promise<Folder> => {
+  const response = await apiClient.post<Folder>('/folders', { path });
+  return response.data;
+};
+
+export const deleteFolder = async (folderId: number): Promise<void> => {
+  await apiClient.delete(`/folders/${folderId}`);
+};
+
+export const refreshFolder = async (folderId: number): Promise<ScanProgress> => {
+    // Invalidate cache before refresh
+    imageCache.invalidate(folderId);
+    const response = await apiClient.post<ScanProgress>(`/folders/${folderId}/scan`);
+    return response.data;
+};
+
+// Images (UPDATE getImages)
+export const getImages = async (
+    folderId: number,
+    page: number = 1,
+    limit: number = 100,
+    sortBy: string = "filename",
+    sortDir: 'asc' | 'desc' = "asc",
+    fileTypes?: string[]
+): Promise<ImageListResponse> => {
+    // Check cache first
+    const cached = imageCache.get(folderId, page, sortBy, sortDir, fileTypes);
+    if (cached) {
+        return cached;
+    }
+
+    const skip = (page - 1) * limit;
+    const params = new URLSearchParams({
+        folder_id: folderId.toString(),
+        skip: skip.toString(),
+        limit: limit.toString(),
+        sort_by: sortBy,
+        sort_dir: sortDir,
+    });
+    
+    if (fileTypes && fileTypes.length > 0) {
+        fileTypes.forEach(type => params.append('file_types', type));
+    }
+    
+    const response = await apiClient.get<ImageListResponse>(`/images?${params.toString()}`);
+    
+    // Cache the response
+    imageCache.set(folderId, page, sortBy, sortDir, fileTypes, response.data);
+    
+    return response.data;
+};
+
+// Function to get the direct image URL (Keep existing)
+export const getImageUrl = (imagePath: string): string => {
+    return `${API_BASE_URL}/image?file_path=${encodeURIComponent(imagePath)}`;
+};
+
+// Function to reveal file in system's file explorer
+export const revealInExplorer = async (filePath: string): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>(`/reveal-in-explorer?file_path=${encodeURIComponent(filePath)}`);
+    return response.data;
+};
+
+// WebSocket connection for scan progress
+export const connectToScanProgress = (
+    folderId: number,
+    onProgress: (data: ScanProgress) => void
+): WebSocket => {
+    const ws = new WebSocket(`${WS_BASE_URL}/ws/scan-progress/${folderId}`);
+    
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        onProgress(data);
+    };
+    
+    return ws;
+};
+
+export const api = {
+  async getImages(): Promise<Image[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/images`);
+      if (!response.ok) throw new Error('Failed to fetch images');
+      return await response.json();
+    } catch (error) {
+      throw new Error(handleError(error));
+    }
+  },
+
+  async getFolders(): Promise<Folder[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/folders`);
+      if (!response.ok) throw new Error('Failed to fetch folders');
+      return await response.json();
+    } catch (error) {
+      throw new Error(handleError(error));
+    }
+  },
+
+  async addFolder(path: string): Promise<Folder> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/folders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path })
+      });
+      if (!response.ok) throw new Error('Failed to add folder');
+      return await response.json();
+    } catch (error) {
+      throw new Error(handleError(error));
+    }
+  },
+
+  async removeFolder(id: number): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to remove folder');
+    } catch (error) {
+      throw new Error(handleError(error));
+    }
+  },
+
+  async scanFolders(): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/scan`, {
+        method: 'POST'
+      });
+      if (!response.ok) throw new Error('Failed to initiate scan');
+    } catch (error) {
+      throw new Error(handleError(error));
+    }
+  },
+
+  async getScanProgress(): Promise<ScanProgress> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/scan/progress`);
+      if (!response.ok) throw new Error('Failed to get scan progress');
+      return await response.json();
+    } catch (error) {
+      throw new Error(handleError(error));
+    }
+  },
+
+  async deleteImage(id: number): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/images/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) throw new Error('Failed to delete image');
+    } catch (error) {
+      throw new Error(handleError(error));
+    }
+  }
+};
+
+// Add export for Image, Folder, ScanProgress from types
+export type { Image, Folder, ScanProgress } from '../types/index';
+
+export default apiClient;

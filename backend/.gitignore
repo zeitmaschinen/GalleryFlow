@@ -1,0 +1,38 @@
+# Backend-specific gitignore for comfyui-browser
+
+# Node dependencies (if any)
+node_modules/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+
+# Build outputs
+build/
+dist/
+
+# Environment files
+.env
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# SQLite and other local DBs
+*.sqlite
+*.db
+
+# Coverage reports
+coverage/
+
+# Misc
+*.egg-info/

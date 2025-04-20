@@ -1,0 +1,14 @@
+fastapi>=0.95.0
+uvicorn[standard]>=0.22.0
+sqlalchemy[asyncio]>=1.4.0
+pydantic>=1.10.0
+pillow>=9.0.0
+
+# Optional: for SQLite async support
+aiosqlite>=0.18.0
+
+# If you use CORS middleware (as seen in main.py)
+python-multipart>=0.0.5
+
+# If you want to use dotenv for environment variables (recommended for local dev)
+python-dotenv>=1.0.0

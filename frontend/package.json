@@ -1,0 +1,56 @@
+{
+  "name": "galleryflow",
+  "private": false,
+  "version": "1.0.0",
+  "description": "A modern web application for browsing and managing GalleryFlow-generated images with advanced metadata support",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zeitmaschinen/galleryflow.git"
+  },
+  "keywords": [
+    "galleryflow",
+    "image-browser",
+    "stable-diffusion",
+    "metadata",
+    "comfyui",
+    "gallery"
+  ],
+  "author": "Bianca Mueller (zeitmaschinen)",
+  "license": "CC-BY-NC-4.0",
+  "bugs": {
+    "url": "https://github.com/zeitmaschinen/galleryflow/issues"
+  },
+  "homepage": "https://github.com/zeitmaschinen/galleryflow",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "start": "vite preview --host"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.3",
+    "@mui/material": "^5.15.3",
+    "axios": "^1.6.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "sass": "^1.69.7",
+    "path-browserify": "^1.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^8.56.0",
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "globals": "^13.24.0",
+    "typescript": "~5.3.3",
+    "typescript-eslint": "^0.0.1-alpha.5",
+    "vite": "^5.0.11"
+  }
+}
