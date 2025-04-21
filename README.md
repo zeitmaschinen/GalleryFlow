@@ -24,7 +24,7 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 ## Tech Stack
 - **Frontend:** React 18, TypeScript, Material UI
 - **Backend:** FastAPI, SQLAlchemy, Python 3.10+
-- **Other:** WebSockets, watchdog, custom theming, responsive design
+- **Other:** WebSockets, custom theming, responsive design
 
 ---
 
@@ -85,21 +85,12 @@ npm run dev
 ### 5. Additional Notes
 
 - The backend and frontend must both be running for full functionality.
-- **Auto-Update Feature:**
-    - GalleryFlow uses [watchdog](https://pypi.org/project/watchdog/) to monitor your folders for changes.
-    - When you add, remove, or modify images, the backend notifies the frontend via WebSocket, and the gallery updates instantly—keeping your view always in sync.
-- For production builds, see the Deployment section below.
 
 ## Configuration
 - See `.env.example` for available configuration options.
 
-## Development
+## Contributing
 - For advanced usage, troubleshooting, SSH setup, and contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
-- Common issues (e.g., missing Python modules):
-  ```bash
-  pip install package-name
-  ```
-- Typical dependencies: `sqlalchemy`, `aiosqlite`, `pillow`, `greenlet`
 
 ## Contact
 You can find me and follow my creations here: [https://www.instagram.com/hyperink.ai](hyperink.ai) and here [https://www.instagram.com/latentvisi.on](latentvisi.on). 
