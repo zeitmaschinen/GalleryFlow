@@ -18,6 +18,7 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import { borders, colors, typography, spacing } from '../theme/themeConstants';
 import { getImageUrl } from '../services/api';
 import type { Image } from '../types/index';
+import ModalNavArrow from '../theme/ModalNavArrow';
 
 interface ImageModalProps {
   open: boolean;
@@ -30,6 +31,8 @@ interface ImageModalProps {
   onModalImageLoad: () => void;
   onRevealFile: () => void;
   onCopyToClipboard: (text: string, isNegative?: boolean) => void;
+  images?: Image[]; // Optional: list of all images for navigation
+  setSelectedImage?: (img: Image) => void; // Optional: setter for navigation
 }
 
 const truncateFilename = (filename: string): string => {
@@ -58,6 +61,8 @@ const ImageModal: React.FC<ImageModalProps> = ({
   onModalImageLoad,
   onRevealFile,
   onCopyToClipboard,
+  images,
+  setSelectedImage
 }) => {
   if (!selectedImage || !selectedImageData) return null;
 
@@ -92,6 +97,18 @@ const ImageModal: React.FC<ImageModalProps> = ({
     const validLoras = Array.isArray(loras)
       ? loras.filter(lora => lora && typeof lora.name === 'string' && typeof lora.weight === 'number')
       : [];
+
+    // Navigation logic
+    const currentIdx = images && selectedImage ? images.findIndex(img => img.id === selectedImage.id) : -1;
+    const hasPrev = images && currentIdx > 0;
+    const hasNext = images && images.length > 0 && currentIdx < images.length - 1 && currentIdx !== -1;
+
+    const goPrev = () => {
+      if (hasPrev && setSelectedImage && images) setSelectedImage(images[currentIdx - 1]);
+    };
+    const goNext = () => {
+      if (hasNext && setSelectedImage && images) setSelectedImage(images[currentIdx + 1]);
+    };
 
     return (
       <Dialog
@@ -137,8 +154,25 @@ const ImageModal: React.FC<ImageModalProps> = ({
             overscrollBehavior: 'none',
           }}
         >
+          {/* Navigation arrows always visible on all screen sizes */}
+          {open && hasPrev && (
+            <ModalNavArrow
+              direction="left"
+              aria-label="Previous image"
+              onClick={goPrev}
+              sx={{ display: 'flex' }} // always visible
+            />
+          )}
+          {open && hasNext && (
+            <ModalNavArrow
+              direction="right"
+              aria-label="Next image"
+              onClick={goNext}
+              sx={{ display: 'flex' }} // always visible
+            />
+          )}
           {/* Left: Image Preview */}
-          <Box sx={{ flex: '1 1 40%', minWidth: 200, textAlign: 'center' }}>
+          <Box sx={{ flex: '1 1 40%', minWidth: 200, textAlign: 'center', position: 'relative' }}>
             <img
               ref={modalImageRef}
               onLoad={onModalImageLoad}
@@ -147,9 +181,9 @@ const ImageModal: React.FC<ImageModalProps> = ({
               style={{
                 maxWidth: '100%',
                 maxHeight: '60vh',
-                height: 'auto',
                 objectFit: 'contain',
                 borderRadius: borders.radius.md,
+                marginBottom: 8,
               }}
             />
             <Typography

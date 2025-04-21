@@ -246,6 +246,8 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
         onModalImageLoad={handleModalImageLoad}
         onRevealFile={handleRevealFile}
         onCopyToClipboard={handleCopyToClipboard}
+        images={images}
+        setSelectedImage={setSelectedImage}
       />
 
       <Snackbar 
