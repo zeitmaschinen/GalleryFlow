@@ -101,5 +101,9 @@ npm run dev
   ```
 - Typical dependencies: `sqlalchemy`, `aiosqlite`, `pillow`, `greenlet`
 
+## Contact
+You can find me and follow my creations here: [https://www.instagram.com/hyperink.ai](hyperink.ai) and here [https://www.instagram.com/latentvisi.on](latentvisi.on). 
+If this project is useful to you, please don't forget to give it a star! 🌟 🤗
+
 ## License
 This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
