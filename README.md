@@ -45,7 +45,7 @@ git clone git@github.com:zeitmaschinen/galleryflow.git
 cd galleryflow
 ```
 
-#### Windows CMD
+#### Windows
 ```cmd
 git clone https://github.com/zeitmaschinen/galleryflow.git
 cd galleryflow
@@ -64,7 +64,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-#### Windows CMD
+#### Windows
 ```cmd
 cd backend
 python -m venv venv
