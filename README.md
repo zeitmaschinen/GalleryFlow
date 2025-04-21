@@ -39,8 +39,15 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 
 ### 1. Clone the Repository
 
+#### Unix/macOS
 ```bash
 git clone git@github.com:zeitmaschinen/galleryflow.git
+cd galleryflow
+```
+
+#### Windows CMD
+```cmd
+git clone https://github.com/zeitmaschinen/galleryflow.git
 cd galleryflow
 ```
 
@@ -48,10 +55,20 @@ cd galleryflow
 
 ### 2. Start the Backend
 
+#### Unix/macOS
 ```bash
 cd backend
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Windows CMD
+```cmd
+cd backend
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
@@ -64,7 +81,15 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Open a new terminal and run:
 
+#### Unix/macOS
 ```bash
+cd frontend
+npm install
+npm run dev
+```
+
+#### Windows CMD
+```cmd
 cd frontend
 npm install
 npm run dev
