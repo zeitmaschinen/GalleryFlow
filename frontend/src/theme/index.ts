@@ -25,8 +25,9 @@ const baseTheme = {
           textTransform: 'none',
           borderRadius: borders.radius.md,
           transition: 'none !important', // Prevent flicker on theme change
+          variants: [],
         }
-      }
+      },
     },
     MuiIconButton: {
       styleOverrides: {

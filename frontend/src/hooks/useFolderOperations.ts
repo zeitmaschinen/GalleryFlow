@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { api } from '../services/api';
 import { useSnackbar } from './useSnackbar';
 import { logger } from '../services/logger';
-import { scanProgressWS, subscribeScanProgress } from '../services/websocket';
+import { subscribeScanProgress } from '../services/websocket';
 import type { ScanProgress } from '../services/api';
 
 const SCAN_TIMEOUT = 180000; // 3 minutes timeout
@@ -51,9 +51,12 @@ export const useFolderOperations = (folderId: number | null) => {
       // Use scanFolders (the available api method) instead of scanFolder/refreshFolder
       const scanPromise = api.scanFolders();
       
+      // Correct usage: pass folderId and handler to subscribeScanProgress
+      subscribeScanProgress(folderId, handleScanProgress);
       cleanup = subscribeScanProgress(
+        folderId,
         handleScanProgress,
-        (error) => {
+        (error: unknown) => {
           logger.error('Scan progress WebSocket error', error instanceof Error ? error : new Error(String(error)));
           showSnackbar('Error monitoring scan progress. The scan may still be running.', 'warning');
         }
@@ -80,7 +83,6 @@ export const useFolderOperations = (folderId: number | null) => {
     if (!folderId || !isScanning) return;
 
     try {
-      scanProgressWS.disconnect();
       setIsScanning(false);
       setScanProgress(null);
       showSnackbar('Scan stopped', 'info');
