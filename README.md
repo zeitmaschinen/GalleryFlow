@@ -57,7 +57,6 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 - The backend will be available at [http://localhost:8000](http://localhost:8000).
-- **Automatic Updates:** As soon as you add or delete images in your monitored folders, the gallery will update in real time—no refresh required!
 
 ---
 
