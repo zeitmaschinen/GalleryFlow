@@ -7,15 +7,14 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 ## Features
 
 - 📁 Browse and manage your ComfyUI-generated images
+- 🖼️ Customizable thumbnail sizes
 - 🎨 Image preview
+- 📋 Metadata extraction and visualization
 - 🚀 Automatic real-time gallery updates
 - 📂 Recursively reads all folders, so you never miss an image
-- 🌓 Light/Dark theme support
-- ⚡ Fast and responsive interface
 - 🔄 Real-time sorting and filtering options
-- 📱 Responsive design
-- 🖼️ Customizable thumbnail sizes
-- 📋 Metadata extraction and visualization
+- ⚡ Fast and responsive interface
+- 🌓 Light/Dark theme support
 - 🔗 Direct integration with ComfyUI workflows
 - 🔄 WebSocket support for real-time updates
 
