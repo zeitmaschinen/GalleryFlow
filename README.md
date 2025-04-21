@@ -112,7 +112,7 @@ npm run dev
 ## Contact
 You can find me and follow my creations:
 - [hyperink.ai](https://www.instagram.com/hyperink.ai)
-- [latentvisi.on](https://www.instagram.com/latentvisi.on)
+- [stablevisi.on](https://www.instagram.com/stablevisi.on)
 
 If this project is useful to you, please don't forget to give it a star! 🌟 🤗
 
