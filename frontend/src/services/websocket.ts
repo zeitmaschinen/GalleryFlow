@@ -92,28 +92,29 @@ export class WebSocketService {
   }
 }
 
-// Create a specific instance for scan progress updates
-export const scanProgressWS = new WebSocketService(`${config.api.wsUrl}/ws/scan-progress`);
+// Helper function to create a WebSocketService for a specific folder
+export function createScanProgressWS(folderId: number) {
+  return new WebSocketService(`${config.api.wsUrl}/ws/scan-progress/${folderId}`);
+}
 
-// Helper function to subscribe to scan progress
-export const subscribeScanProgress = (
+// Helper function to subscribe to scan progress for a specific folder
+export function subscribeScanProgress(
+  folderId: number,
   onProgress: (progress: ScanProgress) => void,
   onError?: ErrorHandler
-): () => void => {
-  scanProgressWS.addMessageHandler(onProgress as MessageHandler);
+): () => void {
+  const wsService = createScanProgressWS(folderId);
+  wsService.addMessageHandler(onProgress as MessageHandler);
   if (onError) {
-    scanProgressWS.addErrorHandler(onError);
+    wsService.addErrorHandler(onError);
   }
-
-  if (!scanProgressWS.isConnected()) {
-    scanProgressWS.connect();
-  }
-
-  // Return cleanup function
+  wsService.connect();
+  // Cleanup function
   return () => {
-    scanProgressWS.removeMessageHandler(onProgress as MessageHandler);
+    wsService.removeMessageHandler(onProgress as MessageHandler);
     if (onError) {
-      scanProgressWS.removeErrorHandler(onError);
+      wsService.removeErrorHandler(onError);
     }
+    wsService.disconnect();
   };
-};
+}

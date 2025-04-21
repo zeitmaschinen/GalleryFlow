@@ -8,14 +8,15 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 
 - 📁 Browse and manage your ComfyUI-generated images
 - 🎨 Image preview
+- 🚀 Automatic real-time gallery updates
+- 📂 Recursively reads all folders, so you never miss an image
 - 🌓 Light/Dark theme support
 - ⚡ Fast and responsive interface
 - 🔄 Real-time sorting and filtering options
-- 📱 Mobile-responsive design
+- 📱 Responsive design
 - 🖼️ Customizable thumbnail sizes
 - 📋 Metadata extraction and visualization
 - 🔗 Direct integration with ComfyUI workflows
-- 📂 Recursively reads all folders, so you never miss an image
 - 🔄 WebSocket support for real-time updates
 
 ![Gallery screenshot](frontend/docs/images/gallery.jpg)
@@ -24,7 +25,7 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 ## Tech Stack
 - **Frontend:** React 18, TypeScript, Material UI
 - **Backend:** FastAPI, SQLAlchemy, Python 3.10+
-- **Other:** WebSockets, custom theming, responsive design
+- **Other:** WebSockets, watchdog, custom theming, responsive design
 
 ---
 
@@ -57,6 +58,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 - The backend will be available at [http://localhost:8000](http://localhost:8000).
+- **Automatic Updates:** As soon as you add or delete images in your monitored folders, the gallery will update in real time—no refresh required!
 
 ---
 
@@ -84,6 +86,9 @@ npm run dev
 ### 5. Additional Notes
 
 - The backend and frontend must both be running for full functionality.
+- **Auto-Update Feature:**
+    - GalleryFlow uses [watchdog](https://pypi.org/project/watchdog/) to monitor your folders for changes.
+    - When you add, remove, or modify images, the backend notifies the frontend via WebSocket, and the gallery updates instantly—keeping your view always in sync.
 - For production builds, see the Deployment section below.
 
 ## Configuration

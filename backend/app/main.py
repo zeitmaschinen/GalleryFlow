@@ -12,6 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict
 import json
 import asyncio
+import threading
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import uuid
 
 from . import crud, models, schemas, database
 
@@ -30,11 +34,90 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+watchdog_observers = {}
+
+# Store the main event loop for cross-thread scheduling
+MAIN_EVENT_LOOP = None
+
+class FolderWatchdogHandler(FileSystemEventHandler):
+    def __init__(self, folder_id, folder_path):
+        self.folder_id = folder_id
+        self.folder_path = folder_path
+        super().__init__()
+        self._debounce_task = None
+        self._debounce_lock = threading.Lock()
+
+    def on_any_event(self, event):
+        if not event.is_directory:
+            logger.info(f"Watchdog event detected for folder_id={self.folder_id}: {event.event_type} {event.src_path}")
+            global MAIN_EVENT_LOOP
+            with self._debounce_lock:
+                if self._debounce_task is not None:
+                    self._debounce_task.cancel()
+                # Use threading.Timer for debounce, then run coroutine in main loop
+                def run_scan():
+                    if MAIN_EVENT_LOOP:
+                        asyncio.run_coroutine_threadsafe(self.handle_change(), MAIN_EVENT_LOOP)
+                self._debounce_task = threading.Timer(0.5, run_scan)
+                self._debounce_task.start()
+
+    async def handle_change(self):
+        scan_id = str(uuid.uuid4())
+        logger.info(f"Starting scan for folder_id={self.folder_id} (path={self.folder_path}) after watchdog event. scan_id={scan_id}")
+        from . import database, crud
+        db_gen = database.get_db()
+        db = await db_gen.__anext__()
+        try:
+            folder = await crud.get_folder(db, self.folder_id)
+            if folder:
+                scan_result = await crud.scan_folder_and_update_db(db, folder)
+                logger.info(f"Scan complete for folder_id={self.folder_id}. Result: {scan_result}")
+                await broadcast_progress(self.folder_id, {"event": "folder_change", "folder_id": self.folder_id, "scan_id": scan_id})
+            else:
+                logger.warning(f"No folder found in DB for folder_id={self.folder_id} during watchdog-triggered scan.")
+        except Exception as e:
+            logger.error(f"Error during watchdog-triggered scan for folder_id={self.folder_id}: {e}", exc_info=True)
+        finally:
+            await db_gen.aclose()
+
+async def start_watchdog_for_folder(folder_id, folder_path):
+    if folder_id in watchdog_observers:
+        return  # Already watching
+    event_handler = FolderWatchdogHandler(folder_id, folder_path)
+    observer = Observer()
+    observer.schedule(event_handler, folder_path, recursive=True)
+    observer.daemon = True
+    observer.start()
+    watchdog_observers[folder_id] = observer
+    logger.info(f"Started watchdog for folder {folder_path} (ID: {folder_id})")
+
+async def stop_all_watchdogs():
+    for observer in watchdog_observers.values():
+        observer.stop()
+        observer.join()
+    watchdog_observers.clear()
+    logger.info("Stopped all watchdog observers.")
+
 @app.on_event("startup")
 async def on_startup():
+    global MAIN_EVENT_LOOP
+    MAIN_EVENT_LOOP = asyncio.get_running_loop()
     logger.info("Initializing database...")
     await database.create_db_and_tables()
     logger.info("Database initialized.")
+    # Start watchdogs for all folders in DB
+    db_gen = database.get_db()
+    db = await db_gen.__anext__()
+    try:
+        folders = await crud.get_folders(db)
+        for folder in folders:
+            await start_watchdog_for_folder(folder.id, folder.path)
+    finally:
+        await db_gen.aclose()
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    await stop_all_watchdogs()
 
 # Store active WebSocket connections
 active_connections: Dict[int, List[WebSocket]] = {}
@@ -54,11 +137,13 @@ async def websocket_endpoint(websocket: WebSocket, folder_id: int):
             del active_connections[folder_id]
 
 async def broadcast_progress(folder_id: int, data: dict):
+    logger.info(f"Broadcasting WebSocket event for folder_id={folder_id}: {data}")
     if folder_id in active_connections:
         for connection in active_connections[folder_id]:
             try:
                 await connection.send_json(data)
-            except:
+            except Exception as e:
+                logger.error(f"WebSocket send failed: {e}")
                 continue
 
 # --- API Endpoints ---
@@ -117,6 +202,8 @@ async def add_folder(
         created_folder = await crud.create_folder(db, schemas.FolderCreate(path=resolved_path_str))
         logger.info(f"Folder added to database: {created_folder.path} (ID: {created_folder.id})")
         background_tasks.add_task(crud.scan_folder_and_update_db, db, created_folder)
+        # Start watchdog for new folder
+        await start_watchdog_for_folder(created_folder.id, created_folder.path)
         return created_folder
     except Exception as e:
         logger.error(f"Failed to add folder: {e}")
@@ -165,6 +252,12 @@ async def remove_folder(folder_id: int, db: AsyncSession = Depends(database.get_
     success = await crud.delete_folder(db, folder_id)
     if not success:
         raise HTTPException(status_code=404, detail=f"Folder with ID {folder_id} not found")
+    # Stop watchdog for deleted folder
+    observer = watchdog_observers.pop(folder_id, None)
+    if observer:
+        observer.stop()
+        observer.join()
+        logger.info(f"Stopped watchdog for folder ID: {folder_id}")
     logger.info(f"Folder ID {folder_id} deleted successfully.")
     return
 
@@ -180,7 +273,7 @@ async def list_images(
     db: AsyncSession = Depends(database.get_db)
 ):
     """Lists cached images for a specific folder with pagination, sorting, and filtering."""
-    logger.debug(f"Request images: folder={folder_id}, skip={skip}, limit={limit}, sort={sort_by} {sort_dir}, types={file_types}")
+    logger.info(f"Request images: folder={folder_id}, skip={skip}, limit={limit}, sort={sort_by} {sort_dir}, types={file_types}")
 
     if sort_by not in ["filename", "date", "folder"]:
         sort_by = "filename"
@@ -210,7 +303,7 @@ async def get_image_file(
     file_path: str = Query(..., description="Absolute path to the image file"),
     db: AsyncSession = Depends(database.get_db)
 ):
-    logger.debug(f"Received request for image file: {file_path}")
+    logger.info(f"Received request for image file: {file_path}")
     requested_path = Path(file_path)
     if not requested_path.is_absolute():
         raise HTTPException(status_code=400, detail="File path must be absolute.")
@@ -245,7 +338,7 @@ async def get_image_file(
     if resolved_requested_path.suffix.lower() == '.jpg':
         media_type = 'image/jpeg'
 
-    logger.debug(f"Serving image: {resolved_requested_path} with media type {media_type}")
+    logger.info(f"Serving image: {resolved_requested_path} with media type {media_type}")
     return FileResponse(str(resolved_requested_path), media_type=media_type)
 
 @app.post("/api/reveal-in-explorer", status_code=200)

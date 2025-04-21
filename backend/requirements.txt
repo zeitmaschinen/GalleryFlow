@@ -3,6 +3,7 @@ uvicorn[standard]>=0.22.0
 sqlalchemy[asyncio]>=1.4.0
 pydantic>=1.10.0
 pillow>=9.0.0
+watchdog>=3.0.0
 
 # Optional: for SQLite async support
 aiosqlite>=0.18.0

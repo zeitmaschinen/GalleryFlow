@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   CssBaseline,
@@ -34,6 +34,7 @@ import ControlsCard from './components/ControlsCard';
 import PaginationControls from './components/PaginationControls';
 import { IMAGES_PER_PAGE } from './constants';
 import { SortField } from './types';
+import { subscribeScanProgress } from './services/websocket';
 
 function App() {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
@@ -74,6 +75,7 @@ function App() {
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const handleDrawerOpen = () => setSidebarOpen(true);
   const handleDrawerClose = () => setSidebarOpen(false);
@@ -137,22 +139,87 @@ function App() {
     }
   };
 
-  // Automatically load images when folder or relevant state changes
+  // Always fetch images when state changes
   useEffect(() => {
     if (selectedFolder) {
-      fetchImages(selectedFolder.id, currentPage, sortBy, sortDirection, selectedFileTypes);
+      fetchImages(selectedFolder.id, currentPage, sortBy, sortDirection, selectedFileTypes)
+        .then(() => {
+          // After images load, check if currentPage is out of bounds
+          const totalPages = Math.max(1, Math.ceil(totalImages / IMAGES_PER_PAGE));
+          if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+          }
+        });
     }
-  }, [fetchImages, selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey]);
 
-  // Patch: after refreshing a folder, if it's selected, also refresh images
-  const handleRefreshFolderAndImages = async (folderId: number) => {
-    await handleRefreshFolder(folderId);
-    if (selectedFolder && selectedFolder.id === folderId) {
-      // Always reset to page 1 after refresh for consistency
-      setCurrentPage(1);
-      fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
+  // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
+  const reloadImageGrid = () => {
+    console.log('[reloadImageGrid] called, selectedFolder:', selectedFolder);
+    if (selectedFolder) {
+      setReloadKey(k => k + 1); // Always reload, but do NOT reset currentPage
     }
   };
+
+  // Track the last scan_id per folder
+  const lastScanIdRef = useRef<{ [folderId: number]: string }>({});
+
+  // --- Patch: WebSocket event triggers the SAME code as the sidebar refresh button ---
+  useEffect(() => {
+    if (!selectedFolder) return;
+    const handleWsEvent = (data: any) => {
+      const { selectedFolder: sf } = latestStateRef.current;
+      if (sf && data.folder_id === sf.id && data.event === 'folder_change') {
+        if (data.scan_id && lastScanIdRef.current[sf.id] !== data.scan_id) {
+          handleRefreshFolderAndImages(sf.id);
+          lastScanIdRef.current[sf.id] = data.scan_id;
+        } else {
+        }
+      }
+    };
+    const unsubscribe = subscribeScanProgress(selectedFolder.id, handleWsEvent);
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedFolder]);
+
+  // --- Patch: Sidebar refresh button uses the same reload function ---
+  const handleRefreshFolderAndImages = async (folderId: number) => {
+    console.log('[handleRefreshFolderAndImages] called with folderId:', folderId, 'selectedFolder:', selectedFolder);
+    await handleRefreshFolder(folderId);
+    if (selectedFolder && selectedFolder.id === folderId) {
+      console.log('[handleRefreshFolderAndImages] calling reloadImageGrid');
+      reloadImageGrid();
+    } else {
+      // Fallback: force fetch if state is out of sync
+      console.log('[handleRefreshFolderAndImages] Fallback: force fetchImages for folderId', folderId);
+      fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
+      setCurrentPage(1);
+    }
+  };
+
+  // Track latest pagination/sort/filter state for WebSocket handler
+  const latestStateRef = useRef({
+    currentPage,
+    sortBy,
+    sortDirection,
+    selectedFileTypes,
+    fetchImages,
+    selectedFolder,
+    setCurrentPage
+  });
+  useEffect(() => {
+    latestStateRef.current = {
+      currentPage,
+      sortBy,
+      sortDirection,
+      selectedFileTypes,
+      fetchImages,
+      selectedFolder,
+      setCurrentPage
+    };
+  }, [currentPage, sortBy, sortDirection, selectedFileTypes, fetchImages, selectedFolder, setCurrentPage]);
 
   return (
     <ThemeProvider theme={theme}>

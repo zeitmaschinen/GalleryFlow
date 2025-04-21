@@ -189,12 +189,14 @@ async def scan_folder_and_update_db(
             if item.is_file() and item.suffix.lower() in SUPPORTED_EXTENSIONS:
                 full_path_str = str(item.resolve())
                 found_on_disk.add(full_path_str)
-                
                 try:
                     last_modified_timestamp = item.stat().st_mtime
+                    # Always use UTC-aware datetime for comparison
                     last_modified_dt = datetime.fromtimestamp(last_modified_timestamp, tz=timezone.utc)
-                    
                     existing_mod_time = existing_db_images.get(full_path_str)
+                    # If DB time is naive, make it aware (assume UTC)
+                    if existing_mod_time is not None and existing_mod_time.tzinfo is None:
+                        existing_mod_time = existing_mod_time.replace(tzinfo=timezone.utc)
                     if existing_mod_time is None or last_modified_dt > existing_mod_time:
                         metadata = metadata_extractor.extract_comfyui_metadata(full_path_str)
                         image_data = schemas.ImageCreate(
@@ -205,12 +207,10 @@ async def scan_folder_and_update_db(
                             folder_id=folder.id
                         )
                         batch.append(image_data)
-                        
                         if existing_mod_time is None:
                             stats['added_count'] += 1
                         else:
                             stats['updated_count'] += 1
-                            
                         # Process batch if it reaches the size limit
                         if len(batch) >= BATCH_SIZE:
                             await process_image_batch(db, batch)
