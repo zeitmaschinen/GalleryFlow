@@ -144,6 +144,16 @@ function App() {
     }
   }, [fetchImages, selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes]);
 
+  // Patch: after refreshing a folder, if it's selected, also refresh images
+  const handleRefreshFolderAndImages = async (folderId: number) => {
+    await handleRefreshFolder(folderId);
+    if (selectedFolder && selectedFolder.id === folderId) {
+      // Always reset to page 1 after refresh for consistency
+      setCurrentPage(1);
+      fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -221,7 +231,7 @@ function App() {
                       <FolderList
                         folders={folders}
                         onDeleteFolder={handleDeleteFolder}
-                        onRefreshFolder={handleRefreshFolder}
+                        onRefreshFolder={handleRefreshFolderAndImages}
                         onSelectFolder={handleSelectFolder}
                         selectedFolderId={selectedFolder?.id ?? null}
                       />
@@ -285,7 +295,7 @@ function App() {
                     <FolderList
                       folders={folders}
                       onDeleteFolder={handleDeleteFolder}
-                      onRefreshFolder={handleRefreshFolder}
+                      onRefreshFolder={handleRefreshFolderAndImages}
                       onSelectFolder={handleSelectFolder}
                       selectedFolderId={selectedFolder?.id ?? null}
                     />
