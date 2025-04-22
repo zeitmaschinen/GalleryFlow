@@ -34,6 +34,8 @@ export const useWebSocket = ({
         setIsConnected(true);
         attempts.current = 0;
         logger.info('WebSocket connected');
+        // Send a keepalive message to backend on connect
+        ws.current?.send(JSON.stringify({ type: 'keepalive', timestamp: Date.now() }));
       };
 
       ws.current.onclose = () => {

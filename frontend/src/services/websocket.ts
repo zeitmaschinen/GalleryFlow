@@ -37,9 +37,20 @@ export class WebSocketService {
       this.handleReconnect();
     };
 
-    this.ws.onerror = (error) => {
-      logger.error('WebSocket error', error instanceof Error ? error : new Error(String(error)));
-      this.errorHandlers.forEach(handler => handler(error));
+    this.ws.onerror = (event) => {
+      // Provide a more useful error log
+      if (event instanceof ErrorEvent) {
+        logger.error('WebSocket error', {
+          message: event.message,
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+          type: event.type
+        });
+      } else {
+        logger.error('WebSocket error', { type: event.type, event });
+      }
+      this.errorHandlers.forEach(handler => handler(event));
     };
 
     this.ws.onmessage = (event) => {
