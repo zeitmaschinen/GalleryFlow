@@ -13,6 +13,24 @@ export function useFolders() {
     try {
       const fetchedFolders = await api.getFolders();
       setFolders(fetchedFolders);
+      // --- Auto-clean localStorage if folders are missing (DB reset, etc.) ---
+      if (window && window.localStorage) {
+        // Remove any cached folder paths/IDs that are not in the backend anymore
+        const remembered = window.localStorage.getItem('folders');
+        if (remembered) {
+          try {
+            const rememberedFolders = JSON.parse(remembered);
+            const validIds = new Set(fetchedFolders.map(f => f.id));
+            const filtered = rememberedFolders.filter((f: any) => validIds.has(f.id));
+            if (filtered.length !== rememberedFolders.length) {
+              window.localStorage.setItem('folders', JSON.stringify(filtered));
+            }
+          } catch {
+            window.localStorage.removeItem('folders');
+          }
+        }
+      }
+      // ---------------------------------------------------------------
     } catch (err: unknown) {
       setErrorFolders(err instanceof Error ? err.message : 'Could not load folders.');
     } finally {

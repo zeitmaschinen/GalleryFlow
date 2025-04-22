@@ -19,6 +19,11 @@ import uuid
 
 from . import crud, models, schemas, database
 
+# Suppress SQLAlchemy engine and pool logs
+logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
+logging.getLogger('sqlalchemy.dialects').setLevel(logging.WARNING)
+
 # ... (keep logging setup, app setup, CORS, startup event) ...
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -130,8 +135,18 @@ async def websocket_endpoint(websocket: WebSocket, folder_id: int):
     active_connections[folder_id].append(websocket)
     try:
         while True:
-            await websocket.receive_text()  # Keep connection alive
-    except:
+            # Accept any message (text or binary) to keep the connection alive
+            try:
+                await websocket.receive_text()
+            except Exception:
+                try:
+                    await websocket.receive_bytes()
+                except Exception:
+                    # If neither text nor bytes, just continue to keep alive
+                    await asyncio.sleep(10)
+    except Exception:
+        pass
+    finally:
         active_connections[folder_id].remove(websocket)
         if not active_connections[folder_id]:
             del active_connections[folder_id]

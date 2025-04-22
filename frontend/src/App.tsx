@@ -154,43 +154,42 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey]);
 
-  // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
-  const reloadImageGrid = () => {
-    console.log('[reloadImageGrid] called, selectedFolder:', selectedFolder);
+  // --- Track last user-initiated reload per folder to suppress redundant WebSocket reloads ---
+  const lastUserReloadRef = useRef<{ [folderId: number]: number }>({});
+  const lastScanIdRef = useRef<{ [folderId: number]: string }>({});
+
+  // --- Patch: Debounced but Always Latest Reload ---
+  const suppressionWindowMs = 5000; // 5 seconds (or change as desired)
+  const suppressionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingReloadRef = useRef<{ [folderId: number]: boolean }>({});
+
+  const reloadImageGrid = (userInitiated = false) => {
+    console.log('[reloadImageGrid] called, selectedFolder:', selectedFolder, 'userInitiated:', userInitiated);
     if (selectedFolder) {
+      if (userInitiated) {
+        lastUserReloadRef.current[selectedFolder.id] = Date.now();
+        // Start suppression window
+        if (suppressionTimeoutRef.current) clearTimeout(suppressionTimeoutRef.current);
+        pendingReloadRef.current[selectedFolder.id] = false;
+        suppressionTimeoutRef.current = setTimeout(() => {
+          if (pendingReloadRef.current[selectedFolder.id]) {
+            console.log('[Suppression] Running pending reload after debounce window');
+            setReloadKey(k => k + 1);
+            pendingReloadRef.current[selectedFolder.id] = false;
+          }
+        }, suppressionWindowMs);
+      }
       setReloadKey(k => k + 1); // Always reload, but do NOT reset currentPage
     }
   };
 
-  // Track the last scan_id per folder
-  const lastScanIdRef = useRef<{ [folderId: number]: string }>({});
-
-  // --- Patch: WebSocket event triggers the SAME code as the sidebar refresh button ---
-  useEffect(() => {
-    if (!selectedFolder) return;
-    const handleWsEvent = (data: any) => {
-      const { selectedFolder: sf } = latestStateRef.current;
-      if (sf && data.folder_id === sf.id && data.event === 'folder_change') {
-        if (data.scan_id && lastScanIdRef.current[sf.id] !== data.scan_id) {
-          handleRefreshFolderAndImages(sf.id);
-          lastScanIdRef.current[sf.id] = data.scan_id;
-        } else {
-        }
-      }
-    };
-    const unsubscribe = subscribeScanProgress(selectedFolder.id, handleWsEvent);
-    return () => {
-      unsubscribe();
-    };
-  }, [selectedFolder]);
-
-  // --- Patch: Sidebar refresh button uses the same reload function ---
+  // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
   const handleRefreshFolderAndImages = async (folderId: number) => {
     console.log('[handleRefreshFolderAndImages] called with folderId:', folderId, 'selectedFolder:', selectedFolder);
     await handleRefreshFolder(folderId);
     if (selectedFolder && selectedFolder.id === folderId) {
       console.log('[handleRefreshFolderAndImages] calling reloadImageGrid');
-      reloadImageGrid();
+      reloadImageGrid(true);
     } else {
       // Fallback: force fetch if state is out of sync
       console.log('[handleRefreshFolderAndImages] Fallback: force fetchImages for folderId', folderId);
@@ -220,6 +219,42 @@ function App() {
       setCurrentPage
     };
   }, [currentPage, sortBy, sortDirection, selectedFileTypes, fetchImages, selectedFolder, setCurrentPage]);
+
+  // --- Patch: WebSocket event triggers the SAME code as the sidebar refresh button ---
+  useEffect(() => {
+    if (isLoadingFolders || !selectedFolder || folders.length === 0) return;
+    // Debounce WebSocket connection until folders exist and selectedFolder is set
+    const debounceTimeout = setTimeout(() => {
+      const handleWsEvent = (data: unknown) => {
+        if (typeof data !== 'object' || data === null) return;
+        const eventData = data as { folder_id?: number; event?: string; scan_id?: string };
+        const { selectedFolder: sf } = latestStateRef.current;
+        if (sf && eventData.folder_id === sf.id && eventData.event === 'folder_change') {
+          const lastUserReload = lastUserReloadRef.current[sf.id] || 0;
+          if (Date.now() - lastUserReload < suppressionWindowMs) {
+            // Within suppression window: mark pending reload
+            console.log('[WebSocket] Suppressed reload, will run after debounce window');
+            pendingReloadRef.current[sf.id] = true;
+            return;
+          }
+          if (eventData.scan_id && lastScanIdRef.current[sf.id] !== eventData.scan_id) {
+            handleRefreshFolderAndImages(sf.id);
+            lastScanIdRef.current[sf.id] = eventData.scan_id;
+          } else {
+            // TODO: Implement logic or remove block
+          }
+        }
+      };
+      const unsubscribe = subscribeScanProgress(selectedFolder.id, handleWsEvent);
+      // Cleanup
+      return () => {
+        unsubscribe();
+      };
+    }, 400); // 400ms debounce
+    return () => {
+      clearTimeout(debounceTimeout);
+    };
+  }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages]);
 
   return (
     <ThemeProvider theme={theme}>
