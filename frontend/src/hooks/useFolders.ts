@@ -21,7 +21,7 @@ export function useFolders() {
           try {
             const rememberedFolders = JSON.parse(remembered);
             const validIds = new Set(fetchedFolders.map(f => f.id));
-            const filtered = rememberedFolders.filter((f: any) => validIds.has(f.id));
+            const filtered = rememberedFolders.filter((f: api.Folder) => validIds.has(f.id));
             if (filtered.length !== rememberedFolders.length) {
               window.localStorage.setItem('folders', JSON.stringify(filtered));
             }

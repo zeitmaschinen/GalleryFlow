@@ -50,7 +50,7 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
   if (!metadata) return defaultMetadata;
 
   // Helper to get both snake_case and camelCase
-  function getField(obj: Record<string, unknown>, key: string, fallback: any) {
+  function getField(obj: Record<string, unknown>, key: string, fallback: unknown): unknown {
     if (obj == null) return fallback;
     if (key in obj) return obj[key];
     // Try snake_case
@@ -123,19 +123,19 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
 
     // Flat dict: try to extract fields by both styles
     const result: ImageMetadata = {
-      model: getField(metadata, 'model', 'N/A'),
-      modelHash: getField(metadata, 'modelHash', 'N/A'),
-      seed: getField(metadata, 'seed', 'N/A'),
-      steps: getField(metadata, 'steps', 'N/A'),
-      cfg: getField(metadata, 'cfg', 'N/A'),
-      sampler: getField(metadata, 'sampler', 'N/A'),
-      scheduler: getField(metadata, 'scheduler', 'N/A'),
-      denoise: getField(metadata, 'denoise', 'N/A'),
-      hiresUpscale: getField(metadata, 'hiresUpscale', 'N/A'),
-      hiresUpscaler: getField(metadata, 'hiresUpscaler', 'N/A'),
-      positivePrompt: getField(metadata, 'positivePrompt', ''),
-      negativePrompt: getField(metadata, 'negativePrompt', ''),
-      loras: Array.isArray(getField(metadata, 'loras', [])) ? getField(metadata, 'loras', []) : [],
+      model: String(getField(metadata, 'model', 'N/A')),
+      modelHash: String(getField(metadata, 'modelHash', 'N/A')),
+      seed: String(getField(metadata, 'seed', 'N/A')),
+      steps: String(getField(metadata, 'steps', 'N/A')),
+      cfg: String(getField(metadata, 'cfg', 'N/A')),
+      sampler: String(getField(metadata, 'sampler', 'N/A')),
+      scheduler: String(getField(metadata, 'scheduler', 'N/A')),
+      denoise: getField(metadata, 'denoise', 'N/A') as string | number,
+      hiresUpscale: getField(metadata, 'hiresUpscale', 'N/A') as string | number,
+      hiresUpscaler: String(getField(metadata, 'hiresUpscaler', 'N/A')),
+      positivePrompt: String(getField(metadata, 'positivePrompt', '')),
+      negativePrompt: String(getField(metadata, 'negativePrompt', '')),
+      loras: Array.isArray(getField(metadata, 'loras', [])) ? getField(metadata, 'loras', []) as Array<{ name: string; weight: number }> : [],
     };
     // Also check for lora_models (backend snake_case)
     if (!result.loras.length && Array.isArray(metadata['lora_models'])) {
