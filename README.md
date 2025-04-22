@@ -39,7 +39,7 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 
 ### 1. Clone the Repository
 
-#### Unix/macOS
+#### macOS
 ```bash
 git clone git@github.com:zeitmaschinen/galleryflow.git
 cd galleryflow
@@ -90,9 +90,16 @@ npm run dev
 
 - The frontend will be available at [http://localhost:5173](http://localhost:5173).
 
+
+### Troubleshooting
+If you're getting an error when installing npm, you likely need to install nodejs first.
+Download it from nodejs.org and run the installation.
+
+Then try `npm install` again after closing cmd/terminal to refresh the environment.
+
 ---
 
-### 4. Open the App
+### 4. To Open GalleryFlow
 
 - Visit [http://localhost:5173](http://localhost:5173) in your browser.
 - Add folder path from your ComfyUI images output.
