@@ -39,15 +39,8 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 
 ### 1. Clone the Repository
 
-#### macOS
 ```bash
 git clone git@github.com:zeitmaschinen/galleryflow.git
-cd galleryflow
-```
-
-#### Windows
-```cmd
-git clone https://github.com/zeitmaschinen/galleryflow.git
 cd galleryflow
 ```
 
