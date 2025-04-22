@@ -107,6 +107,18 @@ export const colors = {
       inputBorderRadius: '8px',
     }
   },
+  warningBox: {
+    light: {
+      background: '#FFF9E1', // soft yellow
+      border: '#FFE066',    // strong yellow
+      text: '#B38600',      // dark yellow for text
+    },
+    dark: {
+      background: '#41403B', // deep muted yellow for dark mode
+      border: '#FFE451',     // vivid yellow border
+      text: '#EEE6BA',       // bright yellow text
+    }
+  },
 };
 
 export const addFolderPath = colors.addFolderPath;

@@ -214,6 +214,29 @@ const ImageModal: React.FC<ImageModalProps> = ({
                 {imageDimensions.width} × {imageDimensions.height} pixels
               </Typography>
             )}
+            {/* Metadata extraction notice */}
+            <Box
+              sx={theme => {
+                const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
+                return {
+                  mt: 2,
+                  mx: 'auto',
+                  p: 1.5,
+                  borderRadius: borders.radius.sm,
+                  backgroundColor: colors.warningBox[mode].background,
+                  border: `1px solid ${colors.warningBox[mode].border}`,
+                  color: colors.warningBox[mode].text,
+                  maxWidth: 350,
+                };
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: typography.fontWeights.medium }}
+              >
+                Depending on the workflow used to generate the image, you might see <b>N/A</b> for some fields. This can happen if the workflow is complex or uses custom nodes, making it difficult to extract metadata reliably from each field.
+              </Typography>
+            </Box>
           </Box>
           {/* Right: Metadata */}
           <Box sx={{ flex: '1 1 60%' }}>

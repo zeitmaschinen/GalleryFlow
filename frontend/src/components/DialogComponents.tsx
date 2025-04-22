@@ -17,6 +17,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import { colors, typography } from '../theme/themeConstants';
+import { parseMetadata } from '../utils/metadataParser';
 
 // ===== ConfirmationDialog Component =====
 interface ConfirmationDialogProps {
@@ -230,15 +231,61 @@ export const ImageDetailDialog: React.FC<ImageDetailDialogProps> = ({
             <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: typography.fontWeights.semibold }}>
               Metadata
             </Typography>
-            <pre style={{
-              margin: 0,
-              fontSize: '0.75rem',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              color: metadataColor
-            }}>
-              {JSON.stringify(image.metadata_, null, 2)}
-            </pre>
+            {(() => {
+              let metadata: Record<string, unknown>;
+              try {
+                metadata = typeof image.metadata_ === 'string' ? JSON.parse(image.metadata_) : image.metadata_;
+              } catch {
+                metadata = image.metadata_ as Record<string, unknown>;
+              }
+              const parsed = parseMetadata(metadata);
+              const fields = [
+                { key: 'model', label: 'Model' },
+                { key: 'modelHash', label: 'Model Hash' },
+                { key: 'seed', label: 'Seed' },
+                { key: 'steps', label: 'Steps' },
+                { key: 'cfg', label: 'CFG' },
+                { key: 'sampler', label: 'Sampler' },
+                { key: 'scheduler', label: 'Scheduler' },
+                { key: 'denoise', label: 'Denoise' },
+                { key: 'hiresUpscale', label: 'Hires Upscale' },
+                { key: 'hiresUpscaler', label: 'Hires Upscaler' },
+                { key: 'positivePrompt', label: 'Positive Prompt' },
+                { key: 'negativePrompt', label: 'Negative Prompt' },
+              ];
+              return (
+                <Box>
+                  {fields.map(({ key, label }) => (
+                    <Box key={key} sx={{ display: 'flex', mb: 0.5 }}>
+                      <Typography sx={{ minWidth: 140, fontWeight: 500, color: metadataColor }}>{label}:</Typography>
+                      <Typography sx={{ color: metadataColor, wordBreak: 'break-word', ml: 1 }}>
+                        {parsed[key as keyof typeof parsed] && parsed[key as keyof typeof parsed] !== 'N/A' ? parsed[key as keyof typeof parsed] : <span style={{ opacity: 0.6 }}>Not found</span>}
+                      </Typography>
+                    </Box>
+                  ))}
+                  {parsed.loras && Array.isArray(parsed.loras) && (parsed.loras as Array<{ name: string; weight: number }> ).length > 0 && (
+                    <Box sx={{ mt: 1 }}>
+                      <Typography sx={{ fontWeight: 500, color: metadataColor }}>Lora Models:</Typography>
+                      {(parsed.loras as Array<{ name: string; weight: number }> ).map((lora, idx) => (
+                        <Box key={idx} sx={{ ml: 2 }}>
+                          <Typography sx={{ color: metadataColor }}>
+                            {lora.name} (weight: {lora.weight})
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: typography.fontWeights.semibold }}>
+                      Raw Metadata
+                    </Typography>
+                    <pre style={{ margin: 0, fontSize: '0.7rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: metadataColor }}>
+                      {JSON.stringify(metadata, null, 2)}
+                    </pre>
+                  </Box>
+                </Box>
+              );
+            })()}
           </Paper>
         )}
         {/* Ensures 100px breathing space at the very end of modal scroll */}
