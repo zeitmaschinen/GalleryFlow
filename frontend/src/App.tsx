@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   CssBaseline,
@@ -35,6 +35,7 @@ import PaginationControls from './components/PaginationControls';
 import { IMAGES_PER_PAGE } from './constants';
 import { SortField } from './types';
 import { subscribeScanProgress } from './services/websocket';
+import AppProvider from './contexts/AppContextObject';
 
 function App() {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
@@ -160,7 +161,7 @@ function App() {
 
   // --- Patch: Debounced but Always Latest Reload ---
   const suppressionWindowMs = 5000; // 5 seconds (or change as desired)
-  const suppressionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const suppressionTimeoutRef = useRef<number | null>(null);
   const pendingReloadRef = useRef<{ [folderId: number]: boolean }>({});
 
   const reloadImageGrid = (userInitiated = false) => {
@@ -169,7 +170,7 @@ function App() {
       if (userInitiated) {
         lastUserReloadRef.current[selectedFolder.id] = Date.now();
         // Start suppression window
-        if (suppressionTimeoutRef.current) clearTimeout(suppressionTimeoutRef.current);
+        if (suppressionTimeoutRef.current) clearTimeout(suppressionTimeoutRef.current as unknown as number);
         pendingReloadRef.current[selectedFolder.id] = false;
         suppressionTimeoutRef.current = setTimeout(() => {
           if (pendingReloadRef.current[selectedFolder.id]) {
@@ -184,19 +185,22 @@ function App() {
   };
 
   // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
-  const handleRefreshFolderAndImages = async (folderId: number) => {
-    console.log('[handleRefreshFolderAndImages] called with folderId:', folderId, 'selectedFolder:', selectedFolder);
-    await handleRefreshFolder(folderId);
-    if (selectedFolder && selectedFolder.id === folderId) {
-      console.log('[handleRefreshFolderAndImages] calling reloadImageGrid');
-      reloadImageGrid(true);
-    } else {
-      // Fallback: force fetch if state is out of sync
-      console.log('[handleRefreshFolderAndImages] Fallback: force fetchImages for folderId', folderId);
-      fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
-      setCurrentPage(1);
-    }
-  };
+  const handleRefreshFolderAndImages = useCallback(
+    async (folderId: number) => {
+      console.log('[handleRefreshFolderAndImages] called with folderId:', folderId, 'selectedFolder:', selectedFolder);
+      await handleRefreshFolder(folderId);
+      if (selectedFolder && selectedFolder.id === folderId) {
+        console.log('[handleRefreshFolderAndImages] calling reloadImageGrid');
+        reloadImageGrid(true);
+      } else {
+        // Fallback: force fetch if state is out of sync
+        console.log('[handleRefreshFolderAndImages] Fallback: force fetchImages for folderId', folderId);
+        fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
+        setCurrentPage(1);
+      }
+    },
+    [handleRefreshFolder, setCurrentPage, fetchImages, sortBy, sortDirection, selectedFileTypes, reloadImageGrid]
+  );
 
   // Track latest pagination/sort/filter state for WebSocket handler
   const latestStateRef = useRef({
@@ -252,7 +256,7 @@ function App() {
       };
     }, 400); // 400ms debounce
     return () => {
-      clearTimeout(debounceTimeout);
+      clearTimeout(debounceTimeout as unknown as number);
     };
   }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages]);
 
