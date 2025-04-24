@@ -1,0 +1,50 @@
+name: Create Release Package
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Cria o arquivo ZIP excluindo arquivos desnecessários
+      - name: Create ZIP package
+        run: |
+          zip -r galleryflow-${{ github.event.release.tag_name }}.zip \
+          . \
+          -x "node_modules/*" \
+          -x "*/node_modules/*" \
+          -x "build/*" \
+          -x "dist/*" \
+          -x "frontend/build/*" \
+          -x "frontend/dist/*" \
+          -x "backend/build/*" \
+          -x "backend/dist/*" \
+          -x ".env" \
+          -x ".DS_Store" \
+          -x "Thumbs.db" \
+          -x "*.log" \
+          -x ".idea/*" \
+          -x ".vscode/*" \
+          -x "*.sublime-workspace" \
+          -x "*.sublime-project" \
+          -x "__pycache__/*" \
+          -x "*/__pycache__/*" \
+          -x "*.py[cod]" \
+          -x "coverage/*" \
+          -x "*.snap" \
+          -x "*.db" \
+          -x ".git/*" \
+          -x ".github/*"
+      
+      # Anexa o ZIP à release 
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: galleryflow-${{ github.event.release.tag_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
