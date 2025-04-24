@@ -17,14 +17,14 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 - 🌓 Light/Dark theme support
 - 🔗 Direct integration with ComfyUI workflows
 - 🔄 WebSocket support for real-time updates
-- 🧩 Workflow visualization for each image (see how your image was generated!)
+- 🧩 Workflow visualization for each image
 
 ![Gallery screenshot](frontend/docs/images/gallery.jpg)
 ![Metadata modal screenshot](frontend/docs/images/metadata.jpg)
 ![Workflow preview](frontend/docs/images/workflow.jpg)
 
 ## Tech Stack
-- **Frontend:** React 18, TypeScript, Material UI, [React Flow](https://reactflow.dev/) ⚡
+- **Frontend:** React 18, TypeScript, Material UI, React Flow
 - **Backend:** FastAPI, SQLAlchemy, Python 3.10+
 - **Other:** WebSockets, custom theming, responsive design
 
