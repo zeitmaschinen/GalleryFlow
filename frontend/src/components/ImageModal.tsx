@@ -19,6 +19,7 @@ import { borders, colors, typography, spacing } from '../theme/themeConstants';
 import { getImageUrl } from '../services/api';
 import type { Image } from '../types/index';
 import ModalNavArrow from '../theme/ModalNavArrow';
+import ModalSlideTransition from './ModalSlideTransition';
 
 interface ImageModalProps {
   open: boolean;
@@ -31,6 +32,7 @@ interface ImageModalProps {
   onModalImageLoad: () => void;
   onRevealFile: () => void;
   onCopyToClipboard: (text: string, isNegative?: boolean) => void;
+  onOpenWorkflow: () => void; // New prop
   images?: Image[]; // Optional: list of all images for navigation
   setSelectedImage?: (img: Image) => void; // Optional: setter for navigation
 }
@@ -61,6 +63,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
   onModalImageLoad,
   onRevealFile,
   onCopyToClipboard,
+  onOpenWorkflow, // New prop
   images,
   setSelectedImage
 }) => {
@@ -116,8 +119,8 @@ const ImageModal: React.FC<ImageModalProps> = ({
         onClose={onClose}
         maxWidth="md"
         fullWidth
+        TransitionComponent={ModalSlideTransition}
         PaperProps={{ sx: { borderRadius: borders.radius.lg } }}
-        TransitionProps={{ onExited: onClose }}
       >
         <DialogTitle
           sx={{
@@ -128,7 +131,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
             fontWeight: typography.fontWeights.semibold,
           }}
         >
-          Image Details
+          Metadata preview
           <IconButton
             onClick={onClose}
             sx={{
@@ -214,29 +217,6 @@ const ImageModal: React.FC<ImageModalProps> = ({
                 {imageDimensions.width} × {imageDimensions.height} pixels
               </Typography>
             )}
-            {/* Metadata extraction notice */}
-            <Box
-              sx={theme => {
-                const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
-                return {
-                  mt: 2,
-                  mx: 'auto',
-                  p: 1.5,
-                  borderRadius: borders.radius.sm,
-                  backgroundColor: colors.warningBox[mode].background,
-                  border: `1px solid ${colors.warningBox[mode].border}`,
-                  color: colors.warningBox[mode].text,
-                  maxWidth: 350,
-                };
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: typography.fontWeights.medium }}
-              >
-                Depending on the workflow used to generate the image, you might see <b>N/A</b> for some fields. This can happen if the workflow is complex or uses custom nodes, making it difficult to extract metadata reliably from each field.
-              </Typography>
-            </Box>
           </Box>
           {/* Right: Metadata */}
           <Box sx={{ flex: '1 1 60%' }}>
@@ -340,7 +320,6 @@ const ImageModal: React.FC<ImageModalProps> = ({
                 variant="outlined"
                 sx={{
                   p: 1.5,
-                  mb: 2,
                   position: 'relative',
                   '&:hover .copy-button': {
                     opacity: 1,
@@ -363,7 +342,11 @@ const ImageModal: React.FC<ImageModalProps> = ({
                   <ContentCopyIcon fontSize="small" />
                 </IconButton>
               </Paper>
-              <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
+              <Typography 
+                variant="body2" 
+                gutterBottom 
+                sx={{ fontWeight: typography.fontWeights.medium, mt: 3 }} 
+              >
                 Negative Prompt:
               </Typography>
               <Paper
@@ -392,6 +375,48 @@ const ImageModal: React.FC<ImageModalProps> = ({
                   <ContentCopyIcon fontSize="small" />
                 </IconButton>
               </Paper>
+              {/* Metadata extraction notice */}
+              <Box
+                sx={theme => {
+                  const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
+                  return {
+                    mt: 2,
+                    p: 1.5,
+                    borderRadius: borders.radius.md,
+                    backgroundColor: colors.warningBox[mode].background,
+                    border: `1px solid ${colors.warningBox[mode].border}`,
+                    color: colors.warningBox[mode].text,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  };
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: typography.fontWeights.regular, fontSize: '0.85em' }}
+                >
+                  Some fields may show <b>N/A</b> if the workflow is too complex or uses custom nodes. For a better overview, check the{' '}
+                  <Box component="span" sx={{ display: 'inline', p: 0, m: 0 }}>
+                    <Button
+                      variant="text"
+                      size="small"
+                      sx={{
+                        p: 0,
+                        minWidth: 0,
+                        fontSize: 'inherit',
+                        color: 'inherit',
+                        textDecoration: 'underline',
+                        textTransform: 'none',
+                        verticalAlign: 'baseline',
+                        ml: 0.2
+                      }}
+                      onClick={onOpenWorkflow}
+                    >
+                      workflow visualization
+                    </Button>
+                  </Box>.
+                </Typography>
+              </Box>
             </Box>
           </Box>
         </DialogContent>

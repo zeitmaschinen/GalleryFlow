@@ -116,5 +116,3 @@ export const SidebarFooter: React.FC = () => {
     </Box>
   );
 };
-
-// Removed default export for clarity and tree-shaking

@@ -69,7 +69,7 @@ export const colors = {
       titleColor: '#3A3541',
       textColor: '#3A3541',
       closeIcon: '#3A3541AA',
-      backdrop: 'rgba(44, 40, 73, 0.7)'
+      backdrop: 'rgba(44, 40, 73, 0.7)',
     },
     dark: {
       background: '#080529',
@@ -80,31 +80,7 @@ export const colors = {
       titleColor: '#FFF',
       textColor: '#FFF',
       closeIcon: '#C3BEFF',
-      backdrop: 'rgba(0,0,0,1)'
-    }
-  },
-  addFolderPath: {
-    light: {
-      inputBackground: '#F4F5FA',
-      inputBorder: '#E0E0E0',
-      inputText: '#FFF',
-      helpIcon: '#3A3541AA',
-      alertBackground: '#FFF4F4',
-      alertText: '#FF4C51',
-      buttonBackground: '#3A2DB3',
-      buttonText: '#FFF',
-      inputBorderRadius: '8px',
-    },
-    dark: {
-      inputBackground: '#9592AD',
-      inputBorder: '#56546A',
-      inputText: '#FFF',
-      helpIcon: '#C3BEFF',
-      alertBackground: '#2D1436',
-      alertText: '#FF4C51',
-      buttonBackground: '#6C63FF',
-      buttonText: '#FFF',
-      inputBorderRadius: '8px',
+      backdrop: 'rgba(0,0,0,0.7)',
     }
   },
   warningBox: {
@@ -120,8 +96,6 @@ export const colors = {
     }
   },
 };
-
-export const addFolderPath = colors.addFolderPath;
 
 /**
  * Typography settings for consistent font usage across the application.

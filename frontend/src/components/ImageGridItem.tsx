@@ -4,7 +4,6 @@ import { colors } from '../theme/themeConstants';
 import { getImageUrl } from '../services/api';
 import type { Image } from '../types/index';
 
-// Removed unused 'thumbnailSize' prop
 interface ImageGridItemProps {
   image: Image;
   loaded: boolean;

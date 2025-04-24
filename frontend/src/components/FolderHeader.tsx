@@ -35,7 +35,7 @@ const FolderHeader: React.FC<FolderHeaderProps> = ({ selectedFolder }) => (
         }}
         data-testid="folder-header-name"
       >
-        {`/${selectedFolder.path.split('/').filter(Boolean).pop()}/`}
+        {`/${selectedFolder.path.replace(/\\/g, '/').split('/').filter(Boolean).pop()}/`}
       </Typography>
     </Tooltip>
     <Tooltip title="Copy full folder path" enterDelay={300} arrow placement="top">

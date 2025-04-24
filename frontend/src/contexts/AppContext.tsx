@@ -55,6 +55,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) {

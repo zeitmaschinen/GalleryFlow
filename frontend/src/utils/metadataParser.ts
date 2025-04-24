@@ -75,7 +75,7 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
 
       // Find KSampler node
       const kSamplerNodeEntry = nodeEntries.find(([, data]) => 
-        hasClassType(data) && data.class_type?.includes('Sampler')
+        hasClassType(data) && ('class_type' in data && data.class_type?.includes('Sampler'))
       );
 
       if (kSamplerNodeEntry) {
@@ -108,7 +108,7 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
 
       // Extract Lora information
       const loraNodes = Object.values(nodes).filter((node: unknown) => 
-        hasClassType(node) && node.class_type?.includes('LoraLoader')
+        hasClassType(node) && ('class_type' in node && node.class_type?.includes('LoraLoader'))
       );
 
       if (loraNodes.length > 0) {
@@ -205,7 +205,7 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
           if (promptObj && typeof promptObj === 'object' && promptObj !== null) {
             nodes = promptObj as Record<string, unknown>;
           }
-        } catch (e: unknown) {
+        } catch {
           // Could not parse prompt JSON
         }
       }
@@ -215,7 +215,7 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
           if (workflowObj && typeof workflowObj === 'object' && workflowObj !== null) {
             nodes = workflowObj as Record<string, unknown>;
           }
-        } catch (e: unknown) {
+        } catch {
           // Could not parse workflow JSON
         }
       }
@@ -277,7 +277,7 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
           if (promptObj && typeof promptObj === 'object' && promptObj !== null) {
             nodes = promptObj as Record<string, unknown>;
           }
-        } catch (e: unknown) {
+        } catch {
           // Could not parse prompt JSON
         }
       }
@@ -287,7 +287,7 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
           if (workflowObj && typeof workflowObj === 'object' && workflowObj !== null) {
             nodes = workflowObj as Record<string, unknown>;
           }
-        } catch (e: unknown) {
+        } catch {
           // Could not parse workflow JSON
         }
       }
@@ -337,7 +337,7 @@ export const parseMetadata = (metadata: Record<string, unknown> | null): ImageMe
     result.negativePrompt = negativePrompt;
 
     return formatNumericValues(result);
-  } catch (e: unknown) {
+  } catch {
     console.error("Error parsing metadata:");
     return defaultMetadata;
   }
@@ -358,7 +358,7 @@ function extractPrompts(nodes: Record<string, unknown>, kSamplerNode: unknown, r
     if (!node || typeof node !== 'object') return undefined;
     if (hasClassType(node)) {
       // SDXL: CLIPTextEncodeSDXL with text_g/text_l
-      if (node.class_type?.includes('CLIPTextEncode') && hasInputs(node)) {
+      if ('class_type' in node && node.class_type?.includes('CLIPTextEncode') && hasInputs(node)) {
         // Try direct text
         if (hasRecordProp(node, 'inputs') && hasStringProp(node['inputs'], 'text')) {
           return node['inputs']['text'] as string;
@@ -366,19 +366,19 @@ function extractPrompts(nodes: Record<string, unknown>, kSamplerNode: unknown, r
         // Try SDXL: text_g/text_l
         if (hasRecordProp(node, 'inputs') && Array.isArray(node['inputs']['text_g']) && node['inputs']['text_g'].length > 0) {
           const tNode = nodes[node['inputs']['text_g'][0]];
-          if (hasClassType(tNode) && tNode.class_type === 'ttN text' && hasInputs(tNode) && hasStringProp(tNode['inputs'], 'text')) {
+          if (hasClassType(tNode) && 'class_type' in tNode && tNode.class_type === 'ttN text' && hasInputs(tNode) && hasStringProp(tNode['inputs'], 'text')) {
             return tNode['inputs']['text'] as string;
           }
         }
         if (hasRecordProp(node, 'inputs') && Array.isArray(node['inputs']['text_l']) && node['inputs']['text_l'].length > 0) {
           const tNode = nodes[node['inputs']['text_l'][0]];
-          if (hasClassType(tNode) && tNode.class_type === 'ttN text' && hasInputs(tNode) && hasStringProp(tNode['inputs'], 'text')) {
+          if (hasClassType(tNode) && 'class_type' in tNode && tNode.class_type === 'ttN text' && hasInputs(tNode) && hasStringProp(tNode['inputs'], 'text')) {
             return tNode['inputs']['text'] as string;
           }
         }
       }
       // Legacy: direct ttN text node
-      if (node.class_type === 'ttN text' && hasInputs(node) && hasStringProp(node['inputs'], 'text')) {
+      if ('class_type' in node && node.class_type === 'ttN text' && hasInputs(node) && hasStringProp(node['inputs'], 'text')) {
         return node['inputs']['text'] as string;
       }
     }
@@ -438,8 +438,8 @@ function extractModelInfoRobust(nodes: Record<string, unknown>): { model: string
 
 function extractUpscaleInfo(nodes: Record<string, unknown>) {
   const upscaleNode = Object.values(nodes).find((node: unknown) => 
-    hasClassType(node) && (node.class_type?.includes('ImageUpscaleWithModel') || 
-    node.class_type?.includes('LatentUpscale'))
+    hasClassType(node) && ('class_type' in node && (node.class_type?.includes('ImageUpscaleWithModel') || 
+    node.class_type?.includes('LatentUpscale')))
   );
 
   if (!upscaleNode) {
@@ -450,7 +450,7 @@ function extractUpscaleInfo(nodes: Record<string, unknown>) {
   }
 
   const upscaleModelLoaderNode = Object.values(nodes).find((node: unknown) => 
-    hasClassType(node) && node.class_type?.includes('UpscaleModelLoader')
+    hasClassType(node) && ('class_type' in node && node.class_type?.includes('UpscaleModelLoader'))
   );
 
   let hiresUpscaler = 'Unknown Upscaler';

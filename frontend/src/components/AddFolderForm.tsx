@@ -11,7 +11,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CloseIcon from '@mui/icons-material/Close';
-import { borders, typography, addFolderPath } from '../theme/themeConstants';
+import { borders, typography } from '../theme/themeConstants';
 
 interface AddFolderFormProps {
   onAddFolder: (path: string) => Promise<void>;
@@ -87,22 +87,22 @@ const AddFolderForm: React.FC<AddFolderFormProps> = ({ onAddFolder }) => {
           disabled={isSubmitting}
           error={!!error}
           sx={(theme) => {
-            const palette = addFolderPath[theme.palette.mode];
+            const palette = theme.palette;
             return {
               '& .MuiOutlinedInput-root': {
-                borderRadius: palette.inputBorderRadius,
+                borderRadius: borders.radius.sm,
                 fontSize: typography.sizes.sm,
-                backgroundColor: palette.inputBackground,
+                backgroundColor: palette.background.paper,
                 color: '#111',
-                border: `1px solid ${palette.inputBorder}`,
+                border: `1px solid ${palette.divider}`,
               },
               '& .MuiOutlinedInput-input': {
                 color: '#111',
-                backgroundColor: palette.inputBackground,
-                borderRadius: palette.inputBorderRadius,
+                backgroundColor: palette.background.paper,
+                borderRadius: borders.radius.sm,
               },
               '& .MuiInputBase-input': {
-                borderRadius: palette.inputBorderRadius,
+                borderRadius: borders.radius.sm,
               },
             };
           }}
@@ -112,7 +112,7 @@ const AddFolderForm: React.FC<AddFolderFormProps> = ({ onAddFolder }) => {
             size="small" 
             sx={(theme) => ({
               ml: 1,
-              color: addFolderPath[theme.palette.mode].helpIcon
+              color: theme.palette.text.primary
             })}
           >
             <HelpOutlineIcon fontSize="small" />
@@ -125,13 +125,12 @@ const AddFolderForm: React.FC<AddFolderFormProps> = ({ onAddFolder }) => {
           <Alert 
             severity="error" 
             sx={(theme) => {
-              const palette = addFolderPath[theme.palette.mode];
               return {
                 borderRadius: borders.radius.sm,
                 pr: 4, 
                 overflow: 'visible', 
-                background: palette.alertBackground,
-                color: palette.alertText,
+                background: theme.palette.error.main,
+                color: theme.palette.error.contrastText,
                 '& .MuiAlert-message': {
                   fontSize: typography.sizes.sm
                 }
@@ -169,14 +168,13 @@ const AddFolderForm: React.FC<AddFolderFormProps> = ({ onAddFolder }) => {
         disabled={!path.trim() || isSubmitting}
         startIcon={isSubmitting ? <CircularProgress size={20} /> : <AddIcon />}
         sx={(theme) => {
-          const palette = addFolderPath[theme.palette.mode];
           return {
             borderRadius: borders.radius.sm,
             textTransform: 'none',
             fontWeight: typography.fontWeights.medium,
             transition: 'none !important',
-            background: palette.buttonBackground,
-            color: palette.buttonText,
+            background: theme.palette.primary.main,
+            color: theme.palette.primary.contrastText,
             '&:hover': {
               background: theme.palette.mode === 'dark' ? '#554ee6' : '#4a3ab3',
             },

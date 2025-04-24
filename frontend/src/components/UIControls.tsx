@@ -175,5 +175,3 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     </Box>
   );
 };
-
-// Removed default export for clarity and tree-shaking

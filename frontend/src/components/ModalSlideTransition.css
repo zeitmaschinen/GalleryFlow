@@ -1,0 +1,9 @@
+.modal-slide-ease {
+  /* Override MUI default for Slide transitions */
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important; /* standard ease-in-out */
+}
+
+/* Also target the inner Paper for extra safety */
+.modal-slide-ease > .MuiPaper-root {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}

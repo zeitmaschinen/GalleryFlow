@@ -35,7 +35,6 @@ import PaginationControls from './components/PaginationControls';
 import { IMAGES_PER_PAGE } from './constants';
 import { SortField } from './types';
 import { subscribeScanProgress } from './services/websocket';
-import AppProvider from './contexts/AppContextObject';
 
 function App() {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
@@ -152,7 +151,6 @@ function App() {
           }
         });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey]);
 
   // --- Track last user-initiated reload per folder to suppress redundant WebSocket reloads ---

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, Menu, MenuItem, Checkbox, ListItemText } from '@mui/material';
+import { Box, Button, Menu, MenuItem, Checkbox, ListItemText, ClickAwayListener } from '@mui/material';
 import { dropdownStyles } from '../theme/dropdownStyles';
 
 // ===== SortButton Component =====
@@ -68,28 +68,35 @@ export const SortButton: React.FC<SortButtonProps> = ({ value, onChange }) => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         sx={dropdownStyles.menu}
+        hideBackdrop
+        BackdropProps={{ style: { backgroundColor: 'transparent' } }}
       >
-        <MenuItem 
-          onClick={() => handleMenuItemClick('filename')} 
-          selected={value === 'filename'} 
-          sx={dropdownStyles.menuItem(value === 'filename')}
-        >
-          Filename
-        </MenuItem>
-        <MenuItem 
-          onClick={() => handleMenuItemClick('date')} 
-          selected={value === 'date'} 
-          sx={dropdownStyles.menuItem(value === 'date')}
-        >
-          Date Modified
-        </MenuItem>
-        <MenuItem 
-          onClick={() => handleMenuItemClick('folder')} 
-          selected={value === 'folder'} 
-          sx={dropdownStyles.menuItem(value === 'folder')}
-        >
-          Subfolder
-        </MenuItem>
+        {/* ClickAwayListener para fechar ao clicar fora */}
+        <ClickAwayListener onClickAway={handleClose}>
+          <Box>
+            <MenuItem 
+              onClick={() => handleMenuItemClick('filename')} 
+              selected={value === 'filename'} 
+              sx={dropdownStyles.menuItem(value === 'filename')}
+            >
+              Filename
+            </MenuItem>
+            <MenuItem 
+              onClick={() => handleMenuItemClick('date')} 
+              selected={value === 'date'} 
+              sx={dropdownStyles.menuItem(value === 'date')}
+            >
+              Date Modified
+            </MenuItem>
+            <MenuItem 
+              onClick={() => handleMenuItemClick('folder')} 
+              selected={value === 'folder'} 
+              sx={dropdownStyles.menuItem(value === 'folder')}
+            >
+              Subfolder
+            </MenuItem>
+          </Box>
+        </ClickAwayListener>
       </Menu>
     </Box>
   );
@@ -170,22 +177,29 @@ export const FileTypeFilter: React.FC<FileTypeFilterProps> = ({ selectedTypes, o
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         MenuListProps={{ sx: { minWidth: 140 } }}
         sx={dropdownStyles.menu}
+        hideBackdrop
+        BackdropProps={{ style: { backgroundColor: 'transparent' } }}
       >
-        {fileTypes.map(type => (
-          <MenuItem
-            key={type}
-            selected={selectedTypes.includes(type)}
-            onClick={() => handleSelect(type)}
-            sx={dropdownStyles.menuItem(selectedTypes.includes(type))}
-          >
-            <Checkbox
-              checked={selectedTypes.includes(type)}
-              size="small"
-              sx={{ p: 0.5, mr: 1 }}
-            />
-            <ListItemText primary={type} />
-          </MenuItem>
-        ))}
+        {/* ClickAwayListener para fechar ao clicar fora */}
+        <ClickAwayListener onClickAway={handleClose}>
+          <Box>
+            {fileTypes.map(type => (
+              <MenuItem
+                key={type}
+                selected={selectedTypes.includes(type)}
+                onClick={() => handleSelect(type)}
+                sx={dropdownStyles.menuItem(selectedTypes.includes(type))}
+              >
+                <Checkbox
+                  checked={selectedTypes.includes(type)}
+                  size="small"
+                  sx={{ p: 0.5, mr: 1 }}
+                />
+                <ListItemText primary={type} />
+              </MenuItem>
+            ))}
+          </Box>
+        </ClickAwayListener>
       </Menu>
     </Box>
   );

@@ -4,13 +4,17 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import type { Image } from '../services/api';
 import { revealInExplorer } from '../services/api';
 import { getImageUrl } from '../services/api';
 import { parseMetadata } from '../utils/metadataParser';
-import ImageGridItem from './ImageGridItem';
 import ImageModal from './ImageModal';
+import WorkflowModal from './WorkflowModal';
+import WorkflowIcon from '@mui/icons-material/AccountTree';
+import InfoIcon from '@mui/icons-material/InfoOutlined';
 
 interface ImageGridProps {
   images: Image[];
@@ -26,6 +30,8 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const modalImageRef = useRef<HTMLImageElement>(null);
   const [isRevealing, setIsRevealing] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
+  const [workflowModalImage, setWorkflowModalImage] = React.useState<Image | null>(null);
 
   // Preload images
   useEffect(() => {
@@ -44,8 +50,20 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     });
   }, [images, loadedImages]);
 
+  // Função auxiliar para buscar campo ignorando case
+  function getFieldInsensitive(obj: Record<string, unknown> | null, key: string) {
+    if (!obj) return undefined;
+    const foundKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
+    return foundKey ? obj[foundKey] : undefined;
+  }
+
   const handleImageClick = (image: Image) => { 
-    setSelectedImage(image); 
+    setSelectedImage({
+      ...image,
+      // O workflow é o próprio objeto metadata_
+      Workflow: JSON.stringify(image.metadata_),
+      Prompt: getFieldInsensitive(image.metadata_, 'Prompt')
+    } as Image & { Workflow?: string; Prompt?: string });
     setImageDimensions(null); 
     setIsModalOpen(true); 
   };
@@ -137,6 +155,24 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     return () => clearTimeout(timer);
   }, [images]);
 
+  const handleOpenWorkflowModal = (image: Image) => {
+    setWorkflowModalImage(image);
+    setWorkflowModalOpen(true);
+  };
+  const handleCloseWorkflowModal = () => {
+    setWorkflowModalOpen(false);
+    setWorkflowModalImage(null);
+  };
+
+  // --- SQUARE GRID LAYOUT LOGIC ---
+  // Only the last slider level (largest) should show 2 images per row, edge-to-edge. Other levels: adapt to show as many as fit.
+  const allowedSizes = [100, 120, 150, 180, 250, 300, 800];
+  const sliderIndex = allowedSizes.indexOf(thumbnailSize) !== -1 ? allowedSizes.indexOf(thumbnailSize) : 0;
+  const isMax = sliderIndex === allowedSizes.length - 1;
+  const gridTemplateColumns = isMax
+    ? 'repeat(2, 1fr)'
+    : `repeat(auto-fit, minmax(${thumbnailSize}px, 1fr))`;
+
   return (
     <>
       {isTransitioning && (
@@ -150,29 +186,95 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
           <CircularProgress />
         </Box>
       )}
-      <Box sx={{
-        width: '100%',
-        display: 'grid',
-        gridTemplateColumns: `repeat(auto-fill, minmax(${thumbnailSize}px, 1fr))`,
-        gap: 2,
-        '& > *': {
-          aspectRatio: '1',
-        },
-        scrollBehavior: 'smooth',
-        overscrollBehavior: 'none',
-        opacity: isTransitioning ? 0.5 : 1,
-        transition: 'opacity 0.3s ease-in-out',
-        position: 'relative'
-      }}>
-        {images.map((image) => (
-          <ImageGridItem
-            key={image.id}
-            image={image}
-            loaded={loadedImages.has(getImageUrl(image.full_path))}
-            onClick={handleImageClick}
-            onLoad={() => setLoadedImages(prev => new Set(prev).add(getImageUrl(image.full_path)))}
-          />
-        ))}
+      <Box sx={{ width: '100%', p: 1 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns,
+            gap: 2,
+          }}
+        >
+          {images.map((image) => (
+            <Box
+              key={image.id}
+              sx={{
+                position: 'relative',
+                aspectRatio: '1 / 1',
+                width: '100%',
+                borderRadius: 3,
+                overflow: 'hidden',
+                boxShadow: 1,
+                bgcolor: 'background.paper',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'box-shadow 0.2s, transform 0.18s cubic-bezier(0.4,0,0.2,1)',
+                '&:hover': {
+                  boxShadow: 4,
+                  transform: 'translateY(-6px)',
+                },
+                '&:hover .image-action-icons': {
+                  opacity: 1,
+                  pointerEvents: 'auto',
+                },
+              }}
+              onClick={() => handleImageClick(image)}
+            >
+              <img
+                src={getImageUrl(image.full_path)}
+                alt={image.filename}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  opacity: loadedImages.has(getImageUrl(image.full_path)) ? 1 : 0,
+                  transition: 'opacity 0.3s ease-in-out',
+                  borderRadius: 'inherit',
+                }}
+                onLoad={() => setLoadedImages(prev => new Set(prev).add(getImageUrl(image.full_path)))}
+              />
+              {!loadedImages.has(getImageUrl(image.full_path)) && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+              <Box
+                className="image-action-icons"
+                sx={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  display: 'flex',
+                  gap: 1,
+                  zIndex: 2,
+                  opacity: 0,
+                  pointerEvents: 'none',
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                <Tooltip title="Workflow preview" arrow>
+                  <IconButton size="medium" sx={{ bgcolor: '#23272E', color: '#fff', '&:hover': { bgcolor: '#444' }, p: 1 }} onClick={e => { e.stopPropagation(); handleOpenWorkflowModal(image); }}>
+                    <WorkflowIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Metadata preview" arrow>
+                  <IconButton size="medium" sx={{ bgcolor: '#23272E', color: '#fff', '&:hover': { bgcolor: '#444' }, p: 1 }} onClick={e => { e.stopPropagation(); handleImageClick(image); }}>
+                    <InfoIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+          ))}
+        </Box>
       </Box>
 
       {/* OUTSIDE THE DIALOG: Render navigation arrows absolutely on the viewport when modal is open */}
@@ -248,6 +350,22 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
         onCopyToClipboard={handleCopyToClipboard}
         images={images}
         setSelectedImage={setSelectedImage}
+        onOpenWorkflow={() => {
+          setIsModalOpen(false);
+          setTimeout(() => {
+            if (selectedImage) {
+              setWorkflowModalImage(selectedImage);
+              setWorkflowModalOpen(true);
+            }
+          }, 300); // Match modal close animation
+        }}
+      />
+
+      <WorkflowModal
+        open={workflowModalOpen}
+        onClose={handleCloseWorkflowModal}
+        workflowJson={workflowModalImage ? JSON.parse(JSON.stringify(workflowModalImage.metadata_)) : null}
+        image={workflowModalImage}
       />
 
       <Snackbar 

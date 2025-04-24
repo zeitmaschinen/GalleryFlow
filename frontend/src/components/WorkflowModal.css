@@ -1,0 +1,81 @@
+/* Workflow visualization wrapper for background and grid */
+.workflow-visualization-wrapper {
+  width: 100%;
+  height: 100%; /* Garante altura total para React Flow */
+  min-height: 300px;
+  border-radius: 8px;
+  background: var(--workflow-bg, #F4F5FA);
+  position: relative;
+}
+
+/* Light mode workflow background */
+.workflow-visualization-light {
+  --workflow-bg: #F4F5FA;
+  --workflow-grid: #888;
+}
+
+/* Dark mode workflow background */
+.workflow-visualization-dark {
+  --workflow-bg: #23272E;
+  --workflow-grid: #444;
+}
+
+.react-flow__background {
+  background: var(--workflow-bg, #F4F5FA) !important;
+}
+
+/* Conexões (edges) roxas no React Flow */
+.react-flow__edge-path,
+.react-flow__connection-path {
+  stroke: #ACA5FF !important;
+  stroke-width: 2.5;
+}
+
+.comfy-node {
+  border-radius: 8px;
+  padding: 10px;
+  min-width: 220px;
+  max-width: 260px;
+  font-size: 13px;
+  box-shadow: 0 2px 8px #0002;
+  border: 2px solid var(--comfy-node-border);
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  word-break: break-word;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.comfy-node-label {
+  font-weight: 700;
+  margin-bottom: 4px;
+  word-break: break-word;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.comfy-node-handle {
+  background: var(--comfy-node-handle-bg);
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Light mode palette */
+.comfy-node-light {
+  --comfy-node-bg: #E0E0E0;
+  --comfy-node-color: #3A3541;
+  --comfy-node-border: #E0E0E0;
+  --comfy-node-handle-bg: #888;
+  background: var(--comfy-node-bg);
+  color: var(--comfy-node-color);
+}
+
+/* Dark mode palette */
+.comfy-node-dark {
+  --comfy-node-bg: #23272E;
+  --comfy-node-color: #fff;
+  --comfy-node-border: #E0E0E0;
+  --comfy-node-handle-bg: #ACA5FF;
+  background: var(--comfy-node-bg);
+  color: var(--comfy-node-color);
+}
