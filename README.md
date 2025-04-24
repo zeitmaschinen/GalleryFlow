@@ -10,6 +10,7 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 - 🖼️ Customizable thumbnail sizes
 - 🎨 Image preview
 - 📋 Metadata extraction and visualization
+- 🧩 Workflow visualization for each image
 - 🚀 Automatic real-time gallery updates
 - 📂 Recursively reads all folders, so you never miss an image
 - 🔄 Real-time sorting and filtering options
@@ -17,11 +18,20 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 - 🌓 Light/Dark theme support
 - 🔗 Direct integration with ComfyUI workflows
 - 🔄 WebSocket support for real-time updates
-- 🧩 Workflow visualization for each image
+
+<br>
 
 ![Gallery screenshot](frontend/docs/images/gallery.jpg)
+
+<br>
+
 ![Metadata modal screenshot](frontend/docs/images/metadata.jpg)
+
+<br>
+
 ![Workflow preview](frontend/docs/images/workflow.jpg)
+
+<br>
 
 ## Tech Stack
 - **Frontend:** React 18, TypeScript, Material UI, React Flow
