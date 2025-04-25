@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { createTheme, Theme } from '@mui/material';
+import { createTheme, Theme } from '@mui/material/styles';
 import { customLightTheme, customDarkTheme } from '../theme';
 
 type ThemeMode = 'light' | 'dark';
