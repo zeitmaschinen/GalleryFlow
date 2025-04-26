@@ -13,9 +13,9 @@ interface ThumbnailSizeSliderProps {
  * A slider component for adjusting thumbnail size in a grid view
  */
 export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value, onChange }) => {
-  // Define thumbnail sizes that effectively change the grid layout
-  // These sizes ensure actual visible changes in the grid
-  const thumbnailSizes = [100, 120, 150, 180, 220, 260, 300, 340, 380, 420, 500, 600, 800];
+  // Define sizes that create visible changes with the auto-fit, 1fr layout
+  // These sizes create distinct columns in the grid
+  const thumbnailSizes = [100, 150, 200, 250, 300, 350, 400, 500];
   
   // Find the closest valid size for the current value
   const getClosestSize = (val: number) => {
@@ -47,37 +47,35 @@ export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value,
       boxShadow: 'none',
     }}>
       <GridViewIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-      <Tooltip title={`${value}px (width)`} arrow placement="top">
-        <Slider
-          value={value}
-          onChange={handleSliderChange}
-          min={100}
-          max={800}
-          step={1}
-          aria-label="Thumbnail size"
-          valueLabelDisplay="off"
-          size="medium"
-          marks={thumbnailSizes.map(size => ({ value: size, label: '' }))}
-          sx={{
-            '& .MuiSlider-thumb': {
-              width: 20,
-              height: 20,
-              '&:hover, &.Mui-focusVisible': {
-                boxShadow: (theme) => `0 0 0 10px ${alpha(theme.palette.primary.main, 0.18)}`,
-              },
+      <Slider
+        value={value}
+        onChange={handleSliderChange}
+        min={100}
+        max={500}
+        step={1}
+        aria-label="Thumbnail size"
+        valueLabelDisplay="off"
+        size="medium"
+        marks={thumbnailSizes.map(size => ({ value: size, label: '' }))}
+        sx={{
+          '& .MuiSlider-thumb': {
+            width: 20,
+            height: 20,
+            '&:hover, &.Mui-focusVisible': {
+              boxShadow: (theme) => `0 0 0 10px ${alpha(theme.palette.primary.main, 0.18)}`,
             },
-            '& .MuiSlider-rail': {
-              opacity: 0.4,
-            },
-            '& .MuiSlider-mark': {
-              backgroundColor: 'primary.main',
-              height: 8,
-              width: 2,
-              opacity: 0.3,
-            },
-          }}
-        />
-      </Tooltip>
+          },
+          '& .MuiSlider-rail': {
+            opacity: 0.4,
+          },
+          '& .MuiSlider-mark': {
+            backgroundColor: 'primary.main',
+            height: 8,
+            width: 2,
+            opacity: 0.3,
+          },
+        }}
+      />
     </Box>
   );
 };

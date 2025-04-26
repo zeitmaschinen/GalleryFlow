@@ -1,16 +1,22 @@
 import React from 'react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import IconButton from '@mui/material/IconButton';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Button,
+  Box,
+  Paper,
+  Typography,
+  useTheme
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import Box from '@mui/material/Box';
 import WorkflowViewer from './WorkflowViewer';
 import './WorkflowModal.css';
 import ModalSlideTransition from './ModalSlideTransition';
 import type { Image } from '../types/index';
-import { useTheme } from '@mui/material/styles';
 import { borders, spacing, typography } from '../theme/themeConstants';
-import Button from '@mui/material/Button';
 import { modalActionButtonSx } from '../theme/modalStyles';
 
 interface WorkflowModalProps {
@@ -30,8 +36,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
 }) => {
   const isValid = !!workflowJson && typeof workflowJson === 'object' && Object.keys(workflowJson).length > 0;
   const theme = useTheme();
-  const mode = theme.palette.mode;
-  const subtitleColor = theme.palette.text.secondary;
+  const isDarkMode = theme.palette.mode === 'dark';
 
   const handleSeeMetadataPreview = () => {
     onClose();
@@ -49,18 +54,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
       maxWidth="xl"
       fullWidth
       TransitionComponent={ModalSlideTransition}
-      PaperProps={{
-        sx: {
-          borderRadius: borders.radius.lg,
-          backgroundColor: (theme) => theme.palette.background.paper,
-          color: (theme) => theme.palette.text.primary,
-          boxShadow: (theme) => theme.shadows[8],
-          border: 'none',
-        },
-      }}
-      BackdropProps={{
-        className: `workflow-modal-backdrop workflow-modal-backdrop-${mode}`
-      }}
+      PaperProps={{ sx: { borderRadius: borders.radius.lg } }}
     >
       <DialogTitle
         sx={{
@@ -69,15 +63,10 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
           pr: spacing.xl,
           fontSize: typography.sizes.lg,
           fontWeight: typography.fontWeights.semibold,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'relative',
         }}
       >
-        <span>Workflow preview</span>
+        Workflow preview
         <IconButton
-          aria-label="close"
           onClick={onClose}
           sx={{
             position: 'absolute',
@@ -92,41 +81,82 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
+
       {/* Subtitle with filename */}
       {image?.filename && (
-        <Box
+        <Typography
+          variant="body2"
           sx={{
-            fontSize: { xs: '13px', sm: '15px' },
-            color: subtitleColor,
-            fontWeight: 400,
-            px: 3,
-            pt: 0.2,
-            pb: 0.2,
+            px: spacing.md,
+            pt: 0,
+            pb: 1,
             mt: '-8px',
-            mb: 0.5,
+            color: 'text.secondary',
             wordBreak: 'break-all',
-            opacity: 0.9,
-            letterSpacing: 0.01,
-            transition: 'color 0.2s',
+            letterSpacing: 0.2,
           }}
         >
           {image.filename}
-        </Box>
+        </Typography>
       )}
-      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'stretch', minHeight: 400 }}>
-        {isValid ? (
-          <div className={`workflow-visualization-wrapper workflow-visualization-${mode}`}>
-            <Box sx={{ width: '100%', height: 600, minHeight: 400 }}>
+
+      <DialogContent
+        sx={{
+          p: spacing.md,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'stretch',
+          minHeight: 400,
+          bgcolor: 'background.paper',
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            width: '100%',
+            height: 600,
+            minHeight: 400,
+            overflow: 'hidden',
+            bgcolor: 'background.paper',
+            borderRadius: borders.radius.md,
+            border: 1,
+            borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+            '& .workflow-visualization-wrapper': {
+              height: '100%',
+              width: '100%'
+            }
+          }}
+        >
+          {isValid ? (
+            <div className={`workflow-visualization-wrapper workflow-visualization-${isDarkMode ? 'dark' : 'light'}`}>
               <WorkflowViewer workflowJson={workflowJson} height={600} />
+            </div>
+          ) : (
+            <Box sx={{ 
+              textAlign: 'center', 
+              mt: 6,
+              color: 'text.secondary',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Typography>
+                There is no information on the workflow used for this specific image.
+              </Typography>
             </Box>
-          </div>
-        ) : (
-          <Box sx={{ textAlign: 'center', mt: 6 }}>
-            There is no information on the workflow used for this specific image.
-          </Box>
-        )}
-      </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pt: 0 }}>
+          )}
+        </Paper>
+      </DialogContent>
+
+      <DialogActions
+        sx={{
+          p: spacing.sm,
+          bgcolor: isDarkMode ? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.03)',
+          display: 'flex',
+          justifyContent: 'flex-end'
+        }}
+      >
         <Button
           variant="contained"
           size="small"
@@ -136,7 +166,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
         >
           See metadata preview
         </Button>
-      </Box>
+      </DialogActions>
     </Dialog>
   );
 };
