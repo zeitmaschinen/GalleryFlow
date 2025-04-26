@@ -110,8 +110,9 @@ export const SidebarFooter: React.FC = () => {
             textUnderlineOffset: '2px'
           }}
         >
-          zeitmaschinen
-        </a>
+          GalleryFlow
+        </a>{' '}
+        v1.1.1 by zeitmaschinen
       </Typography>
     </Box>
   );
