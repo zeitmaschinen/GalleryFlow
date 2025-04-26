@@ -74,11 +74,7 @@ function App() {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
-
-  // --- MODAL STATE ---
-  const [imageModalOpen, setImageModalOpen] = useState(false);
-  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const prevFolderIdRef = useRef<number | null | undefined>(undefined); // Add ref to track previous folder ID
 
   const handleDrawerOpen = () => setSidebarOpen(true);
   const handleDrawerClose = () => setSidebarOpen(false);
@@ -144,17 +140,43 @@ function App() {
 
   // Always fetch images when state changes
   useEffect(() => {
+    const currentFolderId = selectedFolder?.id;
+    let pageToFetch = currentPage;
+
+    // Check if the selected folder has actually changed
+    if (currentFolderId !== undefined && currentFolderId !== prevFolderIdRef.current) {
+      console.log(`Folder changed from ${prevFolderIdRef.current} to ${currentFolderId}. Resetting page to 1.`);
+      pageToFetch = 1;
+      // Important: Update state synchronoously if possible or ensure fetch uses page 1
+      // If setCurrentPage is async, this might still fetch with old page briefly.
+      // Consider passing pageToFetch directly to fetchImages if setCurrentPage doesn't update immediately for the fetch.
+      setCurrentPage(1); 
+    }
+
     if (selectedFolder) {
-      fetchImages(selectedFolder.id, currentPage, sortBy, sortDirection, selectedFileTypes)
+      console.log(`Fetching images for folder ${selectedFolder.id}, page ${pageToFetch}`);
+      // Use pageToFetch which is either the current page or 1 if folder changed
+      fetchImages(selectedFolder.id, pageToFetch, sortBy, sortDirection, selectedFileTypes)
         .then(() => {
-          // After images load, check if currentPage is out of bounds
+          // This check remains useful if images get deleted, making the current page invalid
           const totalPages = Math.max(1, Math.ceil(totalImages / IMAGES_PER_PAGE));
           if (currentPage > totalPages) {
-            setCurrentPage(totalPages);
+             console.log(`Current page ${currentPage} is out of bounds (${totalPages}). Setting to ${totalPages}.`);
+             setCurrentPage(totalPages);
           }
+        })
+        .catch(error => {
+           console.error("Error fetching images after state change:", error);
+           // Handle fetch error appropriately, maybe show a message
         });
     }
-  }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey]);
+
+    // Update the ref *after* the logic runs
+    prevFolderIdRef.current = currentFolderId;
+
+  // Ensure all dependencies used in the effect are listed correctly.
+  // Added totalImages and setCurrentPage based on their usage.
+  }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey, fetchImages, totalImages, setCurrentPage]);
 
   // --- Track last user-initiated reload per folder to suppress redundant WebSocket reloads ---
   const lastUserReloadRef = useRef<{ [folderId: number]: number }>({});

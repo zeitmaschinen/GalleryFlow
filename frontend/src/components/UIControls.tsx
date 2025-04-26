@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Slider, alpha, CircularProgress, Typography, Tooltip } from '@mui/material';
+import React from 'react';
+import { Box, Slider, alpha, CircularProgress, Typography } from '@mui/material';
 import GridViewIcon from '@mui/icons-material/GridView';
 import { borders, colors, typography } from '../theme/themeConstants';
 

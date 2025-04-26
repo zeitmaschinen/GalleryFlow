@@ -234,7 +234,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
                 width: '100%',
                 height: '0',
                 paddingBottom: '100%', // This creates a square box
-                borderRadius: 3,
+                borderRadius: 2,
                 overflow: 'hidden',
                 boxShadow: 1,
                 bgcolor: 'background.paper',

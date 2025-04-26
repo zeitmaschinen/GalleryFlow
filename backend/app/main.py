@@ -428,7 +428,7 @@ async def reveal_file(
             logger.warning(f"Unsupported operating system for reveal: {system}")
             raise HTTPException(status_code=501, detail=f"Reveal function not implemented for OS: {system}")
 
-        return {"message": f"Command sent to reveal file in {system}."}
+        return {"message": "File location opened in Finder/Explorer."}
 
     except FileNotFoundError:
         logger.error(f"Reveal command not found: '{command[0]}' is likely not in the system PATH.")
