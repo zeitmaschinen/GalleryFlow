@@ -328,20 +328,23 @@ const ImageModal: React.FC<ImageModalProps> = ({
                 }}
               >
                 <Typography variant="body2" sx={{ pr: 4 }}>{positivePrompt}</Typography>
-                <IconButton
-                  size="small"
-                  className="copy-button"
-                  onClick={() => onCopyToClipboard(positivePrompt, false)}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: 8,
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                  }}
-                >
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
+                {/* Conditionally render copy icon for positive prompt */}
+                {positivePrompt && positivePrompt !== 'N/A' && (
+                  <IconButton
+                    size="small"
+                    className="copy-button"
+                    onClick={() => onCopyToClipboard(positivePrompt, false)}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: 8,
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                    }}
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                )}
               </Paper>
               <Typography 
                 variant="body2" 
@@ -361,20 +364,23 @@ const ImageModal: React.FC<ImageModalProps> = ({
                 }}
               >
                 <Typography variant="body2" sx={{ pr: 4 }}>{negativePrompt}</Typography>
-                <IconButton
-                  size="small"
-                  className="copy-button"
-                  onClick={() => onCopyToClipboard(negativePrompt, true)}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: 8,
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                  }}
-                >
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
+                {/* Conditionally render copy icon for negative prompt */}
+                {negativePrompt && negativePrompt !== 'N/A' && (
+                  <IconButton
+                    size="small"
+                    className="copy-button"
+                    onClick={() => onCopyToClipboard(negativePrompt, true)}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: 8,
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                    }}
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                )}
               </Paper>
               {/* Metadata extraction notice */}
               <Box
