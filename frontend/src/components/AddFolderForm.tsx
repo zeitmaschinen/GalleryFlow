@@ -93,16 +93,19 @@ const AddFolderForm: React.FC<AddFolderFormProps> = ({ onAddFolder }) => {
                 borderRadius: borders.radius.sm,
                 fontSize: typography.sizes.sm,
                 backgroundColor: palette.background.paper,
-                color: '#111',
                 border: `1px solid ${palette.divider}`,
               },
               '& .MuiOutlinedInput-input': {
-                color: '#111',
+                color: palette.text.primary,
                 backgroundColor: palette.background.paper,
                 borderRadius: borders.radius.sm,
               },
               '& .MuiInputBase-input': {
                 borderRadius: borders.radius.sm,
+              },
+              '& .MuiInputBase-input::placeholder': {
+                color: palette.text.secondary,
+                opacity: 0.7,
               },
             };
           }}

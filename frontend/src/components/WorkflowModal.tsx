@@ -128,7 +128,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
       </Box>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pt: 0 }}>
         <Button
-          variant="outlined"
+          variant="contained"
           size="small"
           sx={modalActionButtonSx}
           onClick={handleSeeMetadataPreview}

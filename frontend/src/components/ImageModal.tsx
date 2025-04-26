@@ -20,7 +20,7 @@ import { getImageUrl } from '../services/api';
 import type { Image } from '../types/index';
 import ModalNavArrow from '../theme/ModalNavArrow';
 import ModalSlideTransition from './ModalSlideTransition';
-import { modalActionButtonSx } from '../theme/modalStyles';
+import { modalActionButtonSx, modalSecondaryActionButtonSx } from '../theme/modalStyles';
 
 interface ImageModalProps {
   open: boolean;
@@ -397,7 +397,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
                   variant="caption"
                   sx={{ fontWeight: typography.fontWeights.normal, fontSize: '0.85em' }}
                 >
-                  Some fields may show <b>N/A</b> if the workflow is too complex or uses custom nodes. For a better overview, check the workflow preview.
+                  Some fields may show <b>N/A</b> if the workflow is too complex or uses custom nodes. For a better overview, see the workflow preview.
                 </Typography>
               </Box>
             </Box>
@@ -417,15 +417,15 @@ const ImageModal: React.FC<ImageModalProps> = ({
             onClick={onRevealFile}
             startIcon={isRevealing ? <CircularProgress size={18} color="inherit" /> : <FolderOpenIcon />}
             disabled={isRevealing || !selectedImage}
-            variant="outlined"
+            variant="text"
             size="small"
-            sx={modalActionButtonSx}
+            sx={modalSecondaryActionButtonSx}
           >
             Reveal in Finder/Explorer
           </Button>
           <Button
             onClick={onOpenWorkflow}
-            variant="outlined"
+            variant="contained"
             size="small"
             sx={modalActionButtonSx}
           >
