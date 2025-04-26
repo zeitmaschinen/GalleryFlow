@@ -87,13 +87,21 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     
     try { 
       await navigator.clipboard.writeText(text);
-      const message = isNegative ? 'Negative prompt copied!' : 
-                     text.includes('.') ? 'Image filename copied!' : 'Positive prompt copied!';
+      let message;
+      
+      if (isNegative) {
+        message = 'Negative prompt copied!';
+      } else if (selectedImage && text === selectedImage.filename) {
+        message = 'Image filename copied!';
+      } else {
+        message = 'Positive prompt copied!';
+      }
+      
       setSnackbarMessage(message); 
       setSnackbarOpen(true); 
     } catch (err) { 
       console.error('Failed to copy text: ', err); 
-      setSnackbarMessage('Failed to copy prompt.'); 
+      setSnackbarMessage('Failed to copy text.'); 
       setSnackbarOpen(true); 
     }
   };
