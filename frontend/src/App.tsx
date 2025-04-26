@@ -17,11 +17,8 @@ import {
 } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
-import CollectionsIcon from '@mui/icons-material/Collections';
 import { BurgerMenu, DrawerHeaderMobile, SidebarHeader } from './components/Navigation';
-import SidebarFooter from './components/SidebarFooter';
-
-import { getTheme } from './theme/index';
+import { SidebarFooter } from './components';
 import AddFolderForm from './components/AddFolderForm';
 import FolderList from './components/FolderList';
 import ImageGrid from './components/ImageGrid';
@@ -35,6 +32,7 @@ import PaginationControls from './components/PaginationControls';
 import { IMAGES_PER_PAGE } from './constants';
 import { SortField } from './types';
 import { subscribeScanProgress } from './services/websocket';
+import { getTheme } from './theme';
 
 function App() {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
@@ -76,6 +74,11 @@ function App() {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // --- MODAL STATE ---
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const handleDrawerOpen = () => setSidebarOpen(true);
   const handleDrawerClose = () => setSidebarOpen(false);
@@ -275,8 +278,8 @@ function App() {
           gap: 2,
           bgcolor: 'background.default'
         }}>
-          <CollectionsIcon sx={{ color: 'primary.main', fontSize: '3rem' }} />
-          <CircularProgress />
+          <img src="/images/symbol.png" alt="Logo" style={{ width: 64, height: 64, animation: 'spin 1s linear infinite' }} />
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </Box>
       ) : (
         <Box sx={{ display: 'flex', height: '100vh', width: '100%' }}>

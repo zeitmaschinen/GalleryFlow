@@ -7,22 +7,40 @@ import Box from '@mui/material/Box';
 import WorkflowViewer from './WorkflowViewer';
 import './WorkflowModal.css';
 import ModalSlideTransition from './ModalSlideTransition';
-import type { Image } from '../types';
+import type { Image } from '../types/index';
 import { useTheme } from '@mui/material/styles';
 import { borders, spacing, typography } from '../theme/themeConstants';
+import Button from '@mui/material/Button';
+import { modalActionButtonSx } from '../theme/modalStyles';
 
 interface WorkflowModalProps {
   open: boolean;
   onClose: () => void;
   workflowJson: Record<string, unknown> | null;
   image?: Image | null;
+  onSeeMetadataPreview?: () => void;
 }
 
-const WorkflowModal: React.FC<WorkflowModalProps> = ({ open, onClose, workflowJson, image }) => {
+const WorkflowModal: React.FC<WorkflowModalProps> = ({ 
+  open, 
+  onClose, 
+  workflowJson, 
+  image,
+  onSeeMetadataPreview
+}) => {
   const isValid = !!workflowJson && typeof workflowJson === 'object' && Object.keys(workflowJson).length > 0;
   const theme = useTheme();
   const mode = theme.palette.mode;
   const subtitleColor = theme.palette.text.secondary;
+
+  const handleSeeMetadataPreview = () => {
+    onClose();
+    if (onSeeMetadataPreview) {
+      setTimeout(() => {
+        onSeeMetadataPreview();
+      }, 350); // Match the exit timeout from ModalSlideTransition
+    }
+  };
 
   return (
     <Dialog
@@ -74,7 +92,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({ open, onClose, workflowJs
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      {/* Subtítulo com nome do arquivo da imagem */}
+      {/* Subtitle with filename */}
       {image?.filename && (
         <Box
           sx={{
@@ -104,9 +122,20 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({ open, onClose, workflowJs
           </div>
         ) : (
           <Box sx={{ textAlign: 'center', mt: 6 }}>
-            The image doesn't have any information on the workflow used.
+            There is no information on the workflow used for this specific image.
           </Box>
         )}
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, pt: 0 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          sx={modalActionButtonSx}
+          onClick={handleSeeMetadataPreview}
+          disabled={!image}
+        >
+          See metadata preview
+        </Button>
       </Box>
     </Dialog>
   );

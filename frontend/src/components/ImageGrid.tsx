@@ -165,13 +165,8 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   };
 
   // --- SQUARE GRID LAYOUT LOGIC ---
-  // Only the last slider level (largest) should show 2 images per row, edge-to-edge. Other levels: adapt to show as many as fit.
-  const allowedSizes = [100, 120, 150, 180, 250, 300, 800];
-  const sliderIndex = allowedSizes.indexOf(thumbnailSize) !== -1 ? allowedSizes.indexOf(thumbnailSize) : 0;
-  const isMax = sliderIndex === allowedSizes.length - 1;
-  const gridTemplateColumns = isMax
-    ? 'repeat(2, 1fr)'
-    : `repeat(auto-fit, minmax(${thumbnailSize}px, 1fr))`;
+  // Let the grid fill the width naturally, no centering or special spacing logic
+  const gridTemplateColumns = `repeat(auto-fit, minmax(${thumbnailSize}px, 1fr))`;
 
   return (
     <>
@@ -191,7 +186,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
           sx={{
             display: 'grid',
             gridTemplateColumns,
-            gap: 2,
+            gap: '8px', // simple, small gap
           }}
         >
           {images.map((image) => (
@@ -200,7 +195,8 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
               sx={{
                 position: 'relative',
                 aspectRatio: '1 / 1',
-                width: '100%',
+                width: '100%', // let the grid cell control width
+                height: 'auto',
                 borderRadius: 3,
                 overflow: 'hidden',
                 boxShadow: 1,
@@ -232,6 +228,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
                   opacity: loadedImages.has(getImageUrl(image.full_path)) ? 1 : 0,
                   transition: 'opacity 0.3s ease-in-out',
                   borderRadius: 'inherit',
+                  display: 'block',
                 }}
                 onLoad={() => setLoadedImages(prev => new Set(prev).add(getImageUrl(image.full_path)))}
               />
@@ -357,7 +354,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
               setWorkflowModalImage(selectedImage);
               setWorkflowModalOpen(true);
             }
-          }, 300); // Match modal close animation
+          }, 300);
         }}
       />
 
@@ -366,6 +363,12 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
         onClose={handleCloseWorkflowModal}
         workflowJson={workflowModalImage ? JSON.parse(JSON.stringify(workflowModalImage.metadata_)) : null}
         image={workflowModalImage}
+        onSeeMetadataPreview={() => {
+          if (workflowModalImage) {
+            setSelectedImage(workflowModalImage);
+            setIsModalOpen(true);
+          }
+        }}
       />
 
       <Snackbar 
