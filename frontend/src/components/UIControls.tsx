@@ -1,7 +1,16 @@
 import React from 'react';
-import { Box, Slider, alpha, CircularProgress, Typography } from '@mui/material';
+import { Box, Slider, CircularProgress, Typography } from '@mui/material';
 import GridViewIcon from '@mui/icons-material/GridView';
-import { borders, colors, typography } from '../theme/themeConstants';
+import { 
+  thumbnailSizeSliderContainerSx, 
+  thumbnailSizeIconSx, 
+  thumbnailSizeSliderSx,
+  progressBarLabelSx,
+  progressBarContainerSx,
+  progressBarFillSx,
+  loadingSpinnerOverlaySx,
+  loadingSpinnerContainerSx
+} from '../theme/controlStyles';
 
 // ===== ThumbnailSizeSlider Component =====
 interface ThumbnailSizeSliderProps {
@@ -13,9 +22,8 @@ interface ThumbnailSizeSliderProps {
  * A slider component for adjusting thumbnail size in a grid view
  */
 export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value, onChange }) => {
-  // Define sizes that create visible changes with the auto-fit, 1fr layout
-  // These sizes create distinct columns in the grid
-  const thumbnailSizes = [100, 150, 200, 250, 300, 350, 400, 500];
+  // Define sizes with evenly spaced values (50px increments)
+  const thumbnailSizes = [100, 150, 200, 250, 300, 350, 400, 450, 500];
   
   // Find the closest valid size for the current value
   const getClosestSize = (val: number) => {
@@ -34,19 +42,8 @@ export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value,
   };
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: 2,
-      minWidth: 260,
-      maxWidth: 400,
-      bgcolor: 'background.paper',
-      p: 1.5,
-      borderRadius: borders.radius.sm,
-      border: 0,
-      boxShadow: 'none',
-    }}>
-      <GridViewIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
+    <Box sx={thumbnailSizeSliderContainerSx}>
+      <GridViewIcon sx={thumbnailSizeIconSx} />
       <Slider
         value={value}
         onChange={handleSliderChange}
@@ -57,24 +54,7 @@ export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value,
         valueLabelDisplay="off"
         size="medium"
         marks={thumbnailSizes.map(size => ({ value: size, label: '' }))}
-        sx={{
-          '& .MuiSlider-thumb': {
-            width: 20,
-            height: 20,
-            '&:hover, &.Mui-focusVisible': {
-              boxShadow: (theme) => `0 0 0 10px ${alpha(theme.palette.primary.main, 0.18)}`,
-            },
-          },
-          '& .MuiSlider-rail': {
-            opacity: 0.4,
-          },
-          '& .MuiSlider-mark': {
-            backgroundColor: 'primary.main',
-            height: 8,
-            width: 2,
-            opacity: 0.3,
-          },
-        }}
+        sx={thumbnailSizeSliderSx}
       />
     </Box>
   );
@@ -92,32 +72,13 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, label }) => 
       {label && (
         <Typography 
           variant="caption" 
-          sx={{ 
-            display: 'block', 
-            mb: 0.5,
-            color: 'text.secondary',
-            fontSize: typography.sizes.xs
-          }}
+          sx={progressBarLabelSx}
         >
           {label}
         </Typography>
       )}
-      <Box 
-        sx={{ 
-          height: 4,
-          bgcolor: theme => theme.palette.mode === 'dark' ? colors.common.hoverDark : colors.common.hoverLight,
-          borderRadius: 2,
-          overflow: 'hidden'
-        }}
-      >
-        <Box
-          sx={{
-            width: `${progress}%`,
-            height: '100%',
-            bgcolor: 'primary.main',
-            transition: 'width 0.3s ease-in-out'
-          }}
-        />
+      <Box sx={progressBarContainerSx}>
+        <Box sx={progressBarFillSx(progress)} />
       </Box>
     </Box>
   );
@@ -135,34 +96,14 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 }) => {
   if (overlay) {
     return (
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          zIndex: 1000
-        }}
-      >
+      <Box sx={loadingSpinnerOverlaySx}>
         <CircularProgress size={size} />
       </Box>
     );
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 2
-      }}
-    >
+    <Box sx={loadingSpinnerContainerSx}>
       <CircularProgress size={size} />
     </Box>
   );
