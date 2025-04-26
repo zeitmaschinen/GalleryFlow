@@ -416,7 +416,7 @@ async def reveal_file(
             process = subprocess.run(command, check=True, capture_output=True, text=True)
             logger.info(f"Executed 'open -R': {process.args}. Return code: {process.returncode}")
         elif system == "Windows":
-            command = ["explorer", "/select,", resolved_path_str]
+            command = ["explorer", "/select," + resolved_path_str]
             process = subprocess.run(command, check=True, capture_output=True, text=True, shell=False)
             logger.info(f"Executed 'explorer /select,': {process.args}. Return code: {process.returncode}")
         elif system == "Linux":
