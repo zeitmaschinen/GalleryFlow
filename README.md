@@ -21,7 +21,11 @@ You can connect to your ComfyUI output directory, customize sorting/filtering, s
 
 <br>
 
-![Gallery screenshot](frontend/docs/images/gallery.jpg)
+![Gallery screenshot](frontend/docs/images/gallery-light.jpg)
+
+<br>
+
+![Gallery screenshot](frontend/docs/images/gallery-dark.jpg)
 
 <br>
 
