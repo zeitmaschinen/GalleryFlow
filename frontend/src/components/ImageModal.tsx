@@ -20,13 +20,14 @@ import { getImageUrl } from '../services/api';
 import type { Image } from '../types/index';
 import ModalNavArrow from '../theme/ModalNavArrow';
 import ModalSlideTransition from './ModalSlideTransition';
+import { modalActionButtonSx } from '../theme/modalStyles';
 
 interface ImageModalProps {
   open: boolean;
   selectedImage: Image | null;
   selectedImageData: Record<string, unknown> | null;
   imageDimensions: { width: number; height: number } | null;
-  modalImageRef: React.RefObject<HTMLImageElement | null>;
+  modalImageRef: React.RefObject<HTMLImageElement>;
   isRevealing: boolean;
   onClose: () => void;
   onModalImageLoad: () => void;
@@ -381,6 +382,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
                   const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
                   return {
                     mt: 2,
+                    mb: 3,
                     p: 1.5,
                     borderRadius: borders.radius.md,
                     backgroundColor: colors.warningBox[mode].background,
@@ -393,37 +395,22 @@ const ImageModal: React.FC<ImageModalProps> = ({
               >
                 <Typography
                   variant="caption"
-                  sx={{ fontWeight: typography.fontWeights.regular, fontSize: '0.85em' }}
+                  sx={{ fontWeight: typography.fontWeights.normal, fontSize: '0.85em' }}
                 >
-                  Some fields may show <b>N/A</b> if the workflow is too complex or uses custom nodes. For a better overview, check the{' '}
-                  <Box component="span" sx={{ display: 'inline', p: 0, m: 0 }}>
-                    <Button
-                      variant="text"
-                      size="small"
-                      sx={{
-                        p: 0,
-                        minWidth: 0,
-                        fontSize: 'inherit',
-                        color: 'inherit',
-                        textDecoration: 'underline',
-                        textTransform: 'none',
-                        verticalAlign: 'baseline',
-                        ml: 0.2
-                      }}
-                      onClick={onOpenWorkflow}
-                    >
-                      workflow visualization
-                    </Button>
-                  </Box>.
+                  Some fields may show <b>N/A</b> if the workflow is too complex or uses custom nodes. For a better overview, check the workflow preview.
                 </Typography>
               </Box>
             </Box>
+            {/* End of content - this padding ensures proper spacing */}
+            <Box sx={{ pb: 3 }}>{/* Intentionally empty, provides bottom padding */}</Box>
           </Box>
         </DialogContent>
         <DialogActions
           sx={{
             p: spacing.sm,
             bgcolor: colors.common.hoverLight,
+            display: 'flex',
+            justifyContent: 'space-between'
           }}
         >
           <Button
@@ -432,12 +419,17 @@ const ImageModal: React.FC<ImageModalProps> = ({
             disabled={isRevealing || !selectedImage}
             variant="outlined"
             size="small"
-            sx={{
-              borderRadius: borders.radius.sm,
-              textTransform: 'none',
-            }}
+            sx={modalActionButtonSx}
           >
             Reveal in Finder/Explorer
+          </Button>
+          <Button
+            onClick={onOpenWorkflow}
+            variant="outlined"
+            size="small"
+            sx={modalActionButtonSx}
+          >
+            See workflow preview
           </Button>
         </DialogActions>
       </Dialog>
