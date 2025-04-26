@@ -32,6 +32,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [workflowModalImage, setWorkflowModalImage] = React.useState<Image | null>(null);
+  const [columnsCount, setColumnsCount] = useState(Math.floor(window.innerWidth / thumbnailSize));
 
   // Preload images
   useEffect(() => {
@@ -49,6 +50,27 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
       }
     });
   }, [images, loadedImages]);
+
+  // Update column count when window is resized or thumbnail size changes
+  useEffect(() => {
+    const calculateColumns = () => {
+      // Calculate available width (excluding padding)
+      const containerWidth = window.innerWidth - 16 * 2;
+      // Calculate columns with gap consideration
+      const columnWidth = thumbnailSize + 8; // thumbnail size + gap
+      const columns = Math.floor(containerWidth / columnWidth);
+      setColumnsCount(Math.max(1, columns));
+    };
+    
+    calculateColumns();
+    
+    const handleResize = () => {
+      calculateColumns();
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [thumbnailSize]);
 
   // Função auxiliar para buscar campo ignorando case
   function getFieldInsensitive(obj: Record<string, unknown> | null, key: string) {
@@ -173,8 +195,9 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   };
 
   // --- SQUARE GRID LAYOUT LOGIC ---
-  // Let the grid fill the width naturally, no centering or special spacing logic
-  const gridTemplateColumns = `repeat(auto-fit, minmax(${thumbnailSize}px, 1fr))`;
+  // Calculate columns based on container width and thumbnail size
+  // This approach allows us to eliminate the right-side gap by adjusting the column width
+  const gridTemplateColumns = `repeat(${columnsCount}, 1fr)`;
 
   return (
     <>
@@ -189,12 +212,17 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
           <CircularProgress />
         </Box>
       )}
-      <Box sx={{ width: '100%', p: 1 }}>
+      <Box sx={{ 
+        width: '100%', 
+        p: 1,
+        overflowX: 'hidden' // Prevent horizontal scrollbar
+      }}>
         <Box
           sx={{
             display: 'grid',
             gridTemplateColumns,
-            gap: '8px', // simple, small gap
+            gap: '8px',
+            width: '100%',
           }}
         >
           {images.map((image) => (
@@ -203,16 +231,15 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
               sx={{
                 position: 'relative',
                 aspectRatio: '1 / 1',
-                width: '100%', // let the grid cell control width
-                height: 'auto',
+                width: '100%',
+                height: '0',
+                paddingBottom: '100%', // This creates a square box
                 borderRadius: 3,
                 overflow: 'hidden',
                 boxShadow: 1,
                 bgcolor: 'background.paper',
                 cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                display: 'block', // Changed to block for padding-bottom to work
                 transition: 'box-shadow 0.2s, transform 0.18s cubic-bezier(0.4,0,0.2,1)',
                 '&:hover': {
                   boxShadow: 4,
@@ -225,57 +252,59 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
               }}
               onClick={() => handleImageClick(image)}
             >
-              <img
-                src={getImageUrl(image.full_path)}
-                alt={image.filename}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  objectPosition: 'center',
-                  opacity: loadedImages.has(getImageUrl(image.full_path)) ? 1 : 0,
-                  transition: 'opacity 0.3s ease-in-out',
-                  borderRadius: 'inherit',
-                  display: 'block',
-                }}
-                onLoad={() => setLoadedImages(prev => new Set(prev).add(getImageUrl(image.full_path)))}
-              />
-              {!loadedImages.has(getImageUrl(image.full_path)) && (
+              <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img
+                  src={getImageUrl(image.full_path)}
+                  alt={image.filename}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    opacity: loadedImages.has(getImageUrl(image.full_path)) ? 1 : 0,
+                    transition: 'opacity 0.3s ease-in-out',
+                    borderRadius: 'inherit',
+                    display: 'block',
+                  }}
+                  onLoad={() => setLoadedImages(prev => new Set(prev).add(getImageUrl(image.full_path)))}
+                />
+                {!loadedImages.has(getImageUrl(image.full_path)) && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  >
+                    <CircularProgress size={24} />
+                  </Box>
+                )}
                 <Box
+                  className="image-action-icons"
                   sx={{
                     position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
+                    top: 8,
+                    right: 8,
+                    display: 'flex',
+                    gap: 1,
+                    zIndex: 2,
+                    opacity: 0,
+                    pointerEvents: 'none',
+                    transition: 'opacity 0.2s',
                   }}
                 >
-                  <CircularProgress size={24} />
+                  <Tooltip title="Workflow preview" arrow>
+                    <IconButton size="medium" sx={{ bgcolor: '#23272E', color: '#fff', '&:hover': { bgcolor: '#444' }, p: 1 }} onClick={e => { e.stopPropagation(); handleOpenWorkflowModal(image); }}>
+                      <WorkflowIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Metadata preview" arrow>
+                    <IconButton size="medium" sx={{ bgcolor: '#23272E', color: '#fff', '&:hover': { bgcolor: '#444' }, p: 1 }} onClick={e => { e.stopPropagation(); handleImageClick(image); }}>
+                      <InfoIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </Tooltip>
                 </Box>
-              )}
-              <Box
-                className="image-action-icons"
-                sx={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  display: 'flex',
-                  gap: 1,
-                  zIndex: 2,
-                  opacity: 0,
-                  pointerEvents: 'none',
-                  transition: 'opacity 0.2s',
-                }}
-              >
-                <Tooltip title="Workflow preview" arrow>
-                  <IconButton size="medium" sx={{ bgcolor: '#23272E', color: '#fff', '&:hover': { bgcolor: '#444' }, p: 1 }} onClick={e => { e.stopPropagation(); handleOpenWorkflowModal(image); }}>
-                    <WorkflowIcon sx={{ fontSize: 20 }} />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Metadata preview" arrow>
-                  <IconButton size="medium" sx={{ bgcolor: '#23272E', color: '#fff', '&:hover': { bgcolor: '#444' }, p: 1 }} onClick={e => { e.stopPropagation(); handleImageClick(image); }}>
-                    <InfoIcon sx={{ fontSize: 20 }} />
-                  </IconButton>
-                </Tooltip>
               </Box>
             </Box>
           ))}

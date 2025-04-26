@@ -13,35 +13,23 @@ interface ThumbnailSizeSliderProps {
  * A slider component for adjusting thumbnail size in a grid view
  */
 export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value, onChange }) => {
-  // Only allow sizes that visually change the image size in the grid
-  const [isMobile, setIsMobile] = useState(false);
-  const [allowedSizes, setAllowedSizes] = useState([100, 120, 150, 180, 250, 300, 400, 800]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const isMobile = window.matchMedia('(max-width:600px)').matches;
-      const newAllowedSizes = isMobile
-        ? [100, 120, 180]
-        : [100, 120, 150, 180, 250, 300, 400, 800];
-      setIsMobile(isMobile);
-      setAllowedSizes(newAllowedSizes);
-      // If the current value is not in the new allowedSizes, reset to the closest valid value
-      if (!newAllowedSizes.includes(value)) {
-        onChange(new Event('resize'), newAllowedSizes[0]);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, [value, onChange]);
-
-  const stopCount = allowedSizes.length;
-
-  // Map slider index (0..stopCount-1) to actual size
-  const sliderValue = allowedSizes.indexOf(value) !== -1 ? allowedSizes.indexOf(value) : 0;
-  const handleSliderChange = (event: Event, newIndex: number | number[]) => {
-    if (typeof newIndex === 'number') {
-      onChange(event, allowedSizes[newIndex]);
+  // Define thumbnail sizes that effectively change the grid layout
+  // These sizes ensure actual visible changes in the grid
+  const thumbnailSizes = [100, 120, 150, 180, 220, 260, 300, 340, 380, 420, 500, 600, 800];
+  
+  // Find the closest valid size for the current value
+  const getClosestSize = (val: number) => {
+    return thumbnailSizes.reduce((prev, curr) => 
+      Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev
+    );
+  };
+  
+  // Map the continuous slider value to the closest meaningful size
+  const handleSliderChange = (event: Event, newValue: number | number[]) => {
+    if (typeof newValue === 'number') {
+      // Find the closest size that will actually make a difference in the layout
+      const closestSize = getClosestSize(newValue);
+      onChange(event, closestSize);
     }
   };
 
@@ -59,27 +47,33 @@ export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value,
       boxShadow: 'none',
     }}>
       <GridViewIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-      <Tooltip title={`${allowedSizes[sliderValue]}px (width)`} arrow placement="top">
+      <Tooltip title={`${value}px (width)`} arrow placement="top">
         <Slider
-          value={sliderValue}
+          value={value}
           onChange={handleSliderChange}
-          min={0}
-          max={stopCount - 1}
+          min={100}
+          max={800}
           step={1}
-          marks={Array.from({length: stopCount}, (_, i) => ({ value: i, label: '' }))}
           aria-label="Thumbnail size"
           valueLabelDisplay="off"
           size="medium"
+          marks={thumbnailSizes.map(size => ({ value: size, label: '' }))}
           sx={{
             '& .MuiSlider-thumb': {
               width: 20,
               height: 20,
               '&:hover, &.Mui-focusVisible': {
-                boxShadow: `0 0 0 10px ${alpha(colors.primary[isMobile ? 'light' : 'dark'].main, 0.18)}`,
+                boxShadow: (theme) => `0 0 0 10px ${alpha(theme.palette.primary.main, 0.18)}`,
               },
             },
             '& .MuiSlider-rail': {
               opacity: 0.4,
+            },
+            '& .MuiSlider-mark': {
+              backgroundColor: 'primary.main',
+              height: 8,
+              width: 2,
+              opacity: 0.3,
             },
           }}
         />
