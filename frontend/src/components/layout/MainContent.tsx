@@ -152,7 +152,7 @@ const MainContent: React.FC<MainContentProps> = ({
               <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>Welcome to GalleryFlow</span>
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Select a folder from the sidebar to view your images.
+              Add or select a folder from the sidebar to view your images.
             </Typography>
           </Stack>
         </Box>
