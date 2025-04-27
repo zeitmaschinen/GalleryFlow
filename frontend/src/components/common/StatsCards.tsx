@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Card, Typography } from '@mui/material';
-import { typography, spacing } from '../theme/themeConstants';
+import { typography, spacing } from '../../theme/themeConstants';
 
 interface StatsCardsProps {
   totalImages: number;

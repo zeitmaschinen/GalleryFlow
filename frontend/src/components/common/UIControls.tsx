@@ -10,7 +10,7 @@ import {
   progressBarFillSx,
   loadingSpinnerOverlaySx,
   loadingSpinnerContainerSx
-} from '../theme/controlStyles';
+} from '../../theme/controlStyles';
 
 // ===== ThumbnailSizeSlider Component =====
 interface ThumbnailSizeSliderProps {

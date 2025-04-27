@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactFlow, { Background, Controls, Node, Edge, applyNodeChanges } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { parseComfyWorkflow } from '../utils/parseComfyWorkflow';
+import { parseComfyWorkflow } from '../../utils/parseComfyWorkflow';
 import ComfyNode from './ComfyNode';
 import { useTheme } from '@mui/material/styles';
 import { Box } from '@mui/material';

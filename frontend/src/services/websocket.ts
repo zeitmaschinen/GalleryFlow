@@ -2,6 +2,12 @@ import { config } from '../config';
 import { logger } from './logger';
 import type { ScanProgress } from '../types/index';
 
+interface WebSocketError {
+  lineno?: number;
+  colno?: number;
+  eventType: string;
+}
+
 type MessageHandler = (data: unknown) => void;
 type ErrorHandler = (error: Event) => void;
 
@@ -28,27 +34,28 @@ export class WebSocketService {
     if (!this.ws) return;
 
     this.ws.onopen = () => {
-      logger.info('WebSocket connected');
+      logger.info('WebSocket connected', undefined, true);
       this.reconnectAttempts = 0;
     };
 
     this.ws.onclose = () => {
-      logger.warn('WebSocket connection closed');
+      logger.warn('WebSocket connection closed', undefined, true);
       this.handleReconnect();
     };
 
     this.ws.onerror = (event) => {
       // Provide a more useful error log
+      const errorContext: WebSocketError = {
+        eventType: event instanceof ErrorEvent ? event.type : 'unknown'
+      };
+      
       if (event instanceof ErrorEvent) {
-        logger.error('WebSocket error', {
-          message: event.message,
-          filename: event.filename,
-          lineno: event.lineno,
-          colno: event.colno,
-          type: event.type
-        });
+        if (event.lineno) errorContext.lineno = event.lineno;
+        if (event.colno) errorContext.colno = event.colno;
+        
+        logger.error('WebSocket error', new Error(event.message), errorContext);
       } else {
-        logger.error('WebSocket error', { type: event.type, event });
+        logger.error('WebSocket error', new Error('Unknown WebSocket error'), errorContext);
       }
       this.errorHandlers.forEach(handler => handler(event));
     };

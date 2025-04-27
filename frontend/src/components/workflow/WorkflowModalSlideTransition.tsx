@@ -1,6 +1,6 @@
 import React from 'react';
 import { Slide, SlideProps } from '@mui/material';
-import './ModalSlideTransition.css';
+import '../common/ModalSlideTransition.css';
 
 // Slide from bottom to center
 const WorkflowModalSlideTransition = React.forwardRef(function WorkflowModalSlideTransition(

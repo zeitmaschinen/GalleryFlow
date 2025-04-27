@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, Menu, MenuItem, Checkbox, ListItemText, ClickAwayListener } from '@mui/material';
-import { dropdownStyles } from '../theme/dropdownStyles';
+import { Box, Button, Menu, MenuItem, Checkbox, ListItemText } from '@mui/material';
+import { dropdownStyles } from '../../theme/dropdownStyles';
 
 // ===== SortButton Component =====
 interface SortButtonProps {
@@ -57,46 +57,57 @@ export const SortButton: React.FC<SortButtonProps> = ({ value, onChange }) => {
             transition: 'none !important',
           },
         }}
+        aria-controls={open ? 'sort-menu' : undefined}
+        aria-haspopup="true"
+        aria-expanded={open}
+        id="sort-button"
       >
         {`Sort: ${value === 'filename' ? 'Filename' : value === 'date' ? 'Date Modified' : value === 'folder' ? 'Subfolder' : value}`}
       </Button>
       <Menu
+        id="sort-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
         elevation={1}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        sx={dropdownStyles.menu}
-        hideBackdrop
-        BackdropProps={{ style: { backgroundColor: 'transparent' } }}
+        sx={{
+          ...dropdownStyles.menu,
+          '& .MuiBackdrop-root': {
+            backgroundColor: 'transparent'
+          }
+        }}
+        disableAutoFocusItem
+        MenuListProps={{
+          autoFocusItem: false,
+          'aria-labelledby': 'sort-button'
+        }}
+        BackdropProps={{ invisible: true }}
       >
-        {/* ClickAwayListener para fechar ao clicar fora */}
-        <ClickAwayListener onClickAway={handleClose}>
-          <Box>
-            <MenuItem 
-              onClick={() => handleMenuItemClick('filename')} 
-              selected={value === 'filename'} 
-              sx={dropdownStyles.menuItem(value === 'filename')}
-            >
-              Filename
-            </MenuItem>
-            <MenuItem 
-              onClick={() => handleMenuItemClick('date')} 
-              selected={value === 'date'} 
-              sx={dropdownStyles.menuItem(value === 'date')}
-            >
-              Date Modified
-            </MenuItem>
-            <MenuItem 
-              onClick={() => handleMenuItemClick('folder')} 
-              selected={value === 'folder'} 
-              sx={dropdownStyles.menuItem(value === 'folder')}
-            >
-              Subfolder
-            </MenuItem>
-          </Box>
-        </ClickAwayListener>
+        <Box>
+          <MenuItem 
+            onClick={() => handleMenuItemClick('filename')} 
+            selected={value === 'filename'} 
+            sx={dropdownStyles.menuItem(value === 'filename')}
+          >
+            Filename
+          </MenuItem>
+          <MenuItem 
+            onClick={() => handleMenuItemClick('date')} 
+            selected={value === 'date'} 
+            sx={dropdownStyles.menuItem(value === 'date')}
+          >
+            Date Modified
+          </MenuItem>
+          <MenuItem 
+            onClick={() => handleMenuItemClick('folder')} 
+            selected={value === 'folder'} 
+            sx={dropdownStyles.menuItem(value === 'folder')}
+          >
+            Subfolder
+          </MenuItem>
+        </Box>
       </Menu>
     </Box>
   );
@@ -165,41 +176,52 @@ export const FileTypeFilter: React.FC<FileTypeFilterProps> = ({ selectedTypes, o
             transition: 'none !important',
           },
         }}
+        aria-controls={Boolean(anchorEl) ? 'filter-menu' : undefined}
+        aria-haspopup="true"
+        aria-expanded={Boolean(anchorEl)}
+        id="filter-button"
       >
         {label}
       </Button>
       <Menu
+        id="filter-menu"
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
         elevation={1}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        MenuListProps={{ sx: { minWidth: 140 } }}
-        sx={dropdownStyles.menu}
-        hideBackdrop
-        BackdropProps={{ style: { backgroundColor: 'transparent' } }}
+        MenuListProps={{ 
+          sx: { minWidth: 140 },
+          autoFocusItem: false,
+          'aria-labelledby': 'filter-button'
+        }}
+        sx={{
+          ...dropdownStyles.menu,
+          '& .MuiBackdrop-root': {
+            backgroundColor: 'transparent'
+          }
+        }}
+        disableAutoFocusItem
+        BackdropProps={{ invisible: true }}
       >
-        {/* ClickAwayListener para fechar ao clicar fora */}
-        <ClickAwayListener onClickAway={handleClose}>
-          <Box>
-            {fileTypes.map(type => (
-              <MenuItem
-                key={type}
-                selected={selectedTypes.includes(type)}
-                onClick={() => handleSelect(type)}
-                sx={dropdownStyles.menuItem(selectedTypes.includes(type))}
-              >
-                <Checkbox
-                  checked={selectedTypes.includes(type)}
-                  size="small"
-                  sx={{ p: 0.5, mr: 1 }}
-                />
-                <ListItemText primary={type} />
-              </MenuItem>
-            ))}
-          </Box>
-        </ClickAwayListener>
+        <Box>
+          {fileTypes.map(type => (
+            <MenuItem
+              key={type}
+              selected={selectedTypes.includes(type)}
+              onClick={() => handleSelect(type)}
+              sx={dropdownStyles.menuItem(selectedTypes.includes(type))}
+            >
+              <Checkbox
+                checked={selectedTypes.includes(type)}
+                size="small"
+                sx={{ p: 0.5, mr: 1 }}
+              />
+              <ListItemText primary={type} />
+            </MenuItem>
+          ))}
+        </Box>
       </Menu>
     </Box>
   );

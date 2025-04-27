@@ -11,7 +11,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CloseIcon from '@mui/icons-material/Close';
-import { borders, typography } from '../theme/themeConstants';
+import { borders, typography } from '../../theme/themeConstants';
 
 interface AddFolderFormProps {
   onAddFolder: (path: string) => Promise<void>;

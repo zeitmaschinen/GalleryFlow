@@ -95,6 +95,28 @@ export const colors = {
       text: '#EEE6BA',
     }
   },
+  sliderBox: {
+    light: {
+      background: '#F4F5FA',  // Light grey background for light mode
+    },
+    dark: {
+      background: '#312D4B',  // Dark purple background for dark mode
+    }
+  },
+  folderItem: {
+    light: {
+      hoverBg: (alpha: (color: string, opacity: number) => string) => alpha('#9C8EFA', 0.08),
+      selectedBg: (alpha: (color: string, opacity: number) => string) => alpha('#9C8EFA', 0.12),
+      selectedHoverBg: (alpha: (color: string, opacity: number) => string) => alpha('#9C8EFA', 0.16),
+      borderRadius: '8px',
+    },
+    dark: {
+      hoverBg: (alpha: (color: string, opacity: number) => string) => alpha('#9C8EFA', 0.04),
+      selectedBg: (alpha: (color: string, opacity: number) => string) => alpha('#9C8EFA', 0.12),
+      selectedHoverBg: (alpha: (color: string, opacity: number) => string) => alpha('#9C8EFA', 0.16),
+      borderRadius: '8px',
+    }
+  },
 };
 
 /**

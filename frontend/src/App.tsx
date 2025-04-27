@@ -2,41 +2,28 @@ import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   Box,
   CssBaseline,
-  IconButton,
-  Typography,
-  CircularProgress,
-  Alert,
-  Divider,
-  Paper,
-  Stack,
   ThemeProvider,
-  Drawer,
-  useTheme,
-  useMediaQuery,
-  Card
+  useMediaQuery
 } from '@mui/material';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
-import { BurgerMenu, DrawerHeaderMobile, SidebarHeader } from './components/Navigation';
-import { SidebarFooter } from './components';
-import AddFolderForm from './components/AddFolderForm';
-import FolderList from './components/FolderList';
-import ImageGrid from './components/ImageGrid';
-import { typography, spacing } from './theme/themeConstants';
+import { BurgerMenu } from './components/layout/Navigation';
 import { useFolders } from './hooks/useFolders';
 import { useImages } from './hooks/useImages';
-import FolderHeader from './components/FolderHeader';
-import StatsCards from './components/StatsCards';
-import ControlsCard from './components/ControlsCard';
-import PaginationControls from './components/PaginationControls';
 import { IMAGES_PER_PAGE } from './constants';
 import { SortField } from './types';
-import { subscribeScanProgress } from './services/websocket';
 import { getTheme } from './theme';
+import { SidebarContainer, MobileSidebar } from './components/layout';
+import { MainContent } from './components/layout';
+import { useWebSocketEvents } from './hooks/useWebSocketEvents';
+import { useLayoutCalculator } from './hooks/useLayoutCalculator';
 
 function App() {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
   const [isInitializing, setIsInitializing] = useState(true);
+  const theme = useMemo(() => getTheme(mode), [mode]);
+  const muiTheme = theme;
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Folder state and handlers
   const {
@@ -69,19 +56,11 @@ function App() {
     fetchImages,
   } = useImages(IMAGES_PER_PAGE);
 
-  const theme = useMemo(() => getTheme(mode), [mode]);
-  const muiTheme = useTheme();
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const prevFolderIdRef = useRef<number | null | undefined>(undefined); // Add ref to track previous folder ID
-
   const handleDrawerOpen = () => setSidebarOpen(true);
   const handleDrawerClose = () => setSidebarOpen(false);
-
   const toggleColorMode = () => setMode(prev => prev === 'light' ? 'dark' : 'light');
 
-  // Restore correct initialization effect
+  // Initialize app
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -93,6 +72,7 @@ function App() {
     initializeApp();
   }, [fetchFolders]);
 
+  // Handle sort direction toggle
   const handleSortDirectionToggle = () => {
     const newSortDir = sortDirection === 'asc' ? 'desc' : 'asc';
     setSortDirection(newSortDir);
@@ -102,12 +82,14 @@ function App() {
     }
   };
 
+  // Handle thumbnail size change
   const handleThumbnailSizeChange = (_event: Event, newValue: number | number[]) => {
     if (typeof newValue === 'number') {
       setThumbnailSize(newValue);
     }
   };
 
+  // Handle page change
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     if (selectedFolder) {
       setCurrentPage(value);
@@ -115,6 +97,7 @@ function App() {
     }
   };
 
+  // Handle go to first page
   const handleGoToFirstPage = () => {
     if (selectedFolder) {
       setCurrentPage(1);
@@ -122,6 +105,7 @@ function App() {
     }
   };
 
+  // Handle go to last page
   const handleGoToLastPage = () => {
     if (selectedFolder) {
       const lastPage = Math.ceil(totalImages / IMAGES_PER_PAGE);
@@ -130,6 +114,7 @@ function App() {
     }
   };
 
+  // Handle file type change
   const handleFileTypeChange = (types: string[]) => {
     setSelectedFileTypes(types);
     if (selectedFolder) {
@@ -138,150 +123,81 @@ function App() {
     }
   };
 
-  // Always fetch images when state changes
+  // Handle sort by change
+  const handleSortByChange = (field: SortField) => {
+    setSortBy(field);
+    setCurrentPage(1);
+    if (selectedFolder) {
+      fetchImages(selectedFolder.id, 1, field, sortDirection, selectedFileTypes);
+    }
+  };
+
+  // Reload image grid
+  const reloadImageGrid = useCallback((userInitiated = false) => {
+    if (selectedFolder) {
+      if (userInitiated) {
+        webSocketEvents.markUserInitiatedReload(selectedFolder.id);
+      }
+      setReloadKey(k => k + 1);
+    }
+  }, [selectedFolder]);
+
+  // Handle refresh folder and images
+  const handleRefreshFolderAndImages = useCallback(
+    async (folderId: number) => {
+      await handleRefreshFolder(folderId);
+      if (selectedFolder && selectedFolder.id === folderId) {
+        reloadImageGrid(true);
+      } else {
+        fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
+        setCurrentPage(1);
+      }
+    },
+    [handleRefreshFolder, setCurrentPage, fetchImages, sortBy, sortDirection, selectedFileTypes, reloadImageGrid, selectedFolder]
+  );
+
+  // WebSocket events
+  const webSocketEvents = useWebSocketEvents({
+    selectedFolder,
+    isLoadingFolders,
+    folders,
+    onRefreshFolderAndImages: handleRefreshFolderAndImages
+  });
+
+  // Layout calculator
+  const { columnsCount } = useLayoutCalculator({ thumbnailSize });
+
+  // Ref for tracking previous folder ID
+  const prevFolderIdRef = useRef<number | null | undefined>(undefined);
+
+  // Fetch images when state changes
   useEffect(() => {
     const currentFolderId = selectedFolder?.id;
     let pageToFetch = currentPage;
 
     // Check if the selected folder has actually changed
     if (currentFolderId !== undefined && currentFolderId !== prevFolderIdRef.current) {
-      console.log(`Folder changed from ${prevFolderIdRef.current} to ${currentFolderId}. Resetting page to 1.`);
+      setCurrentPage(1);
       pageToFetch = 1;
-      // Important: Update state synchronoously if possible or ensure fetch uses page 1
-      // If setCurrentPage is async, this might still fetch with old page briefly.
-      // Consider passing pageToFetch directly to fetchImages if setCurrentPage doesn't update immediately for the fetch.
-      setCurrentPage(1); 
     }
 
     if (selectedFolder) {
-      console.log(`Fetching images for folder ${selectedFolder.id}, page ${pageToFetch}`);
-      // Use pageToFetch which is either the current page or 1 if folder changed
       fetchImages(selectedFolder.id, pageToFetch, sortBy, sortDirection, selectedFileTypes)
         .then(() => {
           // This check remains useful if images get deleted, making the current page invalid
           const totalPages = Math.max(1, Math.ceil(totalImages / IMAGES_PER_PAGE));
           if (currentPage > totalPages) {
-             console.log(`Current page ${currentPage} is out of bounds (${totalPages}). Setting to ${totalPages}.`);
-             setCurrentPage(totalPages);
+            setCurrentPage(totalPages);
           }
         })
         .catch(error => {
-           console.error("Error fetching images after state change:", error);
-           // Handle fetch error appropriately, maybe show a message
+          console.error("Error fetching images after state change:", error);
         });
     }
 
-    // Update the ref *after* the logic runs
+    // Update the ref after the logic runs
     prevFolderIdRef.current = currentFolderId;
-
-  // Ensure all dependencies used in the effect are listed correctly.
-  // Added totalImages and setCurrentPage based on their usage.
   }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey, fetchImages, totalImages, setCurrentPage]);
-
-  // --- Track last user-initiated reload per folder to suppress redundant WebSocket reloads ---
-  const lastUserReloadRef = useRef<{ [folderId: number]: number }>({});
-  const lastScanIdRef = useRef<{ [folderId: number]: string }>({});
-
-  // --- Patch: Debounced but Always Latest Reload ---
-  const suppressionWindowMs = 5000; // 5 seconds (or change as desired)
-  const suppressionTimeoutRef = useRef<number | null>(null);
-  const pendingReloadRef = useRef<{ [folderId: number]: boolean }>({});
-
-  const reloadImageGrid = (userInitiated = false) => {
-    console.log('[reloadImageGrid] called, selectedFolder:', selectedFolder, 'userInitiated:', userInitiated);
-    if (selectedFolder) {
-      if (userInitiated) {
-        lastUserReloadRef.current[selectedFolder.id] = Date.now();
-        // Start suppression window
-        if (suppressionTimeoutRef.current) clearTimeout(suppressionTimeoutRef.current as unknown as number);
-        pendingReloadRef.current[selectedFolder.id] = false;
-        suppressionTimeoutRef.current = setTimeout(() => {
-          if (pendingReloadRef.current[selectedFolder.id]) {
-            console.log('[Suppression] Running pending reload after debounce window');
-            setReloadKey(k => k + 1);
-            pendingReloadRef.current[selectedFolder.id] = false;
-          }
-        }, suppressionWindowMs);
-      }
-      setReloadKey(k => k + 1); // Always reload, but do NOT reset currentPage
-    }
-  };
-
-  // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
-  const handleRefreshFolderAndImages = useCallback(
-    async (folderId: number) => {
-      console.log('[handleRefreshFolderAndImages] called with folderId:', folderId, 'selectedFolder:', selectedFolder);
-      await handleRefreshFolder(folderId);
-      if (selectedFolder && selectedFolder.id === folderId) {
-        console.log('[handleRefreshFolderAndImages] calling reloadImageGrid');
-        reloadImageGrid(true);
-      } else {
-        // Fallback: force fetch if state is out of sync
-        console.log('[handleRefreshFolderAndImages] Fallback: force fetchImages for folderId', folderId);
-        fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
-        setCurrentPage(1);
-      }
-    },
-    [handleRefreshFolder, setCurrentPage, fetchImages, sortBy, sortDirection, selectedFileTypes, reloadImageGrid]
-  );
-
-  // Track latest pagination/sort/filter state for WebSocket handler
-  const latestStateRef = useRef({
-    currentPage,
-    sortBy,
-    sortDirection,
-    selectedFileTypes,
-    fetchImages,
-    selectedFolder,
-    setCurrentPage
-  });
-  useEffect(() => {
-    latestStateRef.current = {
-      currentPage,
-      sortBy,
-      sortDirection,
-      selectedFileTypes,
-      fetchImages,
-      selectedFolder,
-      setCurrentPage
-    };
-  }, [currentPage, sortBy, sortDirection, selectedFileTypes, fetchImages, selectedFolder, setCurrentPage]);
-
-  // --- Patch: WebSocket event triggers the SAME code as the sidebar refresh button ---
-  useEffect(() => {
-    if (isLoadingFolders || !selectedFolder || folders.length === 0) return;
-    // Debounce WebSocket connection until folders exist and selectedFolder is set
-    const debounceTimeout = setTimeout(() => {
-      const handleWsEvent = (data: unknown) => {
-        if (typeof data !== 'object' || data === null) return;
-        const eventData = data as { folder_id?: number; event?: string; scan_id?: string };
-        const { selectedFolder: sf } = latestStateRef.current;
-        if (sf && eventData.folder_id === sf.id && eventData.event === 'folder_change') {
-          const lastUserReload = lastUserReloadRef.current[sf.id] || 0;
-          if (Date.now() - lastUserReload < suppressionWindowMs) {
-            // Within suppression window: mark pending reload
-            console.log('[WebSocket] Suppressed reload, will run after debounce window');
-            pendingReloadRef.current[sf.id] = true;
-            return;
-          }
-          if (eventData.scan_id && lastScanIdRef.current[sf.id] !== eventData.scan_id) {
-            handleRefreshFolderAndImages(sf.id);
-            lastScanIdRef.current[sf.id] = eventData.scan_id;
-          } else {
-            // TODO: Implement logic or remove block
-          }
-        }
-      };
-      const unsubscribe = subscribeScanProgress(selectedFolder.id, handleWsEvent);
-      // Cleanup
-      return () => {
-        unsubscribe();
-      };
-    }, 400); // 400ms debounce
-    return () => {
-      clearTimeout(debounceTimeout as unknown as number);
-    };
-  }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -310,209 +226,52 @@ function App() {
               {!sidebarOpen && (
                 <BurgerMenu onClick={handleDrawerOpen} sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1301 }} />
               )}
-              <Drawer
-                anchor="left"
+              <MobileSidebar
                 open={sidebarOpen}
                 onClose={handleDrawerClose}
-                ModalProps={{ keepMounted: true }}
-                sx={{
-                  '& .MuiDrawer-paper': {
-                    width: 280,
-                    boxSizing: 'border-box',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-start',
-                  }
-                }}
-              >
-                <DrawerHeaderMobile onClose={handleDrawerClose} />
-                <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                  {/* Add Folder Section */}
-                  <Box sx={{ p: spacing.md }}>
-                    <AddFolderForm onAddFolder={handleAddFolder} />
-                  </Box>
-                  <Divider />
-                  {/* Folder List */}
-                  <Box sx={{ 
-                    p: spacing.md, 
-                    flexGrow: 1, 
-                    overflow: 'auto',
-                    scrollBehavior: 'smooth',
-                    overscrollBehavior: 'none'
-                  }}>
-                    <Typography 
-                      variant="subtitle2" 
-                      color="text.secondary" 
-                      sx={{ 
-                        mb: spacing.sm,
-                        pl: 0,
-                        letterSpacing: '0.1em',
-                        fontWeight: typography.fontWeights.medium 
-                      }}
-                    >
-                      MAPPED FOLDERS
-                    </Typography>
-                    {isLoadingFolders ? (
-                      <Box sx={{ display: 'flex', justifyContent: 'center', py: spacing.sm }}>
-                        <CircularProgress size={24} />
-                      </Box>
-                    ) : (
-                      <FolderList
-                        folders={folders}
-                        onDeleteFolder={handleDeleteFolder}
-                        onRefreshFolder={handleRefreshFolderAndImages}
-                        onSelectFolder={handleSelectFolder}
-                        selectedFolderId={selectedFolder?.id ?? null}
-                      />
-                    )}
-                  </Box>
-                  <Box sx={{ mt: 'auto' }}><SidebarFooter /></Box>
-                </Box>
-              </Drawer>
+                folders={folders}
+                isLoadingFolders={isLoadingFolders}
+                selectedFolderId={selectedFolder?.id ?? null}
+                onAddFolder={handleAddFolder}
+                onDeleteFolder={handleDeleteFolder}
+                onRefreshFolder={handleRefreshFolderAndImages}
+                onSelectFolder={handleSelectFolder}
+              />
             </>
           ) : (
-            <Paper
-              elevation={2}
-              sx={{
-                width: 280,
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                borderRight: 1,
-                borderColor: 'divider',
-                position: 'relative',
-                zIndex: 1201,
-                flexShrink: 0
-              }}
-            >
-              <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                {/* Logo Area */}
-                <SidebarHeader />
-                {/* Add Folder Section */}
-                <Box sx={{ p: spacing.md }}>
-                  <AddFolderForm onAddFolder={handleAddFolder} />
-                </Box>
-
-                <Divider />
-
-                {/* Folder List */}
-                <Box sx={{ 
-                  p: spacing.md, 
-                  flexGrow: 1, 
-                  overflow: 'auto',
-                  scrollBehavior: 'smooth',
-                  overscrollBehavior: 'none'
-                }}>
-                  <Typography 
-                    variant="subtitle2" 
-                    color="text.secondary" 
-                    sx={{ 
-                      mb: spacing.sm,
-                      pl: 0,
-                      letterSpacing: '0.1em',
-                      fontWeight: typography.fontWeights.medium 
-                    }}
-                  >
-                    MAPPED FOLDERS
-                  </Typography>
-                  {isLoadingFolders ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: spacing.sm }}>
-                      <CircularProgress size={24} />
-                    </Box>
-                  ) : (
-                    <FolderList
-                      folders={folders}
-                      onDeleteFolder={handleDeleteFolder}
-                      onRefreshFolder={handleRefreshFolderAndImages}
-                      onSelectFolder={handleSelectFolder}
-                      selectedFolderId={selectedFolder?.id ?? null}
-                    />
-                  )}
-                </Box>
-                <Box sx={{ mt: 'auto' }}><SidebarFooter /></Box>
-              </Box>
-            </Paper>
+            <SidebarContainer
+              folders={folders}
+              isLoadingFolders={isLoadingFolders}
+              selectedFolderId={selectedFolder?.id ?? null}
+              onAddFolder={handleAddFolder}
+              onDeleteFolder={handleDeleteFolder}
+              onRefreshFolder={handleRefreshFolderAndImages}
+              onSelectFolder={handleSelectFolder}
+            />
           )}
-          {/* Main Content */}
-          <Box sx={{ flexGrow: 1, minWidth: 0, width: 0, height: '100vh', overflow: 'auto', p: { xs: 1, md: 2 } }}>
-            {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: spacing.xl }}>
-              <IconButton onClick={toggleColorMode} sx={{ transition: 'none !important' }}>
-                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-              </IconButton>
-            </Box>
 
-            {selectedFolder ? (
-              <Stack spacing={spacing.md}>
-                {/* Folder Name Header */}
-                <FolderHeader selectedFolder={selectedFolder} />
-                {/* Stats Cards */}
-                <StatsCards
-                  totalImages={totalImages}
-                  currentPage={currentPage}
-                  totalPages={Math.ceil(totalImages / IMAGES_PER_PAGE)}
-                />
-                {/* Controls Card */}
-                <ControlsCard
-                  thumbnailSize={thumbnailSize}
-                  onThumbnailSizeChange={handleThumbnailSizeChange}
-                  selectedFileTypes={selectedFileTypes}
-                  onFileTypeChange={handleFileTypeChange}
-                  sortBy={sortBy}
-                  onSortByChange={(val: string) => {
-                    setSortBy(val as SortField);
-                    setCurrentPage(1);
-                    if (selectedFolder) {
-                      fetchImages(selectedFolder.id, 1, val as SortField, sortDirection, selectedFileTypes);
-                    }
-                  }}
-                  sortDirection={sortDirection}
-                  onSortDirectionToggle={handleSortDirectionToggle}
-                />
-                {/* Images Card */}
-                <Card>
-                  {isLoadingImages ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: spacing.xl }}>
-                      <CircularProgress />
-                    </Box>
-                  ) : errorImages ? (
-                    <Alert severity="error" sx={{ m: spacing.md }}>{errorImages}</Alert>
-                  ) : images.length === 0 ? (
-                    <Box sx={{ p: spacing.xl, textAlign: 'center' }}>
-                      <Typography color="text.secondary">No images found</Typography>
-                    </Box>
-                  ) : (
-                    <Box sx={{ p: spacing.md }}>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary" 
-                        sx={{ pb: spacing.md, px: spacing.sm }}
-                      >
-                        Viewing {images.length} images on this page
-                      </Typography>
-                      <ImageGrid images={images} thumbnailSize={thumbnailSize} />
-                    </Box>
-                  )}
-                  <PaginationControls
-                    totalImages={totalImages}
-                    imagesPerPage={IMAGES_PER_PAGE}
-                    currentPage={currentPage}
-                    onPageChange={handlePageChange}
-                    onGoToFirstPage={handleGoToFirstPage}
-                    onGoToLastPage={handleGoToLastPage}
-                    isMobile={isMobile}
-                  />
-                </Card>
-              </Stack>
-            ) : (
-              <Card sx={{ p: spacing.xl, textAlign: 'center' }}>
-                <Typography color="text.secondary">
-                  Select a folder to view images
-                </Typography>
-              </Card>
-            )}
-          </Box>
+          <MainContent
+            mode={mode}
+            toggleColorMode={toggleColorMode}
+            selectedFolder={selectedFolder}
+            images={images}
+            isLoadingImages={isLoadingImages}
+            errorImages={errorImages}
+            thumbnailSize={thumbnailSize}
+            currentPage={currentPage}
+            totalImages={totalImages}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            selectedFileTypes={selectedFileTypes}
+            columnsCount={columnsCount}
+            onSortByChange={handleSortByChange}
+            onSortDirectionToggle={handleSortDirectionToggle}
+            onFileTypeChange={handleFileTypeChange}
+            onPageChange={handlePageChange}
+            onGoToFirstPage={handleGoToFirstPage}
+            onGoToLastPage={handleGoToLastPage}
+            onThumbnailSizeChange={handleThumbnailSizeChange}
+          />
         </Box>
       )}
     </ThemeProvider>

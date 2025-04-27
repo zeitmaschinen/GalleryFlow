@@ -4,17 +4,30 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
-  IconButton,
-  Tooltip,
 } from '@mui/material';
-import type { Image } from '../services/api';
-import { revealInExplorer } from '../services/api';
-import { getImageUrl } from '../services/api';
-import { parseMetadata } from '../utils/metadataParser';
+import { getImageUrl, revealInExplorer } from '../../services/api';
+import ImageGridItem from './ImageGridItem';
 import ImageModal from './ImageModal';
-import WorkflowModal from './WorkflowModal';
-import WorkflowIcon from '@mui/icons-material/AccountTree';
-import InfoIcon from '@mui/icons-material/InfoOutlined';
+import WorkflowModal from '../workflow/WorkflowModal';
+
+// Define the Image interface directly to avoid import issues
+export interface Image {
+  id: string;
+  filename: string;
+  full_path: string;
+  created_at: string;
+  updated_at: string;
+  width: number;
+  height: number;
+  folder_id: string;
+  metadata_: Record<string, unknown>;
+  file_size: number;
+  file_type: string;
+  thumbnail_path?: string;
+  is_favorite?: boolean;
+  Workflow?: string;
+  Prompt?: string;
+}
 
 interface ImageGridProps {
   images: Image[];
@@ -80,12 +93,17 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   }
 
   const handleImageClick = (image: Image) => { 
+    // Ensure metadata_ is never null to prevent issues with the modal
+    const safeMetadata = image.metadata_ || {};
+    
     setSelectedImage({
       ...image,
+      metadata_: safeMetadata, // Ensure metadata is never null
       // O workflow é o próprio objeto metadata_
-      Workflow: JSON.stringify(image.metadata_),
-      Prompt: getFieldInsensitive(image.metadata_, 'Prompt')
+      Workflow: Object.keys(safeMetadata).length > 0 ? JSON.stringify(safeMetadata) : "{}",
+      Prompt: getFieldInsensitive(safeMetadata, 'Prompt')
     } as Image & { Workflow?: string; Prompt?: string });
+    
     setImageDimensions(null); 
     setIsModalOpen(true); 
   };
@@ -128,7 +146,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     }
   };
   
-  const selectedImageData = selectedImage ? parseMetadata(selectedImage.metadata_) : null;
+  const selectedImageData = selectedImage ? selectedImage.metadata_ : null;
 
   const handleModalImageLoad = () => { 
     if (modalImageRef.current) { 
@@ -189,12 +207,11 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     setWorkflowModalImage(image);
     setWorkflowModalOpen(true);
   };
+  
   const handleCloseWorkflowModal = () => {
     setWorkflowModalOpen(false);
-    setWorkflowModalImage(null);
   };
 
-  // --- SQUARE GRID LAYOUT LOGIC ---
   // Calculate columns based on container width and thumbnail size
   // This approach allows us to eliminate the right-side gap by adjusting the column width
   const gridTemplateColumns = `repeat(${columnsCount}, 1fr)`;
@@ -226,87 +243,14 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
           }}
         >
           {images.map((image) => (
-            <Box
+            <ImageGridItem
               key={image.id}
-              sx={{
-                position: 'relative',
-                aspectRatio: '1 / 1',
-                width: '100%',
-                height: '0',
-                paddingBottom: '100%', // This creates a square box
-                borderRadius: 2,
-                overflow: 'hidden',
-                boxShadow: 1,
-                bgcolor: 'background.paper',
-                cursor: 'pointer',
-                display: 'block', // Changed to block for padding-bottom to work
-                transition: 'box-shadow 0.2s, transform 0.18s cubic-bezier(0.4,0,0.2,1)',
-                '&:hover': {
-                  boxShadow: 4,
-                  transform: 'translateY(-6px)',
-                },
-                '&:hover .image-action-icons': {
-                  opacity: 1,
-                  pointerEvents: 'auto',
-                },
-              }}
-              onClick={() => handleImageClick(image)}
-            >
-              <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img
-                  src={getImageUrl(image.full_path)}
-                  alt={image.filename}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'center',
-                    opacity: loadedImages.has(getImageUrl(image.full_path)) ? 1 : 0,
-                    transition: 'opacity 0.3s ease-in-out',
-                    borderRadius: 'inherit',
-                    display: 'block',
-                  }}
-                  onLoad={() => setLoadedImages(prev => new Set(prev).add(getImageUrl(image.full_path)))}
-                />
-                {!loadedImages.has(getImageUrl(image.full_path)) && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  >
-                    <CircularProgress size={24} />
-                  </Box>
-                )}
-                <Box
-                  className="image-action-icons"
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    display: 'flex',
-                    gap: 1,
-                    zIndex: 2,
-                    opacity: 0,
-                    pointerEvents: 'none',
-                    transition: 'opacity 0.2s',
-                  }}
-                >
-                  <Tooltip title="Workflow preview" arrow>
-                    <IconButton size="medium" sx={{ bgcolor: '#23272E', color: '#fff', '&:hover': { bgcolor: '#444' }, p: 1 }} onClick={e => { e.stopPropagation(); handleOpenWorkflowModal(image); }}>
-                      <WorkflowIcon sx={{ fontSize: 20 }} />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Metadata preview" arrow>
-                    <IconButton size="medium" sx={{ bgcolor: '#23272E', color: '#fff', '&:hover': { bgcolor: '#444' }, p: 1 }} onClick={e => { e.stopPropagation(); handleImageClick(image); }}>
-                      <InfoIcon sx={{ fontSize: 20 }} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Box>
-            </Box>
+              image={image}
+              thumbnailSize={thumbnailSize}
+              loadedImages={loadedImages}
+              handleImageClick={handleImageClick}
+              handleOpenWorkflowModal={handleOpenWorkflowModal}
+            />
           ))}
         </Box>
       </Box>
@@ -374,7 +318,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
       <ImageModal
         open={isModalOpen}
         selectedImage={selectedImage}
-        selectedImageData={selectedImageData as unknown as Record<string, unknown> | null}
+        selectedImageData={selectedImageData}
         imageDimensions={imageDimensions}
         modalImageRef={modalImageRef}
         isRevealing={isRevealing}
@@ -398,12 +342,17 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
       <WorkflowModal
         open={workflowModalOpen}
         onClose={handleCloseWorkflowModal}
-        workflowJson={workflowModalImage ? JSON.parse(JSON.stringify(workflowModalImage.metadata_)) : null}
+        workflowJson={workflowModalImage ? workflowModalImage.metadata_ : null}
         image={workflowModalImage}
+        images={images}
+        setSelectedImage={setWorkflowModalImage}
         onSeeMetadataPreview={() => {
           if (workflowModalImage) {
-            setSelectedImage(workflowModalImage);
-            setIsModalOpen(true);
+            setWorkflowModalOpen(false);
+            setTimeout(() => {
+              setSelectedImage(workflowModalImage);
+              setIsModalOpen(true);
+            }, 300);
           }
         }}
       />

@@ -33,7 +33,7 @@ export const useWebSocket = ({
       ws.current.onopen = () => {
         setIsConnected(true);
         attempts.current = 0;
-        logger.info('WebSocket connected');
+        logger.info('WebSocket connected', undefined, true);
         // Send a keepalive message to backend on connect
         ws.current?.send(JSON.stringify({ type: 'keepalive', timestamp: Date.now() }));
       };
@@ -44,7 +44,7 @@ export const useWebSocket = ({
           attempts.current++;
           reconnectTimer.current = setTimeout(connect, reconnectInterval);
         }
-        logger.warn(`WebSocket closed, attempt ${attempts.current}/${reconnectAttempts}`);
+        logger.warn(`WebSocket closed, attempt ${attempts.current}/${reconnectAttempts}`, undefined, true);
       };
 
       ws.current.onmessage = (event) => {

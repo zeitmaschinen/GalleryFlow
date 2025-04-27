@@ -4,7 +4,7 @@ import { ThumbnailSizeSlider } from './UIControls';
 import { FileTypeFilter, SortButton } from './FilterControls';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { spacing } from '../theme/themeConstants';
+import { spacing } from '../../theme/themeConstants';
 
 interface ControlsCardProps {
   thumbnailSize: number;

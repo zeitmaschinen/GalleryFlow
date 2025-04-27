@@ -1,5 +1,5 @@
 import { SxProps, Theme, alpha } from '@mui/material';
-import { borders } from './themeConstants';
+import { borders, colors } from './themeConstants';
 
 /**
  * Styles for the ThumbnailSizeSlider component
@@ -10,7 +10,9 @@ export const thumbnailSizeSliderContainerSx: SxProps<Theme> = {
   gap: 2,
   minWidth: 260,
   maxWidth: 400,
-  bgcolor: 'background.paper',
+  bgcolor: (theme) => theme.palette.mode === 'dark' 
+    ? colors.sliderBox.dark.background 
+    : colors.sliderBox.light.background,
   p: 1.5,
   borderRadius: borders.radius.sm,
   border: 0,

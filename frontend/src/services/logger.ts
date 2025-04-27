@@ -2,6 +2,7 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 class Logger {
   private isDevelopment = import.meta.env.MODE === 'development';
+  private shownOnceMessages = new Set<string>();
 
   private formatMessage(level: LogLevel, message: string, context?: object): string {
     const timestamp = new Date().toISOString();
@@ -15,12 +16,32 @@ class Logger {
     }
   }
 
-  info(message: string, context?: object): void {
+  info(message: string, context?: object, showOnce = false): void {
+    // If this is a message that should only be shown once and has already been shown, skip it
+    if (showOnce && this.shownOnceMessages.has(message)) {
+      return;
+    }
+    
     console.info(this.formatMessage('info', message, context));
+    
+    // If this is a message that should only be shown once, add it to the set
+    if (showOnce) {
+      this.shownOnceMessages.add(message);
+    }
   }
 
-  warn(message: string, context?: object): void {
+  warn(message: string, context?: object, showOnce = false): void {
+    // If this is a message that should only be shown once and has already been shown, skip it
+    if (showOnce && this.shownOnceMessages.has(message)) {
+      return;
+    }
+    
     console.warn(this.formatMessage('warn', message, context));
+    
+    // If this is a message that should only be shown once, add it to the set
+    if (showOnce) {
+      this.shownOnceMessages.add(message);
+    }
   }
 
   error(message: string, error?: Error, context?: object): void {

@@ -11,10 +11,10 @@ import {
   alpha,
   CircularProgress,
 } from '@mui/material';
-import FolderIcon from '@mui/icons-material/Folder';
-import { Folder } from '../services/api';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import { Folder } from './types';
 import { styled } from '@mui/system';
-import { colors } from '../theme/themeConstants';
+import { colors } from '../../theme/themeConstants';
 import { useTheme } from '@mui/material';
 import type { Transitions } from '@mui/material/styles';
 
@@ -27,15 +27,18 @@ const FolderItem = styled(ListItem)(({ theme }) => {
     padding: 0,
     '&:hover': {
       '&::before': {
-        backgroundColor: alpha(colors.primary[mode].main, 0.04),
+        backgroundColor: colors.folderItem[mode].hoverBg(alpha),
+        borderRadius: colors.folderItem[mode].borderRadius,
       }
     },
     '&.selected': {
       '&::before': {
-        backgroundColor: alpha(colors.primary[mode].main, 0.12),
+        backgroundColor: colors.folderItem[mode].selectedBg(alpha),
+        borderRadius: colors.folderItem[mode].borderRadius,
       },
       '&:hover::before': {
-        backgroundColor: alpha(colors.primary[mode].main, 0.16),
+        backgroundColor: colors.folderItem[mode].selectedHoverBg(alpha),
+        borderRadius: colors.folderItem[mode].borderRadius,
       }
     },
     '&::before': {
@@ -102,7 +105,6 @@ const FolderList: React.FC<FolderListProps> = ({
             className={isSelected ? 'selected' : ''}
           >
             <ListItemButton
-              selected={isSelected}
               onClick={() => onSelectFolder(folder)}
               sx={{
                 width: '100%',
@@ -112,10 +114,23 @@ const FolderList: React.FC<FolderListProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 bgcolor: 'transparent',
+                '&.Mui-selected': {
+                  bgcolor: 'transparent',
+                  '&:hover': {
+                    bgcolor: 'transparent',
+                  }
+                },
+                '&:hover': {
+                  bgcolor: 'transparent',
+                },
+                '& .MuiTouchRipple-root': {
+                  borderRadius: theme => colors.folderItem[theme.palette.mode === 'dark' ? 'dark' : 'light'].borderRadius,
+                  overflow: 'hidden'
+                }
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0, pl: 1 }}>
-                <FolderIcon
+                <FolderOpenIcon
                   sx={{
                     mr: 1,
                     transition: 'color 0.2s',

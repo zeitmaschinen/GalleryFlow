@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { typography } from '../theme/themeConstants';
+import { typography } from '../../theme/themeConstants';
 
 interface FolderHeaderProps {
   selectedFolder: { path: string };

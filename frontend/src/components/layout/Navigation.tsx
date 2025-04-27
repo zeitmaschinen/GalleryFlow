@@ -2,8 +2,8 @@ import React from 'react';
 import { Box, styled, Typography, useTheme, IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import logoLight from '../images/logo.png';
-import logoDark from '../images/logo-darkmode.png';
+import logoLight from '../../images/logo.png';
+import logoDark from '../../images/logo-darkmode.png';
 
 // ===== BurgerMenu Component =====
 interface BurgerMenuProps {
