@@ -257,10 +257,29 @@ async def scan_folder_and_update_db(
     )
 
 async def process_image_batch(db: AsyncSession, batch: List[schemas.ImageCreate]):
-    """Process a batch of images for database insertion/update."""
+    """Process a batch of images for database insertion/update, avoiding UNIQUE constraint errors."""
     for image_data in batch:
-        db_image = models.Image(**image_data.model_dump())
-        db.add(db_image)
-    await db.commit()
+        # Check for existing image by full_path
+        existing_image = await get_image_by_path(db, image_data.full_path)
+        if existing_image:
+            # Update if needed
+            needs_update = False
+            if image_data.last_modified > existing_image.last_modified:
+                existing_image.last_modified = image_data.last_modified
+                needs_update = True
+            if image_data.metadata_ != getattr(existing_image, 'metadata_', None):
+                existing_image.metadata_ = image_data.metadata_
+                needs_update = True
+            if needs_update:
+                db.add(existing_image)
+        else:
+            db_image = models.Image(**image_data.model_dump())
+            db.add(db_image)
+    try:
+        await db.commit()
+    except Exception as e:
+        logger.error(f"[process_image_batch] Error committing batch: {e}")
+        await db.rollback()
+        raise
 
 # --- Keep other scan logic ---

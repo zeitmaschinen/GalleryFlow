@@ -55,12 +55,14 @@ class FolderWatchdogHandler(FileSystemEventHandler):
     def on_any_event(self, event):
         if not event.is_directory:
             logger.info(f"Watchdog event detected for folder_id={self.folder_id}: {event.event_type} {event.src_path}")
+            logger.debug(f"[DEBUG] Watchdog event details: {event}")
             global MAIN_EVENT_LOOP
             with self._debounce_lock:
                 if self._debounce_task is not None:
                     self._debounce_task.cancel()
                 # Use threading.Timer for debounce, then run coroutine in main loop
                 def run_scan():
+                    logger.debug(f"[DEBUG] run_scan triggered for folder_id={self.folder_id}")
                     if MAIN_EVENT_LOOP:
                         asyncio.run_coroutine_threadsafe(self.handle_change(), MAIN_EVENT_LOOP)
                 self._debounce_task = threading.Timer(0.5, run_scan)
@@ -69,6 +71,7 @@ class FolderWatchdogHandler(FileSystemEventHandler):
     async def handle_change(self):
         scan_id = str(uuid.uuid4())
         logger.info(f"Starting scan for folder_id={self.folder_id} (path={self.folder_path}) after watchdog event. scan_id={scan_id}")
+        logger.debug(f"[DEBUG] handle_change called for folder_id={self.folder_id}")
         from . import database, crud
         db_gen = database.get_db()
         db = await db_gen.__anext__()
@@ -77,6 +80,7 @@ class FolderWatchdogHandler(FileSystemEventHandler):
             if folder:
                 scan_result = await crud.scan_folder_and_update_db(db, folder)
                 logger.info(f"Scan complete for folder_id={self.folder_id}. Result: {scan_result}")
+                logger.debug(f"[DEBUG] Scan result for folder_id={self.folder_id}: {scan_result}")
                 await broadcast_progress(self.folder_id, {"event": "folder_change", "folder_id": self.folder_id, "scan_id": scan_id})
             else:
                 logger.warning(f"No folder found in DB for folder_id={self.folder_id} during watchdog-triggered scan.")
@@ -153,10 +157,12 @@ async def websocket_endpoint(websocket: WebSocket, folder_id: int):
 
 async def broadcast_progress(folder_id: int, data: dict):
     logger.info(f"Broadcasting WebSocket event for folder_id={folder_id}: {data}")
+    logger.debug(f"[DEBUG] WebSocket broadcast data: {data}")
     if folder_id in active_connections:
         for connection in active_connections[folder_id]:
             try:
                 await connection.send_json(data)
+                logger.debug(f"[DEBUG] Sent WebSocket message to connection for folder_id={folder_id}")
             except Exception as e:
                 logger.error(f"WebSocket send failed: {e}")
                 continue

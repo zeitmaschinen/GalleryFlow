@@ -18,14 +18,18 @@ export class WebSocketService {
   private reconnectTimeout = 1000;
   private messageHandlers: Set<MessageHandler> = new Set();
   private errorHandlers: Set<ErrorHandler> = new Set();
+  private connectionFailed = false;
 
   constructor(private url: string) {}
 
   connect(): void {
     try {
+      console.log(`[WebSocket] Attempting to connect to ${this.url}`);
       this.ws = new WebSocket(this.url);
       this.setupEventListeners();
-    } catch {
+    } catch (error) {
+      console.error('[WebSocket] Error creating connection:', error);
+      this.connectionFailed = true;
       this.handleReconnect();
     }
   }
@@ -34,12 +38,26 @@ export class WebSocketService {
     if (!this.ws) return;
 
     this.ws.onopen = () => {
-      logger.info('WebSocket connected', undefined, true);
+      logger.info('WebSocket connected');
       this.reconnectAttempts = 0;
+      this.connectionFailed = false;
+      
+      // Send a keepalive message to backend on connect
+      try {
+        this.ws?.send(JSON.stringify({ type: 'keepalive', timestamp: Date.now() }));
+      } catch (error) {
+        console.error('[WebSocket] Error sending keepalive:', error);
+      }
     };
 
-    this.ws.onclose = () => {
-      logger.warn('WebSocket connection closed', undefined, true);
+    this.ws.onclose = (event) => {
+      logger.warn(`WebSocket closed with code ${event.code}`);
+      
+      // Check if the connection was closed abnormally
+      if (event.code !== 1000 && event.code !== 1001) {
+        this.connectionFailed = true;
+      }
+      
       this.handleReconnect();
     };
 
@@ -57,6 +75,8 @@ export class WebSocketService {
       } else {
         logger.error('WebSocket error', new Error('Unknown WebSocket error'), errorContext);
       }
+      
+      this.connectionFailed = true;
       this.errorHandlers.forEach(handler => handler(event));
     };
 
@@ -79,6 +99,12 @@ export class WebSocketService {
       }, this.reconnectTimeout * this.reconnectAttempts);
     } else {
       logger.error('Max reconnection attempts reached', new Error('Max reconnection attempts reached'));
+      // Notify all error handlers that max reconnection attempts have been reached
+      const maxRetriesError = new ErrorEvent('error', {
+        message: 'Max reconnection attempts reached',
+        error: new Error('Max reconnection attempts reached')
+      });
+      this.errorHandlers.forEach(handler => handler(maxRetriesError));
     }
   }
 
@@ -92,6 +118,15 @@ export class WebSocketService {
 
   addErrorHandler(handler: ErrorHandler): void {
     this.errorHandlers.add(handler);
+    
+    // If connection already failed, immediately notify the new handler
+    if (this.connectionFailed && this.reconnectAttempts >= this.maxReconnectAttempts) {
+      const maxRetriesError = new ErrorEvent('error', {
+        message: 'Max reconnection attempts reached',
+        error: new Error('Max reconnection attempts reached')
+      });
+      handler(maxRetriesError);
+    }
   }
 
   removeErrorHandler(handler: ErrorHandler): void {
@@ -108,6 +143,10 @@ export class WebSocketService {
   isConnected(): boolean {
     return this.ws?.readyState === WebSocket.OPEN;
   }
+
+  hasConnectionFailed(): boolean {
+    return this.connectionFailed && this.reconnectAttempts >= this.maxReconnectAttempts;
+  }
 }
 
 // Helper function to create a WebSocketService for a specific folder
@@ -121,18 +160,26 @@ export function subscribeScanProgress(
   onProgress: (progress: ScanProgress) => void,
   onError?: ErrorHandler
 ): () => void {
-  const wsService = createScanProgressWS(folderId);
-  wsService.addMessageHandler(onProgress as MessageHandler);
-  if (onError) {
-    wsService.addErrorHandler(onError);
-  }
-  wsService.connect();
-  // Cleanup function
-  return () => {
-    wsService.removeMessageHandler(onProgress as MessageHandler);
+  try {
+    const wsService = createScanProgressWS(folderId);
+    wsService.addMessageHandler(onProgress as MessageHandler);
     if (onError) {
-      wsService.removeErrorHandler(onError);
+      wsService.addErrorHandler(onError);
     }
-    wsService.disconnect();
-  };
+    wsService.connect();
+    
+    // Cleanup function
+    return () => {
+      wsService.removeMessageHandler(onProgress as MessageHandler);
+      if (onError) {
+        wsService.removeErrorHandler(onError);
+      }
+      wsService.disconnect();
+    };
+  } catch (error) {
+    console.error('[WebSocket] Error in subscribeScanProgress:', error);
+    // If we can't even create the WebSocket service, throw the error
+    // so the caller can handle it (e.g., by setting up polling)
+    throw error;
+  }
 }

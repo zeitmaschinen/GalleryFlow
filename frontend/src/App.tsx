@@ -13,8 +13,8 @@ import { SortField } from './types';
 import { getTheme } from './theme';
 import { SidebarContainer, MobileSidebar } from './components/layout';
 import { MainContent } from './components/layout';
-import { useWebSocketEvents } from './hooks/useWebSocketEvents';
 import { useLayoutCalculator } from './hooks/useLayoutCalculator';
+import { subscribeScanProgress } from './services/websocket';
 
 function App() {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
@@ -132,43 +132,145 @@ function App() {
     }
   };
 
-  // Reload image grid
-  const reloadImageGrid = useCallback((userInitiated = false) => {
+  // --- Track last user-initiated reload per folder to suppress redundant WebSocket reloads ---
+  const lastUserReloadRef = useRef<{ [folderId: number]: number }>({});
+  const lastScanIdRef = useRef<{ [folderId: number]: string }>({});
+  const prevFolderIdRef = useRef<number | null | undefined>(undefined);
+
+  // --- Patch: Debounced but Always Latest Reload ---
+  const suppressionWindowMs = 5000; // 5 seconds (or change as desired)
+  const suppressionTimeoutRef = useRef<number | null>(null);
+  const pendingReloadRef = useRef<{ [folderId: number]: boolean }>({});
+
+  const reloadImageGrid = (userInitiated = false) => {
+    console.log('[reloadImageGrid] called, selectedFolder:', selectedFolder, 'userInitiated:', userInitiated);
     if (selectedFolder) {
       if (userInitiated) {
-        webSocketEvents.markUserInitiatedReload(selectedFolder.id);
+        lastUserReloadRef.current[selectedFolder.id] = Date.now();
+        // Start suppression window
+        if (suppressionTimeoutRef.current) clearTimeout(suppressionTimeoutRef.current as unknown as number);
+        pendingReloadRef.current[selectedFolder.id] = false;
+        suppressionTimeoutRef.current = setTimeout(() => {
+          if (pendingReloadRef.current[selectedFolder.id]) {
+            console.log('[Suppression] Running pending reload after debounce window');
+            setReloadKey(k => k + 1);
+            pendingReloadRef.current[selectedFolder.id] = false;
+          }
+        }, suppressionWindowMs);
       }
-      setReloadKey(k => k + 1);
+      setReloadKey(k => k + 1); // Always reload, but do NOT reset currentPage
     }
-  }, [selectedFolder]);
+  };
 
-  // Handle refresh folder and images
+  // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
   const handleRefreshFolderAndImages = useCallback(
     async (folderId: number) => {
+      console.log('[handleRefreshFolderAndImages] called with folderId:', folderId, 'selectedFolder:', selectedFolder);
       await handleRefreshFolder(folderId);
       if (selectedFolder && selectedFolder.id === folderId) {
+        console.log('[handleRefreshFolderAndImages] calling reloadImageGrid');
         reloadImageGrid(true);
       } else {
+        // Fallback: force fetch if state is out of sync
+        console.log('[handleRefreshFolderAndImages] Fallback: force fetchImages for folderId', folderId);
         fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
         setCurrentPage(1);
       }
     },
-    [handleRefreshFolder, setCurrentPage, fetchImages, sortBy, sortDirection, selectedFileTypes, reloadImageGrid, selectedFolder]
+    [handleRefreshFolder, setCurrentPage, fetchImages, sortBy, sortDirection, selectedFileTypes, selectedFolder]
   );
 
-  // WebSocket events
-  const webSocketEvents = useWebSocketEvents({
+  // Track latest pagination/sort/filter state for WebSocket handler
+  const latestStateRef = useRef({
+    currentPage,
+    sortBy,
+    sortDirection,
+    selectedFileTypes,
+    fetchImages,
     selectedFolder,
-    isLoadingFolders,
-    folders,
-    onRefreshFolderAndImages: handleRefreshFolderAndImages
+    setCurrentPage
   });
+  useEffect(() => {
+    latestStateRef.current = {
+      currentPage,
+      sortBy,
+      sortDirection,
+      selectedFileTypes,
+      fetchImages,
+      selectedFolder,
+      setCurrentPage
+    };
+  }, [currentPage, sortBy, sortDirection, selectedFileTypes, fetchImages, selectedFolder, setCurrentPage]);
+
+  // --- Patch: WebSocket event triggers the SAME code as the sidebar refresh button ---
+  useEffect(() => {
+    if (isLoadingFolders || !selectedFolder || folders.length === 0) return;
+    
+    // Debounce WebSocket connection until folders exist and selectedFolder is set
+    const debounceTimeout = setTimeout(() => {
+      const handleWsEvent = (data: unknown) => {
+        if (typeof data !== 'object' || data === null) return;
+        const eventData = data as { folder_id?: number; event?: string; scan_id?: string };
+        const { selectedFolder: sf } = latestStateRef.current;
+        if (sf && eventData.folder_id === sf.id && eventData.event === 'folder_change') {
+          const lastUserReload = lastUserReloadRef.current[sf.id] || 0;
+          if (Date.now() - lastUserReload < suppressionWindowMs) {
+            // Within suppression window: mark pending reload
+            console.log('[WebSocket] Suppressed reload, will run after debounce window');
+            pendingReloadRef.current[sf.id] = true;
+            return;
+          }
+          if (eventData.scan_id && lastScanIdRef.current[sf.id] !== eventData.scan_id) {
+            handleRefreshFolderAndImages(sf.id);
+            lastScanIdRef.current[sf.id] = eventData.scan_id;
+          } else {
+            // TODO: Implement logic or remove block
+          }
+        }
+      };
+      
+      // Set up polling as fallback in case WebSocket fails
+      let pollingInterval: ReturnType<typeof setInterval> | null = null;
+      
+      try {
+        console.log('[WebSocket] Attempting to connect to WebSocket for folder', selectedFolder.id);
+        const unsubscribe = subscribeScanProgress(selectedFolder.id, handleWsEvent);
+        
+        // Return cleanup function
+        return () => {
+          unsubscribe();
+          if (pollingInterval) clearInterval(pollingInterval);
+        };
+      } catch (error) {
+        console.error('[WebSocket] Failed to connect, setting up polling fallback:', error);
+        
+        // Set up polling as fallback
+        pollingInterval = setInterval(() => {
+          if (selectedFolder) {
+            const folderId = selectedFolder.id;
+            const lastUserReload = lastUserReloadRef.current[folderId] || 0;
+            
+            // Only refresh if not recently user-initiated
+            if (Date.now() - lastUserReload >= suppressionWindowMs) {
+              console.log('[Polling] Checking for changes in folder', folderId);
+              handleRefreshFolderAndImages(folderId);
+            }
+          }
+        }, 10000); // Poll every 10 seconds
+        
+        return () => {
+          if (pollingInterval) clearInterval(pollingInterval);
+        };
+      }
+    }, 400); // 400ms debounce
+    
+    return () => {
+      clearTimeout(debounceTimeout as unknown as number);
+    };
+  }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages, suppressionWindowMs]);
 
   // Layout calculator
   const { columnsCount } = useLayoutCalculator({ thumbnailSize });
-
-  // Ref for tracking previous folder ID
-  const prevFolderIdRef = useRef<number | null | undefined>(undefined);
 
   // Fetch images when state changes
   useEffect(() => {
@@ -177,25 +279,33 @@ function App() {
 
     // Check if the selected folder has actually changed
     if (currentFolderId !== undefined && currentFolderId !== prevFolderIdRef.current) {
-      setCurrentPage(1);
+      console.log(`Folder changed from ${prevFolderIdRef.current} to ${currentFolderId}. Resetting page to 1.`);
       pageToFetch = 1;
+      // Important: Update state synchronoously if possible or ensure fetch uses page 1
+      // If setCurrentPage is async, this might still fetch with old page briefly.
+      // Consider passing pageToFetch directly to fetchImages if setCurrentPage doesn't update immediately for the fetch.
+      setCurrentPage(1); 
     }
 
     if (selectedFolder) {
+      console.log(`Fetching images for folder ${selectedFolder.id}, page ${pageToFetch}`);
+      // Use pageToFetch which is either the current page or 1 if folder changed
       fetchImages(selectedFolder.id, pageToFetch, sortBy, sortDirection, selectedFileTypes)
         .then(() => {
           // This check remains useful if images get deleted, making the current page invalid
           const totalPages = Math.max(1, Math.ceil(totalImages / IMAGES_PER_PAGE));
           if (currentPage > totalPages) {
-            setCurrentPage(totalPages);
+             console.log(`Current page ${currentPage} is out of bounds (${totalPages}). Setting to ${totalPages}.`);
+             setCurrentPage(totalPages);
           }
         })
         .catch(error => {
-          console.error("Error fetching images after state change:", error);
+           console.error("Error fetching images after state change:", error);
+           // Handle fetch error appropriately, maybe show a message
         });
     }
 
-    // Update the ref after the logic runs
+    // Update the ref *after* the logic runs
     prevFolderIdRef.current = currentFolderId;
   }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey, fetchImages, totalImages, setCurrentPage]);
 

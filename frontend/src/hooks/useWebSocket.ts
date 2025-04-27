@@ -29,36 +29,43 @@ export const useWebSocket = ({
   const connect = useCallback(() => {
     try {
       ws.current = new WebSocket(url);
-
+      console.debug('[WebSocket] Connecting to', url);
       ws.current.onopen = () => {
         setIsConnected(true);
         attempts.current = 0;
-        logger.info('WebSocket connected', undefined, true);
+        console.debug('[WebSocket] Connected to', url);
+        logger.info('WebSocket connected');
         // Send a keepalive message to backend on connect
         ws.current?.send(JSON.stringify({ type: 'keepalive', timestamp: Date.now() }));
       };
 
       ws.current.onclose = () => {
         setIsConnected(false);
+        console.debug('[WebSocket] Disconnected from', url);
         if (attempts.current < reconnectAttempts) {
           attempts.current++;
           reconnectTimer.current = setTimeout(connect, reconnectInterval);
         }
-        logger.warn(`WebSocket closed, attempt ${attempts.current}/${reconnectAttempts}`, undefined, true);
+        logger.warn(`WebSocket closed, attempt ${attempts.current}/${reconnectAttempts}`);
+      };
+
+      ws.current.onerror = (event) => {
+        console.error('[WebSocket] Error:', event);
+        handleError(event);
       };
 
       ws.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.debug('[WebSocket] Message received:', data);
           onMessage?.(data);
         } catch (error) {
           logger.error('Failed to parse WebSocket message', error as Error);
         }
       };
-
-      ws.current.onerror = handleError;
     } catch (error) {
       logger.error('Failed to create WebSocket connection', error as Error);
+      setIsConnected(false);
     }
   }, [url, onMessage, reconnectAttempts, reconnectInterval, handleError]);
 
