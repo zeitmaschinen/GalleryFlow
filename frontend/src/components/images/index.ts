@@ -1,7 +1,8 @@
+// Export components
 export { default as ImageGrid } from './ImageGrid';
 export { default as ImageGridContainer } from './ImageGridContainer';
-export { default as ImageModal } from './ImageModal';
 export { default as ImageGridItem } from './ImageGridItem';
+export { default as ImageModal } from './ImageModal';
 
-// Re-export types from the main types file
-export type { Image, Folder } from '../../types';
+// Export types
+export type { Image, Folder } from './types';

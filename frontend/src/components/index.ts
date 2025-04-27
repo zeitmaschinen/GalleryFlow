@@ -1,20 +1,17 @@
-// Export all components from their respective files
-// This barrel file makes imports cleaner throughout the application
+// Export components from their new locations
+export { ThumbnailSizeSlider, ProgressBar, LoadingSpinner } from './common/UIControls';
+export { StatsCards } from './common';
+export { FileTypeFilter, SortButton, FileList } from './common/FilterControls';
+export { ControlsCard } from './common';
+export { BurgerMenu, DrawerHeaderMobile, SidebarFooter, SidebarContainer } from './layout';
+export { FolderHeader } from './folders';
+export { ConfirmationDialog, ImageDetailDialog } from './common/DialogComponents';
+export { default as MainContent } from './layout/MainContent';
+export { default as ImageGrid } from './images/ImageGrid';
+export { default as FolderList } from './folders/FolderList';
+export { default as AddFolderForm } from './folders/AddFolderForm';
+export { default as WorkflowModal } from './workflow/WorkflowModal';
+export { default as ImageModal } from './images/ImageModal';
 
-// UI Controls
-export { ThumbnailSizeSlider, ProgressBar, LoadingSpinner } from './UIControls';
-
-// Filter Controls
-export { FileTypeFilter, SortButton, FileList } from './FilterControls';
-
-// Navigation Components
-export { BurgerMenu, DrawerHeaderMobile, SidebarFooter, SidebarContainer } from './Navigation';
-
-// Dialog Components
-export { ConfirmationDialog, ImageDetailDialog } from './DialogComponents';
-
-// Other Components
-export { default as ImageGrid } from './ImageGrid';
-export { default as FolderList } from './FolderList';
-export { default as AddFolderForm } from './AddFolderForm';
-export { default as Sidebar } from './Sidebar';
+// Export types
+export type { Image, Folder } from './images/types';

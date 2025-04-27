@@ -17,12 +17,12 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import { borders, colors, typography, spacing } from '../../theme/themeConstants';
 import { getImageUrl } from '../../services/api';
-import { Image } from './ImageGrid';
+import type { Image } from './types';
+import { useImageMetadata } from '../../hooks/useImageMetadata';
+import { useImageModalNavigationHelpers } from '../../hooks/useImageModalNavigationHelpers';
 import ModalNavArrow from '../../theme/ModalNavArrow';
 import ModalSlideTransition from '../common/ModalSlideTransition';
 import { modalActionButtonSx, modalSecondaryActionButtonSx } from '../../theme/modalStyles';
-import { useImageMetadata } from '../../hooks/useImageMetadata';
-import { useImageModalNavigationHelpers } from '../../hooks/useImageModalNavigationHelpers';
 
 interface ImageModalProps {
   open: boolean;
@@ -85,8 +85,13 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
     : [];
 
   // Use combined hook for modal navigation and keyboard logic
-  const { currentIdx, hasPrev, hasNext, goPrev, goNext } = useImageModalNavigationHelpers(
-    open, 
+  const { 
+    hasPrev, 
+    hasNext, 
+    goPrev, 
+    goNext 
+  } = useImageModalNavigationHelpers(
+    open,
     images, 
     selectedImage, 
     setSelectedImage

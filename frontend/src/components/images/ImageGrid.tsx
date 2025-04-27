@@ -9,25 +9,26 @@ import { getImageUrl, revealInExplorer } from '../../services/api';
 import ImageGridItem from './ImageGridItem';
 import ImageModal from './ImageModal';
 import WorkflowModal from '../workflow/WorkflowModal';
+import type { Image } from './types';
 
 // Define the Image interface directly to avoid import issues
-export interface Image {
-  id: string;
-  filename: string;
-  full_path: string;
-  created_at: string;
-  updated_at: string;
-  width: number;
-  height: number;
-  folder_id: string;
-  metadata_: Record<string, unknown>;
-  file_size: number;
-  file_type: string;
-  thumbnail_path?: string;
-  is_favorite?: boolean;
-  Workflow?: string;
-  Prompt?: string;
-}
+// export interface Image {
+//   id: string;
+//   filename: string;
+//   full_path: string;
+//   created_at: string;
+//   updated_at: string;
+//   width: number;
+//   height: number;
+//   folder_id: string;
+//   metadata_: Record<string, unknown>;
+//   file_size: number;
+//   file_type: string;
+//   thumbnail_path?: string;
+//   is_favorite?: boolean;
+//   Workflow?: string;
+//   Prompt?: string;
+// }
 
 interface ImageGridProps {
   images: Image[];

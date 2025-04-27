@@ -124,6 +124,7 @@ export const colors = {
  */
 export const typography = {
   fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+  specialFontFamily: "'Space Mono', monospace",
   fontWeights: {
     normal: 400,
     medium: 500,

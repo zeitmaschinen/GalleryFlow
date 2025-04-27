@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useEffect } from 'react';
-import type { Image } from '../types/index';
+import type { Image } from '../components/images/types';
 
 /**
  * Combines indexing and keyboard navigation logic for the image modal.

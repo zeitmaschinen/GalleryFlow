@@ -18,7 +18,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import WorkflowViewer from './WorkflowViewer';
 import './WorkflowModal.css';
 import ModalSlideTransition from '../common/ModalSlideTransition';
-import { Image } from '../images/ImageGrid';
+import type { Image } from '../images/types';
 import { borders, spacing, typography } from '../../theme/themeConstants';
 import { modalActionButtonSx, modalSecondaryActionButtonSx } from '../../theme/modalStyles';
 import ModalNavArrow from '../../theme/ModalNavArrow';

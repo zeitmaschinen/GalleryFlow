@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { getImageUrl } from '../../services/api';
-import { Image } from './ImageGrid';
+import type { Image } from './types';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import WorkflowIcon from '@mui/icons-material/AccountTree';
 

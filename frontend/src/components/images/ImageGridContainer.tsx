@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, CircularProgress, Alert, Card } from '@mui/material';
-import ImageGrid, { Image } from './ImageGrid';
+import { ImageGrid } from './';
+import type { Image } from './types';
 import { PaginationControls } from '../common';
 import { spacing } from '../../theme/themeConstants';
 
@@ -9,7 +10,6 @@ interface ImageGridContainerProps {
   isLoading: boolean;
   error: string | null;
   thumbnailSize: number;
-  columnsCount: number;
   currentPage: number;
   totalImages: number;
   imagesPerPage: number;
@@ -24,7 +24,6 @@ const ImageGridContainer: React.FC<ImageGridContainerProps> = ({
   isLoading,
   error,
   thumbnailSize,
-  columnsCount,
   currentPage,
   totalImages,
   imagesPerPage,
