@@ -2,7 +2,7 @@
 
 A modern web application for browsing and managing <a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" rel="noopener noreferrer">ComfyUI</a>-generated images with advanced metadata support.
 
-You can connect to your ComfyUI output directory, customize sorting/filtering, set view preferences and configure metadata extraction.
+You can connect to your ComfyUI output directory, sort/filter images, check metadata extraction and view workflow visualizations.
 
 ## Features
 
