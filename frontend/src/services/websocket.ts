@@ -154,32 +154,39 @@ export function createScanProgressWS(folderId: number) {
   return new WebSocketService(`${config.api.wsUrl}/ws/scan-progress/${folderId}`);
 }
 
-// Helper function to subscribe to scan progress for a specific folder
+// --- Singleton WebSocketService per folderId ---
+const scanProgressWebSockets = new Map<number, { ws: WebSocketService, refCount: number }>();
+
 export function subscribeScanProgress(
   folderId: number,
   onProgress: (progress: ScanProgress) => void,
   onError?: ErrorHandler
 ): () => void {
-  try {
+  let entry = scanProgressWebSockets.get(folderId);
+  if (!entry) {
     const wsService = createScanProgressWS(folderId);
-    wsService.addMessageHandler(onProgress as MessageHandler);
-    if (onError) {
-      wsService.addErrorHandler(onError);
-    }
-    wsService.connect();
-    
-    // Cleanup function
-    return () => {
-      wsService.removeMessageHandler(onProgress as MessageHandler);
-      if (onError) {
-        wsService.removeErrorHandler(onError);
-      }
-      wsService.disconnect();
-    };
-  } catch (error) {
-    console.error('[WebSocket] Error in subscribeScanProgress:', error);
-    // If we can't even create the WebSocket service, throw the error
-    // so the caller can handle it (e.g., by setting up polling)
-    throw error;
+    entry = { ws: wsService, refCount: 0 };
+    scanProgressWebSockets.set(folderId, entry);
   }
+  entry.refCount++;
+  entry.ws.addMessageHandler(onProgress as MessageHandler);
+  if (onError) {
+    entry.ws.addErrorHandler(onError);
+  }
+  if (entry.refCount === 1) {
+    entry.ws.connect();
+  }
+
+  // Cleanup function
+  return () => {
+    entry!.refCount--;
+    entry!.ws.removeMessageHandler(onProgress as MessageHandler);
+    if (onError) {
+      entry!.ws.removeErrorHandler(onError);
+    }
+    if (entry!.refCount <= 0) {
+      entry!.ws.disconnect();
+      scanProgressWebSockets.delete(folderId);
+    }
+  };
 }
