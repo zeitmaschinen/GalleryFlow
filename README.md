@@ -109,6 +109,7 @@ Close your current terminal/command window, download and install Node.js from [n
 
 - Visit [http://localhost:5173](http://localhost:5173) in your browser.
 - Add folder path from your ComfyUI images output.
+- Enjoy! 🎉
 
 ---
 
