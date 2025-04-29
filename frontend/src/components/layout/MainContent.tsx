@@ -69,9 +69,8 @@ const MainContent: React.FC<MainContentProps> = ({
         p: spacing.md,
         width: { sm: `calc(100% - 280px)` },
         height: '100vh',
-        overflow: 'auto',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
       }}
     >
       {/* Top Bar */}
@@ -85,6 +84,9 @@ const MainContent: React.FC<MainContentProps> = ({
         <>
           {/* Folder Header */}
           <FolderHeader selectedFolder={selectedFolder} />
+
+          {/* Fixed spacer between FolderHeader and StatsCards (always present) */}
+          <Box sx={{ height: spacing.lg }} />
 
           {/* Stats Cards */}
           <Box sx={{ mb: spacing.md }}>
@@ -109,53 +111,60 @@ const MainContent: React.FC<MainContentProps> = ({
             />
           </Box>
 
-          {/* Image Grid */}
-          <ImageGridContainer
-            images={images}
-            isLoading={isLoadingImages}
-            error={errorImages}
-            thumbnailSize={thumbnailSize}
-            columnsCount={columnsCount}
-            currentPage={currentPage}
-            totalImages={totalImages}
-            imagesPerPage={IMAGES_PER_PAGE}
-            onPageChange={onPageChange}
-            onGoToFirstPage={onGoToFirstPage}
-            onGoToLastPage={onGoToLastPage}
-          />
+          {/* Scrollable Image Grid Area */}
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            <ImageGridContainer
+              images={images}
+              isLoading={isLoadingImages}
+              error={errorImages}
+              thumbnailSize={thumbnailSize}
+              columnsCount={columnsCount}
+              currentPage={currentPage}
+              totalImages={totalImages}
+              imagesPerPage={IMAGES_PER_PAGE}
+              onPageChange={onPageChange}
+              onGoToFirstPage={onGoToFirstPage}
+              onGoToLastPage={onGoToLastPage}
+            />
+          </Box>
         </>
       ) : (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            textAlign: 'center',
-            p: spacing.xl
-          }}
-        >
-          <Stack spacing={2} alignItems="center">
-            <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img 
-                src="/images/symbol.png" 
-                alt="Logo" 
-                style={{ 
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  objectFit: 'contain'
-                }} 
-              />
-            </Box>
-            <Typography variant="h5" component="h1">
-              <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>Welcome to GalleryFlow</span>
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Add or select a folder from the sidebar to view your images.
-            </Typography>
-          </Stack>
-        </Box>
+        <>
+          {/* Fixed spacer between FolderHeader and StatsCards (always present) */}
+          <Box sx={{ height: spacing.lg }} />
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              textAlign: 'center',
+              p: spacing.xl
+            }}
+          >
+            <Stack spacing={2} alignItems="center">
+              <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img 
+                  src="/images/symbol.png" 
+                  alt="Logo" 
+                  style={{ 
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain'
+                  }} 
+                />
+              </Box>
+              <Typography variant="h5" component="h1">
+                <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>Welcome to GalleryFlow</span>
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Add or select a folder from the sidebar to view your images.
+              </Typography>
+            </Stack>
+          </Box>
+        </>
       )}
     </Box>
   );

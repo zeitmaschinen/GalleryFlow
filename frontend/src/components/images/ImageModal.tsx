@@ -210,204 +210,225 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
         </Box>
         {/* Right: Metadata */}
         <Box sx={{ flex: '1 1 60%' }}>
-          <Box sx={{ mt: 2 }}>
-            {/* Model Info */}
-            <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
-              Model:
-            </Typography>
-            <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
-              <Typography variant="body2">{model || 'N/A'}</Typography>
-            </Paper>
-            {/* Generation Parameters */}
-            <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
-              Parameters:
-            </Typography>
-            <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Seed:
-                  </Typography>
-                  <Typography variant="body2">{seed || 'N/A'}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Steps:
-                  </Typography>
-                  <Typography variant="body2">{steps || 'N/A'}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    CFG Scale:
-                  </Typography>
-                  <Typography variant="body2">{cfg || 'N/A'}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Sampler:
-                  </Typography>
-                  <Typography variant="body2">{sampler || 'N/A'}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Scheduler:
-                  </Typography>
-                  <Typography variant="body2">{scheduler || 'N/A'}</Typography>
-                </Box>
-                {denoise !== undefined && (
+          {selectedImageData && Object.keys(selectedImageData).length > 0 ? (
+            <Box sx={{ mt: 2 }}>
+              {/* Model Info */}
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
+                Model:
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+                <Typography variant="body2">{model || 'N/A'}</Typography>
+              </Paper>
+              {/* Generation Parameters */}
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
+                Parameters:
+              </Typography>
+              <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Denoise:
+                      Seed:
                     </Typography>
-                    <Typography variant="body2">{denoise}</Typography>
+                    <Typography variant="body2">{seed || 'N/A'}</Typography>
                   </Box>
-                )}
-              </Box>
-            </Paper>
-            {/* Hires Fix Info */}
-            {(hiresUpscale !== undefined || hiresUpscaler !== undefined) && (
-              <>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
-                  Hires Fix:
-                </Typography>
-                <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                    {hiresUpscale !== undefined && (
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Scale:
-                        </Typography>
-                        <Typography variant="body2">{hiresUpscale}</Typography>
-                      </Box>
-                    )}
-                    {hiresUpscaler !== undefined && (
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Upscaler:
-                        </Typography>
-                        <Typography variant="body2">{hiresUpscaler}</Typography>
-                      </Box>
-                    )}
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Steps:
+                    </Typography>
+                    <Typography variant="body2">{steps || 'N/A'}</Typography>
                   </Box>
-                </Paper>
-              </>
-            )}
-            {/* Lora Models */}
-            {validLoras.length > 0 && (
-              <>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
-                  Lora Models:
-                </Typography>
-                <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
-                    {validLoras.map((lora, index) => (
-                      <Box key={index}>
-                        <Typography variant="caption" color="text.secondary">Model Name:</Typography>
-                        <Typography variant="body2">{lora.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">Weight:</Typography>
-                        <Typography variant="body2">{lora.weight.toFixed(2)}</Typography>
-                      </Box>
-                    ))}
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      CFG Scale:
+                    </Typography>
+                    <Typography variant="body2">{cfg || 'N/A'}</Typography>
                   </Box>
-                </Paper>
-              </>
-            )}
-            {/* Prompts */}
-            <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
-              Positive Prompt:
-            </Typography>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 1.5,
-                position: 'relative',
-                '&:hover .copy-button': {
-                  opacity: 1,
-                },
-              }}
-            >
-              <Typography variant="body2" sx={{ pr: 4 }}>{positivePrompt}</Typography>
-              {/* Conditionally render copy icon for positive prompt */}
-              {positivePrompt && positivePrompt !== 'N/A' && (
-                <IconButton
-                  size="small"
-                  className="copy-button"
-                  onClick={() => onCopyToClipboard(positivePrompt, false)}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: 8,
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                  }}
-                >
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Sampler:
+                    </Typography>
+                    <Typography variant="body2">{sampler || 'N/A'}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Scheduler:
+                    </Typography>
+                    <Typography variant="body2">{scheduler || 'N/A'}</Typography>
+                  </Box>
+                  {denoise !== undefined && (
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Denoise:
+                      </Typography>
+                      <Typography variant="body2">{denoise}</Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Paper>
+              {/* Hires Fix Info */}
+              {(hiresUpscale !== undefined || hiresUpscaler !== undefined) && (
+                <>
+                  <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
+                    Hires Fix:
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                      {hiresUpscale !== undefined && (
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Scale:
+                          </Typography>
+                          <Typography variant="body2">{hiresUpscale}</Typography>
+                        </Box>
+                      )}
+                      {hiresUpscaler !== undefined && (
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Upscaler:
+                          </Typography>
+                          <Typography variant="body2">{hiresUpscaler}</Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Paper>
+                </>
               )}
-            </Paper>
-            <Typography 
-              variant="body2" 
-              gutterBottom 
-              sx={{ fontWeight: typography.fontWeights.medium, mt: 3 }} 
-            >
-              Negative Prompt:
-            </Typography>
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 1.5,
-                position: 'relative',
-                '&:hover .copy-button': {
-                  opacity: 1,
-                },
-              }}
-            >
-              <Typography variant="body2" sx={{ pr: 4 }}>{negativePrompt}</Typography>
-              {/* Conditionally render copy icon for negative prompt */}
-              {negativePrompt && negativePrompt !== 'N/A' && (
-                <IconButton
-                  size="small"
-                  className="copy-button"
-                  onClick={() => onCopyToClipboard(negativePrompt, true)}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: 8,
-                    opacity: 0,
-                    transition: 'opacity 0.2s',
-                  }}
-                >
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
+              {/* Lora Models */}
+              {validLoras.length > 0 && (
+                <>
+                  <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
+                    Lora Models:
+                  </Typography>
+                  <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+                      {validLoras.map((lora, index) => (
+                        <Box key={index}>
+                          <Typography variant="caption" color="text.secondary">Model Name:</Typography>
+                          <Typography variant="body2">{lora.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">Weight:</Typography>
+                          <Typography variant="body2">{lora.weight.toFixed(2)}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Paper>
+                </>
               )}
-            </Paper>
-            {/* Metadata extraction notice */}
-            <Box
-              sx={theme => {
-                const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
-                return {
-                  mt: 2,
-                  mb: 3,
+              {/* Prompts */}
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
+                Positive Prompt:
+              </Typography>
+              <Paper
+                variant="outlined"
+                sx={{
                   p: 1.5,
-                  borderRadius: borders.radius.md,
-                  backgroundColor: colors.warningBox[mode].background,
-                  border: `1px solid ${colors.warningBox[mode].border}`,
-                  color: colors.warningBox[mode].text,
-                  width: '100%',
-                  boxSizing: 'border-box',
-                };
+                  position: 'relative',
+                  '&:hover .copy-button': {
+                    opacity: 1,
+                  },
+                }}
+              >
+                <Typography variant="body2" sx={{ pr: 4 }}>{positivePrompt}</Typography>
+                {/* Conditionally render copy icon for positive prompt */}
+                {positivePrompt && positivePrompt !== 'N/A' && (
+                  <IconButton
+                    size="small"
+                    className="copy-button"
+                    onClick={() => onCopyToClipboard(positivePrompt, false)}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: 8,
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                    }}
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Paper>
+              <Typography 
+                variant="body2" 
+                gutterBottom 
+                sx={{ fontWeight: typography.fontWeights.medium, mt: 3 }} 
+              >
+                Negative Prompt:
+              </Typography>
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 1.5,
+                  position: 'relative',
+                  '&:hover .copy-button': {
+                    opacity: 1,
+                  },
+                }}
+              >
+                <Typography variant="body2" sx={{ pr: 4 }}>{negativePrompt}</Typography>
+                {/* Conditionally render copy icon for negative prompt */}
+                {negativePrompt && negativePrompt !== 'N/A' && (
+                  <IconButton
+                    size="small"
+                    className="copy-button"
+                    onClick={() => onCopyToClipboard(negativePrompt, true)}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: 8,
+                      opacity: 0,
+                      transition: 'opacity 0.2s',
+                    }}
+                  >
+                    <ContentCopyIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Paper>
+              {/* Metadata extraction notice */}
+              <Box
+                sx={theme => {
+                  const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
+                  return {
+                    mt: 2,
+                    mb: 3,
+                    p: 1.5,
+                    borderRadius: borders.radius.md,
+                    backgroundColor: colors.warningBox[mode].background,
+                    border: `1px solid ${colors.warningBox[mode].border}`,
+                    color: colors.warningBox[mode].text,
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  };
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: typography.fontWeights.normal, fontSize: '0.85em' }}
+                >
+                  Some fields may appear empty if the workflow is too complex or uses custom nodes. For a better panorama, check the workflow preview.
+                </Typography>
+              </Box>
+              {/* Empty space below negative prompt */}
+              <Box sx={{ height: spacing.md, width: '100%' }} />
+            </Box>
+          ) : (
+            <Box 
+              sx={{ 
+                mt: 4, 
+                p: 3, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                textAlign: 'center'
               }}
             >
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: typography.fontWeights.normal, fontSize: '0.85em' }}
-              >
-                Some fields may show <b>N/A</b> if the workflow is too complex or uses custom nodes. For a better overview, see the workflow preview.
+              <Typography variant="body1" color="text.secondary" gutterBottom>
+                No metadata available for this image
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This image doesn't have any embedded metadata or it couldn't be extracted.
               </Typography>
             </Box>
-            {/* Empty space below negative prompt */}
-            <Box sx={{ height: spacing.md, width: '100%' }} />
-          </Box>
+          )}
         </Box>
       </DialogContent>
       <DialogActions
@@ -428,14 +449,16 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
         >
           Reveal in Finder/Explorer
         </Button>
-        <Button
-          onClick={onOpenWorkflow}
-          variant="contained"
-          size="small"
-          sx={modalActionButtonSx}
-        >
-          See workflow preview
-        </Button>
+        {selectedImageData && Object.keys(selectedImageData).length > 0 && (
+          <Button
+            onClick={onOpenWorkflow}
+            variant="contained"
+            size="small"
+            sx={modalActionButtonSx}
+          >
+            See workflow preview
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
@@ -443,7 +466,7 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
 
 // Main component that handles conditional rendering
 const ImageModal: React.FC<ImageModalProps> = (props) => {
-  if (!props.selectedImage || !props.selectedImageData) {
+  if (!props.selectedImage) {
     return null;
   }
   
