@@ -16,7 +16,7 @@ def run(cmd, cwd=None):
 
 # Start backend (adjust path and port as needed)
 backend = run("uvicorn app.main:app --reload --port 8000 --log-level info", cwd="backend")
-print(f"\n{BOLD}{CYAN}[GalleryFlow]{RESET} {GREEN}Backend server starting (v1.2.0) on {RESET}http://localhost:8000 ⬅ \n")
+print(f"\n{BOLD}{CYAN}[GalleryFlow]{RESET} {GREEN}Backend server starting on {RESET}http://localhost:8000 ⬅ \n")
 
 # Start frontend
 frontend = run("npm run dev", cwd="frontend")
