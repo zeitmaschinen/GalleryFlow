@@ -21,11 +21,11 @@ Effortlessly connect to your ComfyUI output directory and instantly sort and fil
 
 <br>
 
-![Gallery screenshot](frontend/docs/images/gallery-light.jpg)
+![Gallery screenshot](frontend/docs/images/gallery-dark.jpg)
 
 <br>
 
-![Gallery screenshot](frontend/docs/images/gallery-dark.jpg)
+![Gallery screenshot](frontend/docs/images/gallery-light.jpg)
 
 <br>
 
