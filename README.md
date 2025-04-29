@@ -114,7 +114,7 @@ Close your current terminal/command window, download and install Node.js from [n
 
 ### 6. Additional Notes
 
-- Both the backend and frontend are started automatically by the script for full functionality.
+- Both the backend and frontend are started automatically by a python script for full functionality.
 
 ## Configuration
 - See `.env.example` for available configuration options.
