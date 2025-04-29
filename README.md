@@ -10,7 +10,7 @@ You can connect to your ComfyUI output directory, sort/filter images, check meta
 - 🖼️ Customizable thumbnail sizes
 - 🎨 Image preview
 - 📋 Metadata extraction and visualization
-- 🧩 Workflow visualization for each image
+- 🧩 Workflow visualization for each image and copy JSON to clipboard
 - 🚀 Automatic real-time gallery updates
 - 📂 Recursively reads all folders, so you never miss an image
 - 🔄 Real-time sorting and filtering options
@@ -38,9 +38,9 @@ You can connect to your ComfyUI output directory, sort/filter images, check meta
 <br>
 
 ## Tech Stack
-- **Frontend:** React 18, TypeScript, Material UI, React Flow
+- **Frontend:** React 18, TypeScript, Material UI
 - **Backend:** FastAPI, SQLAlchemy, Python 3.10+
-- **Other:** WebSockets, custom theming, responsive design
+- **Other:** WebSockets, React Flow, custom theming, responsive design
 
 ---
 
@@ -62,62 +62,59 @@ cd galleryflow
 
 ---
 
-### 2. Start the Backend
+### 2. Install Backend Dependencies
 
-#### macOS
 ```bash
 cd backend
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv         # or python -m venv venv on Windows
+source venv/bin/activate     # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cd ..  # Return to project root for next steps
 ```
-
-#### Windows
-```cmd
-cd backend
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-- The backend will be available at [http://localhost:8000](http://localhost:8000).
 
 ---
 
-### 3. Start the Frontend
+### 3. Install Frontend (Node.js)
 
-Open a new terminal and run:
-
-#### macOS & Windows
 ```bash
 cd frontend
 npm install
-npm run dev
+cd ..  # Return to project root
 ```
-
-- The frontend will be available at [http://localhost:5173](http://localhost:5173).
-
-
-### Troubleshooting
-If you're getting an error when installing npm, you likely need to install nodejs first.
-Download it from nodejs.org and run the installation.
-
-Then try `npm install` again after closing cmd/terminal to refresh the environment.
 
 ---
 
-### 4. To Open GalleryFlow
+### 4. Start the Application (Every time you want to run the app)
+
+On a terminal/command window **in the project root**, run:
+
+```bash
+source backend/venv/bin/activate     # or backend\venv\Scripts\activate on Windows
+python run_galleryflow.py
+```
+
+- This will launch both the backend and frontend. 
+- The backend will be available at [http://localhost:8000](http://localhost:8000).
+- The frontend will be available at [http://localhost:5173](http://localhost:5173).
+
+---
+
+### Troubleshooting
+If you're getting an error when installing npm, you likely need to install nodejs first.
+Close your current terminal/command window, download and install Node.js from [nodejs.org](https://nodejs.org/), then open a new terminal and run `npm install` again.
+
+---
+
+### 5. To Open GalleryFlow
 
 - Visit [http://localhost:5173](http://localhost:5173) in your browser.
 - Add folder path from your ComfyUI images output.
 
 ---
 
-### 5. Additional Notes
+### 6. Additional Notes
 
-- The backend and frontend must both be running for full functionality.
+- Both the backend and frontend are started automatically by the script for full functionality.
 
 ## Configuration
 - See `.env.example` for available configuration options.
