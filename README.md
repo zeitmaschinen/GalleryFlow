@@ -90,7 +90,7 @@ On a terminal/command window **in the project root**, run:
 
 ```bash
 source backend/venv/bin/activate     # or backend\venv\Scripts\activate on Windows
-python run_galleryflow.py
+python3 run_galleryflow.py
 ```
 
 - This will launch both the backend and frontend. 
