@@ -1,6 +1,6 @@
 # Contributing to GalleryFlow
 
-I love your input! I want to make contributing as easy and transparent as possible.
+I want to make contributing as easy and transparent as possible.
 
 **Note:** I may not be fully available for troubleshooting or providing new updates. However, the project is open for improvement, so feel free to contribute, fork, or adapt it as you wish!
 
