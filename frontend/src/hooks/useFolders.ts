@@ -11,9 +11,9 @@ export function useFolders() {
     setIsLoadingFolders(true);
     setErrorFolders(null);
     try {
-      console.log('[DEBUG] Fetching folders...');
+      // console.log('[DEBUG] Fetching folders...');
       const fetchedFolders = await api.getFolders();
-      console.log('[DEBUG] Fetched folders:', fetchedFolders);
+      // console.log('[DEBUG] Fetched folders:', fetchedFolders);
       setFolders(fetchedFolders);
       // --- Auto-clean localStorage if folders are missing (DB reset, etc.) ---
       if (window && window.localStorage) {
@@ -34,7 +34,7 @@ export function useFolders() {
       }
       // ---------------------------------------------------------------
     } catch (error) {
-      console.error('[DEBUG] Error fetching folders:', error);
+      // console.error('[DEBUG] Error fetching folders:', error);
       setErrorFolders(error instanceof Error ? error.message : 'Could not load folders.');
       setFolders([]);
     } finally {

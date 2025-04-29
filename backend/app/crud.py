@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import delete, func, asc, desc, or_ # Import func for count and sorting
+from sqlalchemy.dialects.sqlite import insert
 from typing import List, Optional, Set
 
 from . import models, schemas, metadata_extractor
@@ -258,30 +259,24 @@ async def scan_folder_and_update_db(
 
 async def process_image_batch(db: AsyncSession, batch: List[schemas.ImageCreate]):
     """Process a batch of images for database insertion/update, avoiding UNIQUE constraint errors."""
+    # --- Deduplicate batch by full_path ---
+    unique_images = {}
+    for img in batch:
+        unique_images[img.full_path] = img
+    batch = list(unique_images.values())
+
     for image_data in batch:
-        # Check for existing image by full_path
-        existing_image = await get_image_by_path(db, image_data.full_path)
-        if existing_image:
-            # Update if needed
-            needs_update = False
-            # --- Ensure both datetimes are timezone-aware (UTC) before comparing ---
-            db_mod = existing_image.last_modified
-            new_mod = image_data.last_modified
-            if db_mod is not None and db_mod.tzinfo is None:
-                db_mod = db_mod.replace(tzinfo=timezone.utc)
-            if new_mod is not None and new_mod.tzinfo is None:
-                new_mod = new_mod.replace(tzinfo=timezone.utc)
-            if new_mod is not None and (db_mod is None or new_mod > db_mod):
-                existing_image.last_modified = new_mod
-                needs_update = True
-            if image_data.metadata_ != getattr(existing_image, 'metadata_', None):
-                existing_image.metadata_ = image_data.metadata_
-                needs_update = True
-            if needs_update:
-                db.add(existing_image)
-        else:
-            db_image = models.Image(**image_data.model_dump())
-            db.add(db_image)
+        stmt = insert(models.Image).values(**image_data.model_dump())
+        stmt = stmt.on_conflict_do_update(
+            index_elements=['full_path'],
+            set_={
+                "last_modified": image_data.last_modified,
+                "metadata": image_data.metadata_,  # Use correct column name for DB
+                "folder_id": image_data.folder_id,
+                "filename": image_data.filename,
+            }
+        )
+        await db.execute(stmt)
     try:
         await db.commit()
     except Exception as e:
