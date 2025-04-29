@@ -1,14 +1,19 @@
+import logging
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+
+logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
+logging.getLogger('sqlalchemy.dialects').setLevel(logging.WARNING)
 
 # Define the path for the SQLite database file
 # It will be created in the 'backend' directory, one level up from 'app'
 DATABASE_URL = "sqlite+aiosqlite:///../galleryflow.db" 
 
 # Create the SQLAlchemy engine
-engine = create_async_engine(DATABASE_URL, echo=True)  # echo=True logs SQL queries, useful for debugging
+engine = create_async_engine(DATABASE_URL, echo=False)  # echo=False to suppress SQL queries in output
 
 # Create a configured "Session" class
 AsyncSessionLocal = sessionmaker(

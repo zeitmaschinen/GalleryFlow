@@ -19,13 +19,11 @@ import uuid
 
 from . import crud, models, schemas, database
 
-# Suppress SQLAlchemy engine and pool logs
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
 logging.getLogger('sqlalchemy.pool').setLevel(logging.WARNING)
 logging.getLogger('sqlalchemy.dialects').setLevel(logging.WARNING)
 
-# ... (keep logging setup, app setup, CORS, startup event) ...
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 app = FastAPI(title="GalleryFlow Backend")
 origins = [
@@ -294,6 +292,7 @@ async def list_images(
     db: AsyncSession = Depends(database.get_db)
 ):
     """Lists cached images for a specific folder with pagination, sorting, and filtering."""
+    logger.info(f"[DEBUG] /api/images called with folder_id={folder_id}, skip={skip}, limit={limit}, sort_by={sort_by}, sort_dir={sort_dir}, file_types={file_types}")
     logger.info(f"Request images: folder={folder_id}, skip={skip}, limit={limit}, sort={sort_by} {sort_dir}, types={file_types}")
 
     if sort_by not in ["filename", "date", "folder"]:
@@ -303,6 +302,7 @@ async def list_images(
 
     folder = await crud.get_folder(db, folder_id)
     if not folder:
+        logger.warning(f"[DEBUG] Folder with ID {folder_id} not found.")
         raise HTTPException(status_code=404, detail=f"Folder with ID {folder_id} not found")
 
     image_response = await crud.get_images_by_folder(
@@ -314,7 +314,7 @@ async def list_images(
         sort_dir=sort_dir,
         file_types=file_types
     )
-
+    logger.info(f"[DEBUG] Returning image response: {image_response}")
     return image_response
 
 
