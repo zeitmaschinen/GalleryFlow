@@ -50,7 +50,7 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
     
     // Extract ComfyUI or other metadata formats
     let metadataSource = selectedImageData;
-    let comfyWorkflow: Record<string, any> = {};
+    let comfyWorkflow: Record<string, unknown> = {};
     
     // Try to parse workflow JSON if it's a string
     if (typeof workflow === 'string') {
@@ -92,148 +92,167 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
     }
 
     // Function to extract metadata from ComfyUI workflow format
-    function extractComfyUIMetadata(workflow: Record<string, any>): Record<string, unknown> {
+    function extractComfyUIMetadata(workflow: Record<string, unknown>): Record<string, unknown> {
       const result: Record<string, unknown> = {};
       const nodes = Object.values(workflow);
-      
-      // Extract text prompts
-      const textNodes = nodes.filter(node => 
-        node?.class_type === 'ttN text' || 
-        node?.class_type === 'CLIPTextEncode' || 
-        node?.class_type === 'CLIPTextEncodeSDXL'
-      );
-      
+
+      // Helper to safely get class_type
+      const getClassType = (node: unknown): string | undefined =>
+        typeof node === 'object' && node !== null && 'class_type' in node && typeof (node as { class_type?: unknown }).class_type === 'string'
+          ? (node as { class_type: string }).class_type
+          : undefined;
+      // Helper to safely get inputs
+      const getInputs = (node: unknown): Record<string, unknown> =>
+        typeof node === 'object' && node !== null && 'inputs' in node && typeof (node as { inputs?: unknown }).inputs === 'object' && (node as { inputs?: unknown }).inputs !== null
+          ? (node as { inputs: Record<string, unknown> }).inputs
+          : {};
+
+      // Find text encode nodes
+      const textNodes = nodes.filter(node => {
+        const ct = getClassType(node);
+        return ct === 'ttN text' || ct === 'CLIPTextEncode' || ct === 'CLIPTextEncodeSDXL';
+      });
+
       // Find positive and negative prompts
-      let positivePromptNode = textNodes.find(node => {
-        // Check if this node is connected to a positive input in a sampler
-        const nodeId = Object.keys(workflow).find(key => workflow[key] === node);
-        if (!nodeId) return false;
-        
-        return Object.values(workflow).some(n => 
-          n?.inputs?.positive?.[0] === nodeId || 
-          n?.inputs?.text_g?.[0] === nodeId
-        );
+      const positivePromptNodes = textNodes.filter(node => {
+        const nodeId = node as { id?: unknown };
+        if (!nodeId || !('id' in nodeId)) return false;
+        return Object.values(workflow).some(n => {
+          const inputs = getInputs(n);
+          return Array.isArray(inputs.positive) && inputs.positive[0] === nodeId.id ||
+            Array.isArray(inputs.text_g) && inputs.text_g[0] === nodeId.id;
+        });
       });
-      
-      let negativePromptNode = textNodes.find(node => {
-        // Check if this node is connected to a negative input in a sampler
-        const nodeId = Object.keys(workflow).find(key => workflow[key] === node);
-        if (!nodeId) return false;
-        
-        return Object.values(workflow).some(n => 
-          n?.inputs?.negative?.[0] === nodeId || 
-          n?.inputs?.text_l?.[0] === nodeId
-        );
+
+      const negativePromptNodes = textNodes.filter(node => {
+        const nodeId = node as { id?: unknown };
+        if (!nodeId || !('id' in nodeId)) return false;
+        return Object.values(workflow).some(n => {
+          const inputs = getInputs(n);
+          return Array.isArray(inputs.negative) && inputs.negative[0] === nodeId.id ||
+            Array.isArray(inputs.text_l) && inputs.text_l[0] === nodeId.id;
+        });
       });
-      
+
+      // Find checkpoint loader nodes
+      const checkpointNodes = nodes.filter(node => {
+        const ct = getClassType(node);
+        return ct?.includes('CheckpointLoader') || ct?.includes('Load Checkpoint');
+      });
+
+      // Find LoRA loader nodes
+      const loraNodes = nodes.filter(node => {
+        const ct = getClassType(node);
+        return ct?.includes('LoraLoader') || ct?.includes('Load LoRA');
+      });
+
+      // Find KSampler nodes
+      const kSamplerNodes = nodes.filter(node => {
+        const ct = getClassType(node);
+        return ct?.includes('KSampler');
+      });
+
+      // Find other sampler types
+      const samplerNodes = nodes.filter(node => {
+        const ct = getClassType(node);
+        return !ct?.includes('KSampler') && (ct?.includes('Sampler') || ct?.includes('Unsampler'));
+      });
+
+      // Find upscaler nodes
+      const upscalerNodes = nodes.filter(node => {
+        const ct = getClassType(node);
+        return ct?.includes('Upscale') || ct?.includes('ImageScale');
+      });
+
       // Extract prompt text
-      if (positivePromptNode?.inputs?.text) {
-        result.positivePrompt = positivePromptNode.inputs.text;
+      if (positivePromptNodes.length > 0) {
+        result.positivePrompt = getInputs(positivePromptNodes[0]).text;
       }
       
-      if (negativePromptNode?.inputs?.text) {
-        result.negativePrompt = negativePromptNode.inputs.text;
+      if (negativePromptNodes.length > 0) {
+        result.negativePrompt = getInputs(negativePromptNodes[0]).text;
       }
       
       // Find checkpoint loader nodes
-      const checkpointNodes = nodes.filter(node => 
-        node?.class_type?.includes('CheckpointLoader') || 
-        node?.class_type?.includes('Load Checkpoint')
-      );
-      
-      if (checkpointNodes.length > 0 && checkpointNodes[0]?.inputs?.ckpt_name) {
-        result.model = checkpointNodes[0].inputs.ckpt_name;
+      if (checkpointNodes.length > 0 && getInputs(checkpointNodes[0]).ckpt_name) {
+        result.model = getInputs(checkpointNodes[0]).ckpt_name;
       }
       
       // Find LoRA loader nodes
-      const loraNodes = nodes.filter(node => 
-        node?.class_type?.includes('LoraLoader') || 
-        node?.class_type?.includes('Load LoRA')
-      );
-      
       if (loraNodes.length > 0) {
         result.loras = loraNodes.map(node => ({
-          name: node.inputs?.lora_name || 'Unknown LoRA',
-          weight: node.inputs?.strength_model || 1.0
+          name: getInputs(node).lora_name || 'Unknown LoRA',
+          weight: getInputs(node).strength_model || 1.0
         }));
       }
       
       // Find KSampler nodes first (prioritize these)
-      const kSamplerNodes = nodes.filter(node => 
-        node?.class_type?.includes('KSampler')
-      );
+      const primarySampler = kSamplerNodes.length > 0 ? kSamplerNodes[0] : samplerNodes.length > 0 ? samplerNodes[0] : null;
       
-      // If no KSampler nodes, look for other sampler types
-      const otherSamplerNodes = nodes.filter(node => 
-        !node?.class_type?.includes('KSampler') && 
-        (node?.class_type?.includes('Sampler') || node?.class_type?.includes('Unsampler'))
-      );
-      
-      // Prioritize KSampler nodes, then fall back to other sampler types
-      const samplerNodes = kSamplerNodes.length > 0 ? kSamplerNodes : otherSamplerNodes;
-      
-      if (samplerNodes.length > 0) {
-        // Use the first KSampler node as the primary source of metadata
-        const primarySampler = samplerNodes[0];
-        
+      if (primarySampler) {
         // Seed
-        if (primarySampler.inputs?.seed || primarySampler.inputs?.noise_seed) {
-          result.seed = primarySampler.inputs?.seed || primarySampler.inputs?.noise_seed;
+        const inputs = getInputs(primarySampler);
+        if (typeof inputs.seed === 'number' || typeof inputs.noise_seed === 'number') {
+          result.seed = typeof inputs.seed === 'number' ? inputs.seed : inputs.noise_seed;
         }
         
         // Steps
-        if (primarySampler.inputs?.steps) {
-          result.steps = primarySampler.inputs.steps;
+        if (typeof inputs.steps === 'number') {
+          result.steps = inputs.steps;
         }
         
         // CFG Scale
-        if (primarySampler.inputs?.cfg) {
-          result.cfg = formatNumberValue(primarySampler.inputs.cfg);
+        if (typeof inputs.cfg === 'number') {
+          result.cfg = formatNumberValue(inputs.cfg);
         }
         
         // Sampler name
-        if (primarySampler.inputs?.sampler_name) {
-          result.sampler = primarySampler.inputs.sampler_name;
+        if (typeof inputs.sampler_name === 'string') {
+          result.sampler = inputs.sampler_name;
         }
         
         // Scheduler
-        if (primarySampler.inputs?.scheduler) {
-          result.scheduler = primarySampler.inputs.scheduler;
+        if (typeof inputs.scheduler === 'string') {
+          result.scheduler = inputs.scheduler;
         }
         
-        // Denoise - check various possible field names
-        const denoiseValue = 
-          primarySampler.inputs?.denoise || 
-          primarySampler.inputs?.denoise_strength || 
-          primarySampler.inputs?.denoising_strength ||
-          (primarySampler.inputs?.add_noise === 'enable' ? 1.0 : null) || 
-          (primarySampler.inputs?.start_at_step === 0 ? 1.0 : null) || 
-          (primarySampler.inputs?.start_at_step && primarySampler.inputs?.steps ? 
-            (1 - primarySampler.inputs.start_at_step / primarySampler.inputs.steps) : null);
-            
+        // Denoise
+        let denoiseValue: number | null = null;
+        if (typeof inputs.denoise === 'number') {
+          denoiseValue = inputs.denoise;
+        } else if (typeof inputs.denoise_strength === 'number') {
+          denoiseValue = inputs.denoise_strength;
+        } else if (typeof inputs.denoising_strength === 'number') {
+          denoiseValue = inputs.denoising_strength;
+        } else if (inputs.add_noise === 'enable') {
+          denoiseValue = 1.0;
+        } else if (inputs.start_at_step === 0) {
+          denoiseValue = 1.0;
+        } else if (typeof inputs.start_at_step === 'number' && typeof inputs.steps === 'number') {
+          denoiseValue = 1 - inputs.start_at_step / inputs.steps;
+        }
         if (denoiseValue !== null) {
           result.denoise = formatNumberValue(denoiseValue);
         }
       }
       
       // Find upscaler nodes
-      const upscalerNodes = nodes.filter(node => 
-        node?.class_type?.includes('Upscale') || 
-        node?.class_type?.includes('ImageScale')
-      );
-      
       if (upscalerNodes.length > 0) {
         const upscaler = upscalerNodes[0];
-        if (upscaler.inputs?.upscale_method || upscaler.inputs?.upscaler) {
-          result.hiresUpscaler = upscaler.inputs?.upscale_method || upscaler.inputs?.upscaler;
+        const upInputs = getInputs(upscaler);
+        if (typeof upInputs.upscale_method === 'string' || typeof upInputs.upscaler === 'string') {
+          result.hiresUpscaler = upInputs.upscale_method || upInputs.upscaler;
         }
-        if (upscaler.inputs?.scale_by || upscaler.inputs?.scale || upscaler.inputs?.upscale) {
-          const scaleValue = upscaler.inputs?.scale_by || upscaler.inputs?.scale || upscaler.inputs?.upscale;
-          if (typeof scaleValue === 'number') {
-            result.hiresUpscale = formatNumberValue(scaleValue);
-          } else {
-            result.hiresUpscale = scaleValue;
-          }
+        let scaleValue: number | undefined;
+        if (typeof upInputs.scale_by === 'number') {
+          scaleValue = upInputs.scale_by;
+        } else if (typeof upInputs.scale === 'number') {
+          scaleValue = upInputs.scale;
+        } else if (typeof upInputs.upscale === 'number') {
+          scaleValue = upInputs.upscale;
+        }
+        if (scaleValue !== undefined) {
+          result.hiresUpscale = formatNumberValue(scaleValue);
         }
       }
       
