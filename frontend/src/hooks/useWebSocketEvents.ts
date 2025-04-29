@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import debounce from 'lodash.debounce';
 import type { Folder } from '../components/images/types';
 import { subscribeScanProgress } from '../services/websocket';
 import type { ScanProgress } from '../types/index';
@@ -30,13 +31,64 @@ export function useWebSocketEvents({
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const maxRetries = 3;
 
-  // Mark a folder reload as user-initiated to avoid duplicate reloads
-  const markUserInitiatedReload = useCallback((folderId: number) => {
-    userInitiatedReloads.current.add(folderId);
-    // Clear the marker after a reasonable time
-    setTimeout(() => {
-      userInitiatedReloads.current.delete(folderId);
-    }, 5000); // 5 seconds should be enough for the scan to complete
+  // Debounce logic for backend events
+  const backendRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const BACKEND_DEBOUNCE_MS = 150;
+
+  // Helper: call refresh immediately, cancel backend debounce
+  const immediateRefresh = useCallback((folderId: number) => {
+    if (backendRefreshTimeout.current) {
+      clearTimeout(backendRefreshTimeout.current);
+      backendRefreshTimeout.current = null;
+    }
+    onRefreshFolderAndImages(folderId);
+  }, [onRefreshFolderAndImages]);
+
+  // Helper: debounce for backend (WebSocket) events
+  const scheduleBackendRefresh = useCallback((folderId: number) => {
+    if (backendRefreshTimeout.current) {
+      clearTimeout(backendRefreshTimeout.current);
+    }
+    backendRefreshTimeout.current = setTimeout(() => {
+      onRefreshFolderAndImages(folderId);
+      backendRefreshTimeout.current = null;
+    }, BACKEND_DEBOUNCE_MS);
+  }, [onRefreshFolderAndImages]);
+
+  // Expose immediate refresh for user actions
+  // Usage: Call this from user actions (add/delete/move) to force immediate refresh
+  // Example: useWebSocketEvents(...).immediateRefresh(folderId)
+  // (You may want to export this via return value if needed)
+
+  // WebSocket message handler
+  const handleWebSocketMessage = useCallback((data: any) => {
+    if (!data) return;
+    connectionErrorsRef.current = 0;
+    if (data.event === 'scan_start') {
+      if (onFolderScanStart) onFolderScanStart();
+    } else if (data.event === 'scan_progress') {
+      if (onFolderScanProgress && data.progress) onFolderScanProgress(data.progress as ScanProgress);
+    } else if (data.event === 'scan_complete') {
+      if (onFolderScanComplete) onFolderScanComplete();
+    } else if (data.event === 'image_added' || data.event === 'image_updated' || data.event === 'image_removed') {
+      // Always batch backend events (WebSocket) with debounce
+      const folderId = typeof data.folder_id === 'string' ? parseInt(data.folder_id, 10) : data.folder_id as number;
+      scheduleBackendRefresh(folderId);
+      // Optionally, call onImageAdded/onImageRemoved/onImageUpdated if needed
+      if (data.event === 'image_added' && onImageAdded) onImageAdded(folderId);
+      if (data.event === 'image_updated' && onImageUpdated) onImageUpdated(folderId);
+      if (data.event === 'image_removed' && onImageRemoved) onImageRemoved(folderId);
+    }
+  }, [onFolderScanStart, onFolderScanProgress, onFolderScanComplete, onImageAdded, onImageUpdated, onImageRemoved, scheduleBackendRefresh]);
+
+  // Cleanup backend debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (backendRefreshTimeout.current) {
+        clearTimeout(backendRefreshTimeout.current);
+        backendRefreshTimeout.current = null;
+      }
+    };
   }, []);
 
   // Setup polling mechanism
@@ -92,56 +144,6 @@ export function useWebSocketEvents({
     if (!selectedFolder) return;
 
     // Process WebSocket messages
-    const handleWebSocketMessage = (data: any) => {
-      if (!data) return;
-      console.log('[WebSocketEvents] Received message:', data);
-      // Reset connection errors counter on successful message
-      connectionErrorsRef.current = 0;
-
-      // Handle scan progress events
-      if (data.event === 'scan_start') {
-        console.log('[WebSocket] Folder scan started');
-        if (onFolderScanStart) onFolderScanStart();
-      } 
-      else if (data.event === 'scan_progress') {
-        if (onFolderScanProgress && data.progress) onFolderScanProgress(data.progress as ScanProgress);
-      } 
-      else if (data.event === 'scan_complete') {
-        console.log('[WebSocket] Folder scan completed');
-        if (onFolderScanComplete) onFolderScanComplete();
-      } 
-      // Handle folder change events
-      else if (data.event === 'folder_change') {
-        console.log('[WebSocket] Folder change detected:', data.folder_id);
-        if (onRefreshFolderAndImages && data.folder_id) {
-          onRefreshFolderAndImages(typeof data.folder_id === 'string' ? parseInt(data.folder_id, 10) : data.folder_id as number);
-        }
-      }
-      // Handle specific image events
-      else if (data.event === 'image_added') {
-        console.log('[WebSocket] Image added', data.folder_id);
-        if (onImageAdded && data.folder_id) {
-          const folderId = typeof data.folder_id === 'string' ? parseInt(data.folder_id, 10) : data.folder_id as number;
-          onImageAdded(folderId);
-        }
-      } 
-      else if (data.event === 'image_updated') {
-        console.log('[WebSocket] Image updated', data.folder_id);
-        if (onImageUpdated && data.folder_id) {
-          const folderId = typeof data.folder_id === 'string' ? parseInt(data.folder_id, 10) : data.folder_id as number;
-          onImageUpdated(folderId);
-        }
-      } 
-      else if (data.event === 'image_removed') {
-        console.log('[WebSocket] Image removed', data.folder_id);
-        if (onImageRemoved && data.folder_id) {
-          const folderId = typeof data.folder_id === 'string' ? parseInt(data.folder_id, 10) : data.folder_id as number;
-          onImageRemoved(folderId);
-        }
-      }
-    };
-
-    // Handle WebSocket errors
     const handleWebSocketError = (error: Event) => {
       console.error('[WebSocket] Error:', error);
       connectionErrorsRef.current += 1;
@@ -193,7 +195,17 @@ export function useWebSocketEvents({
     setupPolling
   ]);
 
+  // Mark a folder reload as user-initiated to avoid duplicate reloads
+  const markUserInitiatedReload = useCallback((folderId: number) => {
+    userInitiatedReloads.current.add(folderId);
+    // Clear the marker after a reasonable time
+    setTimeout(() => {
+      userInitiatedReloads.current.delete(folderId);
+    }, 5000); // 5 seconds should be enough for the scan to complete
+  }, []);
+
   return {
-    markUserInitiatedReload
+    markUserInitiatedReload,
+    immediateRefresh,
   };
 }

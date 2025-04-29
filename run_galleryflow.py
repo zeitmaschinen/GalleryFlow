@@ -15,7 +15,7 @@ def run(cmd, cwd=None):
     return subprocess.Popen(cmd, cwd=cwd, shell=True)
 
 # Start backend (adjust path and port as needed)
-backend = run("uvicorn app.main:app --reload --port 8000 --log-level warning", cwd="backend")
+backend = run("uvicorn app.main:app --reload --port 8000 --log-level info", cwd="backend")
 print(f"\n{BOLD}{CYAN}[GalleryFlow]{RESET} {GREEN}Backend server starting on {RESET}http://localhost:8000 ⬅ \n")
 
 # Start frontend
@@ -38,4 +38,4 @@ except KeyboardInterrupt:
         frontend.wait(timeout=5)
     except Exception:
         frontend.kill()
-    print("Both servers stopped.")
+    print("Both servers stopped. You can now close this window.")

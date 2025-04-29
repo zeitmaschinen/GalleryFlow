@@ -264,8 +264,15 @@ async def process_image_batch(db: AsyncSession, batch: List[schemas.ImageCreate]
         if existing_image:
             # Update if needed
             needs_update = False
-            if image_data.last_modified > existing_image.last_modified:
-                existing_image.last_modified = image_data.last_modified
+            # --- Ensure both datetimes are timezone-aware (UTC) before comparing ---
+            db_mod = existing_image.last_modified
+            new_mod = image_data.last_modified
+            if db_mod is not None and db_mod.tzinfo is None:
+                db_mod = db_mod.replace(tzinfo=timezone.utc)
+            if new_mod is not None and new_mod.tzinfo is None:
+                new_mod = new_mod.replace(tzinfo=timezone.utc)
+            if new_mod is not None and (db_mod is None or new_mod > db_mod):
+                existing_image.last_modified = new_mod
                 needs_update = True
             if image_data.metadata_ != getattr(existing_image, 'metadata_', None):
                 existing_image.metadata_ = image_data.metadata_

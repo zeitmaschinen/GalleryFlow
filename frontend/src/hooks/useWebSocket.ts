@@ -1,6 +1,12 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { logger } from '../services/logger';
 
+declare global {
+  interface Window {
+    _lastWsTime?: number;
+  }
+}
+
 interface WebSocketOptions {
   url: string;
   onMessage?: (data: unknown) => void;
@@ -55,9 +61,18 @@ export const useWebSocket = ({
       };
 
       ws.current.onmessage = (event) => {
+        console.warn('[WS RAW]', event.data); // TEMP: Log all raw incoming WS messages
+        // Always log the raw message, very visibly
+        console.warn('[WebSocket][ALWAYS] Message received:', event.data);
         try {
+          console.log('[WebSocket] Raw message received:', event.data);
           const data = JSON.parse(event.data);
-          console.debug('[WebSocket] Message received:', data);
+          // Print timestamp and delta since last message for diagnostics
+          const now = Date.now();
+          if (!window._lastWsTime) window._lastWsTime = now;
+          const delta = now - window._lastWsTime;
+          window._lastWsTime = now;
+          console.debug(`[WebSocket] ${new Date(now).toISOString()} Δ${delta}ms Message received:`, data);
           onMessage?.(data);
         } catch (error) {
           logger.error('Failed to parse WebSocket message', error as Error);
