@@ -1,22 +1,33 @@
 # Contributing to GalleryFlow
 
-We love your input! We want to make contributing as easy and transparent as possible.
+I love your input! I want to make contributing as easy and transparent as possible.
 
-**Note:** I may not be available for troubleshooting or providing new updates. However, the project is open for improvement, so feel free to contribute, fork, or adapt it as you wish!
+**Note:** I may not be fully available for troubleshooting or providing new updates. However, the project is open for improvement, so feel free to contribute, fork, or adapt it as you wish!
 
 ## Development Process
 
 1. Fork the repo and create your branch from `main`.
 2. If you've added code that should be tested, add tests.
 3. Update the documentation.
-4. Ensure the test suite passes.
+4. Ensure the test suite passes. Test your changes by running the app with the unified script as described below.
 5. Make sure your code lints.
 6. Issue a pull request!
+
+## Running the App Locally
+
+To start both backend and frontend for development, from the project root:
+
+```bash
+source backend/venv/bin/activate     # or backend\venv\Scripts\activate on Windows
+python3 run_galleryflow.py
+```
+
+This will launch both servers. Access the frontend at [http://localhost:5173](http://localhost:5173) and the backend at [http://localhost:8000](http://localhost:8000).
 
 ## Pull Request Process
 
 1. Update the README.md with details of changes if needed.
-2. The PR will be merged once you have the sign-off.
+2. The pull request will be merged once you have the sign-off.
 
 ## Coding Style
 
@@ -30,9 +41,8 @@ We love your input! We want to make contributing as easy and transparent as poss
 
 ## Advanced Usage
 
-- See the `README.md` for details on advanced configuration, environment variables, and deployment.
 - You may customize `.env` files for different environments (local, staging, production).
-- For running backend and frontend in parallel, use two terminal windows or a process manager (e.g., [concurrently](https://www.npmjs.com/package/concurrently)).
+- For advanced workflows (e.g., debugging only backend or frontend), you may still run them separately as described in the README.
 
 ## Troubleshooting
 
@@ -47,16 +57,7 @@ We love your input! We want to make contributing as easy and transparent as poss
 - **Platform-specific tips:**
   - On Windows, use `venv\Scripts\activate` for Python virtualenv
   - On macOS/Linux, use `source venv/bin/activate`
-
-## SSH Setup for Development
-
-- If you wish to develop remotely (e.g., on a server or VM):
-  1. Ensure you have SSH access to your development machine.
-  2. Clone the repository via SSH: `git clone git@github.com:zeitmaschinen/galleryflow.git`
-  3. Use SSH port forwarding to access local servers remotely:
-     - Example: `ssh -L 5173:localhost:5173 user@remote-server` (for frontend)
-     - Example: `ssh -L 8000:localhost:8000 user@remote-server` (for backend)
-  4. Develop as usual, using the forwarded ports in your browser.
+  - If you encounter issues with the unified script, check that dependencies are installed and your virtual environment is activated. For more troubleshooting tips, see the README.
 
 ## License
 
