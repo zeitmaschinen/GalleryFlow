@@ -136,9 +136,9 @@ const MainContent: React.FC<MainContentProps> = ({
             }}
           >
             <Stack spacing={2} alignItems="center">
-              <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Box sx={{ width: 70, height: 70, mb: 2 }}>
                 <img 
-                  src="/images/symbol.png" 
+                  src={mode === 'dark' ? "/images/symbol-darkmode.png" : "/images/symbol.png"} 
                   alt="Logo" 
                   style={{ 
                     maxWidth: '100%',
@@ -148,7 +148,11 @@ const MainContent: React.FC<MainContentProps> = ({
                 />
               </Box>
               <Typography variant="h5" component="h1">
-                <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>Welcome to GalleryFlow</span>
+                <span style={{ 
+                  fontFamily: "'Space Mono', monospace", 
+                  fontWeight: 400,
+                  color: mode === 'dark' ? '#9A8EF3' : '#3A2DB3'
+                }}>Welcome to GalleryFlow</span>
               </Typography>
               <Typography variant="body1" color="text.secondary">
                 Add or select a folder from the sidebar to view your images.

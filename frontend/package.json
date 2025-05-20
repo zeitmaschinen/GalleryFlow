@@ -1,7 +1,7 @@
 {
   "name": "galleryflow",
   "private": false,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A modern web application for browsing and managing ComfyUI-generated images with advanced metadata support",
   "type": "module",
   "repository": {

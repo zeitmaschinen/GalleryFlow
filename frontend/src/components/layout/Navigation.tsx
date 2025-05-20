@@ -112,7 +112,7 @@ export const SidebarFooter: React.FC = () => {
         >
           GalleryFlow
         </a>{' '}
-        v1.2.0 zeitmaschinen
+        v1.2.1 zeitmaschinen
       </Typography>
     </Box>
   );
