@@ -1,11 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import ReactFlow, { Background, Controls, Node, Edge, applyNodeChanges } from 'reactflow';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import ReactFlow, { 
+  Background, 
+  Node, 
+  Edge, 
+  applyNodeChanges,
+  applyEdgeChanges,
+  ConnectionLineType,
+  Panel,
+  ReactFlowInstance,
+  NodeChange,
+  EdgeChange
+} from 'reactflow';
 import type { ComfyUIWorkflow } from '../../utils/parseComfyWorkflow';
 import 'reactflow/dist/style.css';
+import './ComfyUI.css';
 import { parseComfyWorkflow } from '../../utils/parseComfyWorkflow';
 import ComfyNode from './ComfyNode';
 import { useTheme } from '@mui/material/styles';
-import { Box } from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
+import FitScreenIcon from '@mui/icons-material/FitScreen';
 
 interface WorkflowViewerProps {
   workflowJson: Record<string, unknown> | null;
@@ -52,27 +67,90 @@ const WorkflowViewer: React.FC<WorkflowViewerProps> = ({ workflowJson, height = 
     comfy: ComfyNode,
   }), []);
 
+  // ReactFlow instance reference for controlling the view
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  
+  // Edge change handler
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [setEdges]
+  );
+
+  // Node change handler
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    [setNodes]
+  );
+  
+  // Fit view handler
+  const handleFitView = () => {
+    if (reactFlowInstance) {
+      reactFlowInstance.fitView({ padding: 0.2 });
+    }
+  };
+
+  // Zoom handlers
+  const handleZoomIn = () => {
+    if (reactFlowInstance) {
+      reactFlowInstance.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (reactFlowInstance) {
+      reactFlowInstance.zoomOut();
+    }
+  };
+
   return (
-    <Box sx={{ width: '100%', height: height, minHeight: 300, background: 'transparent' }}>
+    <Box sx={{ width: '100%', height: height, minHeight: 300, background: 'transparent', position: 'relative' }}>
       <ReactFlow
-        nodes={nodes.map(node => ({ ...node, data: { ...node.data, darkMode } }))}
+        nodes={nodes.map(node => ({ 
+          ...node, 
+          data: { 
+            ...node.data, 
+            darkMode, 
+            id: node.id 
+          }
+        }))}
         edges={edges}
         nodeTypes={nodeTypes}
+        onInit={(instance: ReactFlowInstance) => setReactFlowInstance(instance)}
         fitView
-        fitViewOptions={{ padding: 0.15 }}
+        fitViewOptions={{ padding: 0.2 }}
         minZoom={0.1}
-        maxZoom={2}
+        maxZoom={3}
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
         zoomOnScroll
         panOnScroll
-        className={`workflow-viewer-reactflow workflow-visualization-${mode}`}
+        connectionLineType={ConnectionLineType.Bezier}
+        className={`comfyui-flow ${mode}`}
         style={{ borderRadius: 8, width: '100%', height: '100%' }}
-        onNodesChange={changes => setNodes(nds => applyNodeChanges(changes, nds))}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
       >
-        <Controls />
-        <Background gap={16} color="var(--workflow-grid, #888)" />
+        <Background gap={25} size={1} color={darkMode ? 'rgba(70, 70, 70, 0.15)' : 'rgba(0, 0, 0, 0.06)'} />
+        
+        {/* Custom controls panel */}
+        <Panel position="top-right" className="comfyui-controls">
+          <Tooltip title="Zoom In">
+            <IconButton onClick={handleZoomIn} size="small" sx={{ color: darkMode ? '#fff' : '#555' }}>
+              <ZoomInIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Zoom Out">
+            <IconButton onClick={handleZoomOut} size="small" sx={{ color: darkMode ? '#fff' : '#555' }}>
+              <ZoomOutIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Fit View">
+            <IconButton onClick={handleFitView} size="small" sx={{ color: darkMode ? '#fff' : '#555' }}>
+              <FitScreenIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Panel>
       </ReactFlow>
     </Box>
   );
