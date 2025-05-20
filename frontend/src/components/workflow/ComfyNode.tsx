@@ -1,6 +1,10 @@
-import React from 'react';
 import { Handle, Position } from 'reactflow';
-import { ComfyNodeData } from './types';
+// TODO: Replace with correct import if available
+export interface ComfyNodeData {
+  class_type: string;
+  inputs: Record<string, unknown>;
+  darkMode?: boolean;
+}
 
 function renderDetails(classType: string, inputs: Record<string, unknown>) {
   switch (classType) {

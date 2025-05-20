@@ -13,7 +13,6 @@ import { SortField } from './types';
 import { getTheme } from './theme';
 import { SidebarContainer, MobileSidebar } from './components/layout';
 import { MainContent } from './components/layout';
-import { useLayoutCalculator } from './hooks/useLayoutCalculator';
 import { subscribeScanProgress } from './services/websocket';
 
 function App() {
@@ -256,7 +255,6 @@ function App() {
   }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages, suppressionWindowMs]);
 
   // Layout calculator
-  const { columnsCount } = useLayoutCalculator({ thumbnailSize });
 
   // Fetch images when state changes
   useEffect(() => {
@@ -355,7 +353,6 @@ function App() {
             sortBy={sortBy}
             sortDirection={sortDirection}
             selectedFileTypes={selectedFileTypes}
-            columnsCount={columnsCount}
             onSortByChange={handleSortByChange}
             onSortDirectionToggle={handleSortDirectionToggle}
             onFileTypeChange={handleFileTypeChange}

@@ -10,7 +10,7 @@ import { AddFolderForm } from '../folders';
 import { FolderList } from '../folders';
 import { SidebarHeader, SidebarFooter } from './Navigation';
 import { typography, spacing } from '../../theme/themeConstants';
-import type { Folder } from '../../types';
+import type { Folder } from '../images/types';
 
 interface SidebarContainerProps {
   folders: Folder[];

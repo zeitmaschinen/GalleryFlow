@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactFlow, { Background, Controls, Node, Edge, applyNodeChanges } from 'reactflow';
+import type { ComfyUIWorkflow } from '../../utils/parseComfyWorkflow';
 import 'reactflow/dist/style.css';
 import { parseComfyWorkflow } from '../../utils/parseComfyWorkflow';
 import ComfyNode from './ComfyNode';
@@ -33,7 +34,7 @@ const WorkflowViewer: React.FC<WorkflowViewerProps> = ({ workflowJson, height = 
           .filter(([k, v]) => !isNaN(Number(k)) && v && typeof v === 'object' && 'class_type' in v)
           .map(([k, v]) => [k, v]);
         const workflowObj = Object.fromEntries(workflowNodes);
-        const { nodes: dagreNodes, edges: dagreEdges } = parseComfyWorkflow(workflowObj as Record<string, unknown>);
+        const { nodes: dagreNodes, edges: dagreEdges } = parseComfyWorkflow(workflowObj as unknown as ComfyUIWorkflow);
         dagreNodes.forEach(n => n.type = 'comfy');
         setNodes(dagreNodes);
         setEdges(dagreEdges);
