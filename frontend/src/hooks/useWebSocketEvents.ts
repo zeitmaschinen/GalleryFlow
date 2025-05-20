@@ -36,7 +36,9 @@ export function useWebSocketEvents({
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    onRefreshFolderAndImages(folderId);
+    if (onRefreshFolderAndImages) {
+      onRefreshFolderAndImages(folderId);
+    }
   }, [onRefreshFolderAndImages]);
 
   // Helper: debounce for backend (WebSocket) events
@@ -45,7 +47,9 @@ export function useWebSocketEvents({
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    onRefreshFolderAndImages(folderId);
+    if (onRefreshFolderAndImages) {
+      onRefreshFolderAndImages(folderId);
+    }
   }, [onRefreshFolderAndImages]);
 
   // Expose immediate refresh for user actions
