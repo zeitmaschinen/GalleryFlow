@@ -104,7 +104,7 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
       );
       
       // Find positive and negative prompts
-      let positivePromptNode = textNodes.find(node => {
+      const positivePromptNode = textNodes.find(node => {
         // Check if this node is connected to a positive input in a sampler
         const nodeId = Object.keys(workflow).find(key => workflow[key] === node);
         if (!nodeId) return false;
@@ -115,7 +115,7 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
         );
       });
       
-      let negativePromptNode = textNodes.find(node => {
+      const negativePromptNode = textNodes.find(node => {
         // Check if this node is connected to a negative input in a sampler
         const nodeId = Object.keys(workflow).find(key => workflow[key] === node);
         if (!nodeId) return false;

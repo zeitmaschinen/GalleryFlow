@@ -176,7 +176,7 @@ export const FileTypeFilter: React.FC<FileTypeFilterProps> = ({ selectedTypes, o
             transition: 'none !important',
           },
         }}
-        aria-controls={Boolean(anchorEl) ? 'filter-menu' : undefined}
+        aria-controls={anchorEl ? 'filter-menu' : undefined}
         aria-haspopup="true"
         aria-expanded={Boolean(anchorEl)}
         id="filter-button"

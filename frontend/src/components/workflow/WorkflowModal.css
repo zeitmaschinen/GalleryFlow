@@ -1,7 +1,7 @@
 /* Workflow visualization wrapper for background and grid */
 .workflow-visualization-wrapper {
   width: 100%;
-  height: 100%; /* Garante altura total para React Flow */
+  height: 100%;
   min-height: 300px;
   border-radius: 8px;
   background: var(--workflow-bg, #F4F5FA);
@@ -10,72 +10,168 @@
 
 /* Light mode workflow background */
 .workflow-visualization-light {
-  --workflow-bg: #F4F5FA;
-  --workflow-grid: #888;
+  --workflow-bg: #F5F5F7;
+  --workflow-grid: #CCCCCC;
 }
 
 /* Dark mode workflow background */
 .workflow-visualization-dark {
-  --workflow-bg: #23272E;
-  --workflow-grid: #444;
+  --workflow-bg: #1A1A1A;
+  --workflow-grid: #333333;
 }
 
 .react-flow__background {
-  background: var(--workflow-bg, #F4F5FA) !important;
+  background: var(--workflow-bg) !important;
 }
 
-/* Conexões (edges) roxas no React Flow */
+/* Connections (edges) styling */
 .react-flow__edge-path,
 .react-flow__connection-path {
-  stroke: #ACA5FF !important;
-  stroke-width: 2.5;
+  stroke: var(--edge-color, #9C8EFA) !important;
+  stroke-width: 3;
 }
 
+/* ComfyUI-style node styling */
 .comfy-node {
-  border-radius: 8px;
-  padding: 10px;
-  min-width: 220px;
-  max-width: 260px;
-  font-size: 13px;
-  box-shadow: 0 2px 8px #0002;
-  border: 2px solid var(--comfy-node-border);
-  transition: background 0.2s, color 0.2s, border 0.2s;
-  word-break: break-word;
-  white-space: pre-line;
-  overflow-wrap: anywhere;
+  border-radius: 6px;
+  padding: 0;
+  min-width: 180px;
+  max-width: 300px;
+  font-size: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--comfy-node-border);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease-in-out;
 }
 
-.comfy-node-label {
-  font-weight: 700;
+.comfy-node:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.comfy-node-header {
+  padding: 8px 10px;
+  font-weight: 600;
+  font-size: 13px;
+  background: var(--comfy-node-header-bg);
+  color: var(--comfy-node-header-color);
+  border-bottom: 1px solid var(--comfy-node-border);
+}
+
+.comfy-node-content {
+  padding: 10px;
+  background: var(--comfy-node-bg);
+  color: var(--comfy-node-color);
+}
+
+.comfy-node-property {
   margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.comfy-node-property-label {
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--comfy-node-label-color);
+  margin-bottom: 2px;
+}
+
+.comfy-node-property-value {
+  font-size: 12px;
   word-break: break-word;
-  white-space: pre-line;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
+  max-height: 80px;
+  overflow-y: auto;
+  padding: 4px 6px;
+  background: var(--comfy-node-value-bg);
+  border-radius: 4px;
 }
 
 .comfy-node-handle {
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
   background: var(--comfy-node-handle-bg);
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
+  border: 2px solid var(--comfy-node-handle-border);
+}
+
+.comfy-node-handle-input {
+  top: 50%;
+  left: -6px;
+}
+
+.comfy-node-handle-output {
+  top: 50%;
+  right: -6px;
+}
+
+/* Node type-specific colors */
+.comfy-node-checkpoint {
+  --comfy-node-header-bg: #3A2DB3;
+  --comfy-node-header-color: #FFFFFF;
+}
+
+.comfy-node-lora {
+  --comfy-node-header-bg: #7B61FF;
+  --comfy-node-header-color: #FFFFFF;
+}
+
+.comfy-node-latent {
+  --comfy-node-header-bg: #FF6B6B;
+  --comfy-node-header-color: #FFFFFF;
+}
+
+.comfy-node-clip {
+  --comfy-node-header-bg: #4CAF50;
+  --comfy-node-header-color: #FFFFFF;
+}
+
+.comfy-node-sampler {
+  --comfy-node-header-bg: #2196F3;
+  --comfy-node-header-color: #FFFFFF;
+}
+
+.comfy-node-vae {
+  --comfy-node-header-bg: #FF9800;
+  --comfy-node-header-color: #FFFFFF;
+}
+
+.comfy-node-save {
+  --comfy-node-header-bg: #9C27B0;
+  --comfy-node-header-color: #FFFFFF;
+}
+
+.comfy-node-image {
+  --comfy-node-header-bg: #00ACC1; /* Cyan color for image nodes */
+  --comfy-node-header-color: #FFFFFF;
+}
+
+.comfy-node-default {
+  --comfy-node-header-bg: #607D8B;
+  --comfy-node-header-color: #FFFFFF;
 }
 
 /* Light mode palette */
 .comfy-node-light {
-  --comfy-node-bg: #E0E0E0;
-  --comfy-node-color: #3A3541;
-  --comfy-node-border: #E0E0E0;
-  --comfy-node-handle-bg: #888;
-  background: var(--comfy-node-bg);
-  color: var(--comfy-node-color);
+  --comfy-node-bg: #FFFFFF;
+  --comfy-node-color: #333333;
+  --comfy-node-border: rgba(0, 0, 0, 0.1);
+  --comfy-node-handle-bg: #FFFFFF;
+  --comfy-node-handle-border: #666666;
+  --comfy-node-label-color: #555555;
+  --comfy-node-value-bg: #F5F5F7;
+  --edge-color: #9C8EFA;
 }
 
 /* Dark mode palette */
 .comfy-node-dark {
-  --comfy-node-bg: #23272E;
-  --comfy-node-color: #fff;
-  --comfy-node-border: #E0E0E0;
-  --comfy-node-handle-bg: #ACA5FF;
-  background: var(--comfy-node-bg);
-  color: var(--comfy-node-color);
+  --comfy-node-bg: #252525;
+  --comfy-node-color: #EEEEEE;
+  --comfy-node-border: rgba(255, 255, 255, 0.1);
+  --comfy-node-handle-bg: #333333;
+  --comfy-node-handle-border: #AAAAAA;
+  --comfy-node-label-color: #BBBBBB;
+  --comfy-node-value-bg: #333333;
+  --edge-color: #9C8EFA;
 }
