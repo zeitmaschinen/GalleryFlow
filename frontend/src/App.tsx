@@ -17,7 +17,9 @@ import { useLayoutCalculator } from './hooks/useLayoutCalculator';
 import { subscribeScanProgress } from './services/websocket';
 
 function App() {
-  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  // Use system preference for initial theme mode
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const [mode, setMode] = useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : 'light');
   const [isInitializing, setIsInitializing] = useState(true);
   const theme = useMemo(() => getTheme(mode), [mode]);
   const muiTheme = theme;
@@ -59,6 +61,11 @@ function App() {
   const handleDrawerOpen = () => setSidebarOpen(true);
   const handleDrawerClose = () => setSidebarOpen(false);
   const toggleColorMode = () => setMode(prev => prev === 'light' ? 'dark' : 'light');
+
+  // Listen for system color scheme changes
+  useEffect(() => {
+    setMode(prefersDarkMode ? 'dark' : 'light');
+  }, [prefersDarkMode]);
 
   // Initialize app
   useEffect(() => {

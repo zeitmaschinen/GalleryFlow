@@ -8,7 +8,7 @@ export function useImages(IMAGES_PER_PAGE: number) {
   const [thumbnailSize, setThumbnailSize] = useState<number>(150);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalImages, setTotalImages] = useState(0);
-  const [sortBy, setSortBy] = useState<'filename' | 'date' | 'folder'>('filename');
+  const [sortBy, setSortBy] = useState<'filename' | 'date' | 'folder'>('folder'); // Default to 'Subfolder'
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
 

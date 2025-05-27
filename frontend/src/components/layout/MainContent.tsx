@@ -1,11 +1,13 @@
 import React from 'react';
+import symbolLight from '../../images/symbol.png';
+import symbolDark from '../../images/symbol-darkmode.png';
 import { Box, IconButton, Typography, Stack } from '@mui/material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { FolderHeader } from '../folders';
 import { StatsCards, ControlsCard } from '../common';
 import { ImageGridContainer } from '../images';
-import { spacing } from '../../theme/themeConstants';
+import { spacing, colors } from '../../theme/themeConstants';
 import type { SortField } from '../../types';
 import { IMAGES_PER_PAGE } from '../../constants';
 import { Image } from '../images/ImageGrid';
@@ -161,7 +163,7 @@ const MainContent: React.FC<MainContentProps> = ({
             <Stack spacing={2} alignItems="center">
               <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img 
-                  src="/images/symbol.png" 
+                  src={mode === 'dark' ? symbolDark : symbolLight} 
                   alt="Logo" 
                   style={{ 
                     maxWidth: '100%',
@@ -171,7 +173,13 @@ const MainContent: React.FC<MainContentProps> = ({
                 />
               </Box>
               <Typography variant="h5" component="h1">
-                <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400 }}>Welcome to GalleryFlow</span>
+                <span style={{ 
+                  fontFamily: "'Space Mono', monospace", 
+                  fontWeight: 400,
+                  color: mode === 'dark' ? colors.primary.dark.main : colors.primary.light.dark
+                }}>
+                  Welcome to GalleryFlow
+                </span>
               </Typography>
               <Typography variant="body1" color="text.secondary">
                 Add or select a folder from the sidebar to view your images.

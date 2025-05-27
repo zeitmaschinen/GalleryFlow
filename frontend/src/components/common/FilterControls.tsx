@@ -87,6 +87,13 @@ export const SortButton: React.FC<SortButtonProps> = ({ value, onChange }) => {
       >
         <Box>
           <MenuItem 
+            onClick={() => handleMenuItemClick('folder')} 
+            selected={value === 'folder'} 
+            sx={dropdownStyles.menuItem(value === 'folder')}
+          >
+            Subfolder
+          </MenuItem>
+          <MenuItem 
             onClick={() => handleMenuItemClick('filename')} 
             selected={value === 'filename'} 
             sx={dropdownStyles.menuItem(value === 'filename')}
@@ -99,13 +106,6 @@ export const SortButton: React.FC<SortButtonProps> = ({ value, onChange }) => {
             sx={dropdownStyles.menuItem(value === 'date')}
           >
             Date Modified
-          </MenuItem>
-          <MenuItem 
-            onClick={() => handleMenuItemClick('folder')} 
-            selected={value === 'folder'} 
-            sx={dropdownStyles.menuItem(value === 'folder')}
-          >
-            Subfolder
           </MenuItem>
         </Box>
       </Menu>
