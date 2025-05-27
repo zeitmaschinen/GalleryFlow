@@ -56,7 +56,7 @@ async def get_images_by_folder(
     db: AsyncSession,
     folder_id: int,
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 200,
     sort_by: str = "filename",
     sort_dir: str = "asc",
     file_types: Optional[List[str]] = None

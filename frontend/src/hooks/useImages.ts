@@ -22,7 +22,6 @@ export function useImages(IMAGES_PER_PAGE: number) {
     setIsLoadingImages(true);
     setErrorImages(null);
     try {
-      // console.log('[DEBUG] Fetching images...');
       const response = await api.getImages(
         folderId,
         page,
@@ -31,7 +30,6 @@ export function useImages(IMAGES_PER_PAGE: number) {
         currentSortDir,
         fileTypes
       );
-      // console.log('[DEBUG] Fetched images:', response);
       setImages(response.images);
       setTotalImages(response.total_count);
     } catch (err: unknown) {

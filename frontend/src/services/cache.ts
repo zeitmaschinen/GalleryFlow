@@ -6,6 +6,8 @@ class ImageCache {
 
   constructor() {
     this.cache = new Map();
+    // Clear cache on initialization to ensure fresh data with new page size
+    this.clear();
   }
 
   private getCacheKey(
@@ -28,7 +30,9 @@ class ImageCache {
     const key = this.getCacheKey(folderId, page, sortBy, sortDir, fileTypes);
     const cached = this.cache.get(key);
 
-    if (!cached) return null;
+    if (!cached) {
+      return null;
+    }
     if (Date.now() - cached.timestamp > this.TTL) {
       this.cache.delete(key);
       return null;

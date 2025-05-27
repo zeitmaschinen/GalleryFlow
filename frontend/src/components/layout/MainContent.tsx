@@ -71,29 +71,39 @@ const MainContent: React.FC<MainContentProps> = ({
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'auto', // Make the entire main container scrollable
       }}
     >
-      {/* Top Bar */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: spacing.md }}>
-        <IconButton onClick={toggleColorMode} color="inherit">
-          {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-        </IconButton>
-      </Box>
-
       {selectedFolder ? (
-        <>
-          {/* Folder Header */}
-          <FolderHeader selectedFolder={selectedFolder} />
-
-          {/* Fixed spacer between FolderHeader and StatsCards (always present) */}
-          <Box sx={{ height: spacing.lg }} />
+        /* Main content container */
+        <Box 
+          sx={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+          }}
+        >
+          {/* Top area with theme toggle button */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: spacing.md }}>
+            <IconButton onClick={toggleColorMode} color="inherit">
+              {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+          </Box>
+          
+          {/* Folder header with more space below the theme toggle */}
+          <Box sx={{ mb: spacing.lg }}>
+            <FolderHeader selectedFolder={selectedFolder} />
+          </Box>
+          
+          {/* Additional spacer between header and content */}
+          <Box sx={{ height: spacing.md }} />
 
           {/* Stats Cards */}
           <Box sx={{ mb: spacing.md }}>
             <StatsCards
               totalImages={totalImages}
               currentPage={currentPage}
-              totalPages={Math.ceil(totalImages / IMAGES_PER_PAGE)}
+              totalPages={Math.ceil(totalImages / 200)} // Force 200 images per page
             />
           </Box>
 
@@ -111,8 +121,8 @@ const MainContent: React.FC<MainContentProps> = ({
             />
           </Box>
 
-          {/* Scrollable Image Grid Area */}
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          {/* Image Grid Area - No longer has its own scrolling */}
+          <Box sx={{ flex: 1 }}>
             <ImageGridContainer
               images={images}
               isLoading={isLoadingImages}
@@ -121,25 +131,29 @@ const MainContent: React.FC<MainContentProps> = ({
               columnsCount={columnsCount}
               currentPage={currentPage}
               totalImages={totalImages}
-              imagesPerPage={IMAGES_PER_PAGE}
+              imagesPerPage={200} // Force 200 images per page
               onPageChange={onPageChange}
               onGoToFirstPage={onGoToFirstPage}
               onGoToLastPage={onGoToLastPage}
             />
           </Box>
-        </>
+        </Box>
       ) : (
-        <>
-          {/* Fixed spacer between FolderHeader and StatsCards (always present) */}
-          <Box sx={{ height: spacing.lg }} />
-
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {/* Top area with theme toggle for welcome screen */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: spacing.md }}>
+            <IconButton onClick={toggleColorMode} color="inherit">
+              {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+          </Box>
+          
           <Box
             sx={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              height: '100%',
+              flex: 1,
               textAlign: 'center',
               p: spacing.xl
             }}
@@ -164,7 +178,7 @@ const MainContent: React.FC<MainContentProps> = ({
               </Typography>
             </Stack>
           </Box>
-        </>
+        </Box>
       )}
     </Box>
   );

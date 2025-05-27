@@ -51,7 +51,7 @@ export const refreshFolder = async (folderId: number): Promise<ScanProgress> => 
 export const getImages = async (
     folderId: number,
     page: number = 1,
-    limit: number = 100,
+    limit: number = 200,
     sortBy: string = "filename",
     sortDir: 'asc' | 'desc' = "asc",
     fileTypes?: string[]
@@ -75,7 +75,8 @@ export const getImages = async (
         fileTypes.forEach(type => params.append('file_types', type));
     }
     
-    const response = await apiClient.get<ImageListResponse>(`/images?${params.toString()}`);
+    const requestUrl = `/images?${params.toString()}`;
+    const response = await apiClient.get<ImageListResponse>(requestUrl);
     
     // Cache the response
     imageCache.set(folderId, page, sortBy, sortDir, fileTypes, response.data);

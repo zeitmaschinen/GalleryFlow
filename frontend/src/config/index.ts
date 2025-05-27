@@ -9,7 +9,7 @@ export const config = {
     }
   },
   pagination: {
-    defaultPageSize: 100,
+    defaultPageSize: 200,
     pageSizeOptions: [50, 100, 200]
   },
   cache: {
