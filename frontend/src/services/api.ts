@@ -84,9 +84,10 @@ export const getImages = async (
     return response.data;
 };
 
-// Function to get the direct image URL (Keep existing)
+// Function to get the direct image URL with browser caching
 export const getImageUrl = (imagePath: string): string => {
-    return `${API_BASE_URL}/image?file_path=${encodeURIComponent(imagePath)}`;
+    // Enable browser caching for images
+    return `${API_BASE_URL}/image?file_path=${encodeURIComponent(imagePath)}&cache=true`;
 };
 
 // Function to reveal file in system's file explorer

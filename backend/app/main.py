@@ -328,6 +328,7 @@ async def list_images(
 @app.get("/api/image")
 async def get_image_file(
     file_path: str = Query(..., description="Absolute path to the image file"),
+    cache: bool = Query(False, description="Enable browser caching for this image"),
     db: AsyncSession = Depends(database.get_db)
 ):
     logger.info(f"Received request for image file: {file_path}")
@@ -365,8 +366,23 @@ async def get_image_file(
     if resolved_requested_path.suffix.lower() == '.jpg':
         media_type = 'image/jpeg'
 
-    logger.info(f"Serving image: {resolved_requested_path} with media type {media_type}")
-    return FileResponse(str(resolved_requested_path), media_type=media_type)
+    logger.info(f"Serving image: {resolved_requested_path} with media type {media_type}, cache={cache}")
+    response = FileResponse(str(resolved_requested_path), media_type=media_type)
+    
+    # Add cache control headers if caching is requested
+    if cache:
+        # Cache for 7 days (604800 seconds)
+        response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+        # Add ETag based on file modification time for cache validation
+        file_stat = resolved_requested_path.stat()
+        etag = f"\"{hash(str(file_stat.st_mtime) + str(file_stat.st_size))}\""
+        response.headers["ETag"] = etag
+    else:
+        # Prevent caching if not explicitly requested
+        response.headers["Cache-Control"] = "no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+    
+    return response
 
 @app.post("/api/reveal-in-explorer", status_code=200)
 async def reveal_file(
