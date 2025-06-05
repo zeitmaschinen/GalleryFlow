@@ -1,4 +1,4 @@
-import React from 'react';
+// Modern JSX transform doesn't require React import
 import { Handle, Position } from 'reactflow';
 import { ComfyNodeData } from './types';
 
@@ -131,11 +131,12 @@ function renderProperties(classType: string, inputs: Record<string, unknown>) {
 const classTypeLabels: Record<string, string> = {
   'CheckpointLoaderSimple': 'Load Checkpoint',
   'LoraLoader': 'Load LoRA',
-  'EmptyLatentImage': 'Empty Latent Image',
-  'CLIPTextEncode': 'CLIP Text Encode',
+  'EmptyLatentImage': 'Empty Latent',
+  'CLIPTextEncode': 'CLIP Text',
   'KSampler': 'KSampler',
   'VAEDecode': 'VAE Decode',
   'SaveImage': 'Save Image',
+  'LoadImage': 'Load Image',
 };
 
 export default function ComfyNode({ data }: { data: ComfyNodeData }) {
