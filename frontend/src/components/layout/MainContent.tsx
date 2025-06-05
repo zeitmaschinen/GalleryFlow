@@ -9,8 +9,13 @@ import { StatsCards, ControlsCard } from '../common';
 import { ImageGridContainer } from '../images';
 import { spacing, colors } from '../../theme/themeConstants';
 import type { SortField } from '../../types';
-import { IMAGES_PER_PAGE } from '../../constants';
-import type { Image, Folder } from '../images/types';
+import { Image } from '../images/ImageGrid';
+
+// Define the Folder interface locally since it's not properly exported from types
+interface Folder {
+  id: number;
+  path: string;
+}
 
 interface MainContentProps {
   mode: 'light' | 'dark';
@@ -25,6 +30,7 @@ interface MainContentProps {
   sortBy: SortField;
   sortDirection: 'asc' | 'desc';
   selectedFileTypes: string[];
+  columnsCount: number;
   onSortByChange: (field: SortField) => void;
   onSortDirectionToggle: () => void;
   onFileTypeChange: (types: string[]) => void;
@@ -47,6 +53,7 @@ const MainContent: React.FC<MainContentProps> = ({
   sortBy,
   sortDirection,
   selectedFileTypes,
+  columnsCount,
   onSortByChange,
   onSortDirectionToggle,
   onFileTypeChange,
@@ -97,7 +104,7 @@ const MainContent: React.FC<MainContentProps> = ({
             <StatsCards
               totalImages={totalImages}
               currentPage={currentPage}
-              totalPages={Math.ceil(totalImages / IMAGES_PER_PAGE)}
+              totalPages={Math.ceil(totalImages / 200)} // Force 200 images per page
             />
           </Box>
 
@@ -122,9 +129,10 @@ const MainContent: React.FC<MainContentProps> = ({
               isLoading={isLoadingImages}
               error={errorImages}
               thumbnailSize={thumbnailSize}
+              columnsCount={columnsCount}
               currentPage={currentPage}
               totalImages={totalImages}
-              imagesPerPage={IMAGES_PER_PAGE}
+              imagesPerPage={200} // Force 200 images per page
               onPageChange={onPageChange}
               onGoToFirstPage={onGoToFirstPage}
               onGoToLastPage={onGoToLastPage}
@@ -152,7 +160,7 @@ const MainContent: React.FC<MainContentProps> = ({
             }}
           >
             <Stack spacing={2} alignItems="center">
-              <Box sx={{ width: 70, height: 70, mb: 2 }}>
+              <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <img 
                   src={mode === 'dark' ? symbolDark : symbolLight} 
                   alt="Logo" 
