@@ -11,7 +11,7 @@ import { FolderList } from '../folders';
 import { DrawerHeaderMobile } from './Navigation';
 import { SidebarFooter } from './Navigation';
 import { typography, spacing } from '../../theme/themeConstants';
-import type { Folder } from '../../types';
+import type { Folder } from '../images/types';
 
 interface MobileSidebarProps {
   open: boolean;

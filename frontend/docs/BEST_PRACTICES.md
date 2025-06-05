@@ -11,8 +11,13 @@ This document outlines the main functionalities of the project, describes where 
 ```
 frontend/
   src/
-    components/        # Reusable UI components (ImageGrid, PaginationControls, Sidebar, etc.)
+    components/
+      images/          # Image grid, modal, grid items, etc.
+      folders/         # Folder management components
+      common/          # Shared UI components (PaginationControls, etc.)
+      layout/          # Layout and navigation components
     hooks/             # Custom React hooks (useFolders, useImages, useGridResize, etc.)
+    services/          # API and websocket services
     theme/             # Theme configuration and constants
     constants.ts       # App-wide constants (e.g., IMAGES_PER_PAGE)
     types.ts           # TypeScript type definitions
@@ -26,7 +31,7 @@ frontend/
 ### A. Image Grid Display
 
 - **Component:** `ImageGrid`
-- **Location:** `frontend/src/components/ImageGrid.tsx`
+- **Location:** `frontend/src/components/images/ImageGrid.tsx`
 - **Purpose:** Displays images in a responsive grid, handles resizing, and integrates infinite scroll.
 - **Change Here If:** You want to alter how images are displayed, grid layout, or image loading logic.
 - **Related Hooks:** `useGridResize`, `useInfiniteScroll` (`frontend/src/hooks/`)
@@ -34,21 +39,21 @@ frontend/
 ### B. Pagination
 
 - **Component:** `PaginationControls`
-- **Location:** `frontend/src/components/PaginationControls.tsx`
+- **Location:** `frontend/src/components/common/PaginationControls.tsx`
 - **Purpose:** Renders and manages pagination controls (next, previous, first, last page).
 - **Change Here If:** You need to adjust pagination logic, button layout, or page calculation.
 
 ### C. Folder Management
 
 - **Components:** `FolderList`, `AddFolderForm`, `FolderHeader`
-- **Location:** `frontend/src/components/`
+- **Location:** `frontend/src/components/folders/`
 - **Purpose:** Lists folders, adds new folders, displays folder info.
 - **Change Here If:** You want to update folder UI or logic.
 
 ### D. Adding a Folder Path
 
 - **Component:** `AddFolderForm`
-- **Location:** `frontend/src/components/AddFolderForm.tsx`
+- **Location:** `frontend/src/components/folders/AddFolderForm.tsx`
 - **Purpose:** Allows the user to input and add a new folder path to the application.
 - **Change Here If:** You want to change the UI/UX for adding folders, input validation, or how folder paths are submitted.
 - **Related Logic:** Folder addition logic may also be handled in the `useFolders` hook (`frontend/src/hooks/useFolders.ts`) and may involve API calls to the backend.
@@ -66,7 +71,7 @@ frontend/
 ### F. Grabbing and Displaying Image Metadata
 
 - **Component:** `ImageGrid`
-- **Location:** `frontend/src/components/ImageGrid.tsx`
+- **Location:** `frontend/src/components/images/ImageGrid.tsx`
 - **Purpose:** Extracts and displays metadata from images, typically using the `parseMetadata` utility and rendering details in the image modal.
 - **Change Here If:** You want to change how metadata is parsed or displayed, or add new metadata fields.
 - **Related Utility:** `parseMetadata` in `frontend/src/utils/metadataParser.ts`.
@@ -75,7 +80,7 @@ frontend/
 ### G. Modal Component (Image Details Dialog)
 
 - **Component:** `ImageModal`
-- **Location:** `frontend/src/components/ImageModal.tsx`
+- **Location:** `frontend/src/components/images/ImageModal.tsx`
 - **Purpose:** Displays a larger view of the image along with its metadata and navigation controls.
 - **Change Here If:** You want to change the modal's appearance, layout, or behavior when viewing image details.
 - **Usage:** The modal is invoked from `ImageGrid.tsx`, which passes the selected image object and metadata as props.
@@ -85,7 +90,7 @@ frontend/
 ### H. Grid Item Component (Individual Image Cells)
 
 - **Component:** `ImageGridItem`
-- **Location:** `frontend/src/components/ImageGridItem.tsx`
+- **Location:** `frontend/src/components/images/ImageGridItem.tsx`
 - **Purpose:** Renders individual image thumbnails in the grid and handles click events to open the modal.
 - **Change Here If:** You want to change how image thumbnails are displayed or interacted with.
 - **Best Practice:** Use `getImageUrl(image.full_path)` for the thumbnail image, and always pass the original image object (with a file path) up to parent components or the modal.
@@ -93,7 +98,7 @@ frontend/
 ### I. Statistics Display
 
 - **Component:** `StatsCards`
-- **Location:** `frontend/src/components/StatsCards.tsx`
+- **Location:** `frontend/src/components/common/StatsCards.tsx`
 - **Purpose:** Displays summary statistics about images/folders (counts, sizes, etc.).
 - **Change Here If:** You want to change what statistics are shown or how they are calculated.
 
@@ -113,8 +118,8 @@ frontend/
 
 ### L. Sidebar & Navigation
 
-- **Components:** `SidebarFooter`, `BurgerMenu`, `DrawerHeaderMobile`
-- **Location:** `frontend/src/components/`
+- **Components:** `SidebarFooter`, `BurgerMenu`, `DrawerHeaderMobile`, `Navigation`, `Sidebar`, `SidebarContainer`, `MobileSidebar`, `MainContent`
+- **Location:** `frontend/src/components/layout/`
 - **Purpose:** Sidebar navigation and footer info.
 - **Change Here If:** You want to update navigation or sidebar content.
 
@@ -136,8 +141,8 @@ frontend/
 
 ## 4. How to Find and Change Functionality
 
-- **To change how images are displayed:** Edit `ImageGrid.tsx` and related hooks.
-- **To adjust pagination:** Edit `PaginationControls.tsx` and check how `currentPage` is managed in `App.tsx`.
+- **To change how images are displayed:** Edit `ImageGrid.tsx` and related hooks in `components/images/` and `hooks/`.
+- **To adjust pagination:** Edit `PaginationControls.tsx` in `components/common/` and check how `currentPage` is managed in `App.tsx`.
 - **To add a new theme or adjust colors:** Edit files in `theme/`.
 - **To add a new feature (e.g., drag-and-drop):** Create a new component or hook in the appropriate directory and import it in `App.tsx`.
 

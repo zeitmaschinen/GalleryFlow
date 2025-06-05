@@ -1,6 +1,40 @@
-// Modern JSX transform doesn't require React import
 import { Handle, Position } from 'reactflow';
-import { ComfyNodeData } from './types';
+import './ComfyUI.css';
+
+export interface ComfyNodeData {
+  class_type: string;
+  inputs: Record<string, unknown>;
+  darkMode?: boolean;
+  id?: string;
+}
+
+// Get node category for styling
+function getNodeCategory(classType: string): string {
+  if (classType.includes('Loader') || classType.includes('Checkpoint')) {
+    return 'loader';
+  } else if (classType.includes('Sampler') || classType.includes('KSampler')) {
+    return 'sampler';
+  } else if (classType.includes('Latent') || classType.includes('Empty')) {
+    return 'latent';
+  } else if (classType.includes('CLIP') || classType.includes('Text')) {
+    return 'clip';
+  } else if (classType.includes('VAE')) {
+    return 'vae';
+  } else if (classType.includes('Save')) {
+    return 'save';
+  }
+  return '';
+}
+
+// Render input fields in ComfyUI style
+function renderInputField(key: string, value: unknown) {
+  return (
+    <div className="comfyui-node-input" key={key}>
+      <div className="comfyui-node-input-label">{key}</div>
+      <div className="comfyui-node-input-value">{String(value)}</div>
+    </div>
+  );
+}
 
 // Get node type class based on the class_type
 function getNodeTypeClass(classType: string): string {

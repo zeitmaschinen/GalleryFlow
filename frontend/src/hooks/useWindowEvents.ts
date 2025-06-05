@@ -29,7 +29,7 @@ export const useWindowEvents = ({
   });
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const resizeHandler = useRef<() => void | null>(null);
+  const resizeHandler = useRef<(() => void) | null>(null); // allow debounce assignment, no 'any'
 
   const updateWindowSize = useCallback(() => {
     const width = window.innerWidth;

@@ -13,7 +13,6 @@ import { SortField } from './types';
 import { getTheme } from './theme';
 import { SidebarContainer, MobileSidebar } from './components/layout';
 import { MainContent } from './components/layout';
-import { useLayoutCalculator } from './hooks/useLayoutCalculator';
 import { subscribeScanProgress } from './services/websocket';
 
 function App() {
@@ -263,7 +262,6 @@ function App() {
   }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages, suppressionWindowMs]);
 
   // Layout calculator
-  const { columnsCount } = useLayoutCalculator({ thumbnailSize });
 
   // Fetch images when state changes
   useEffect(() => {
@@ -315,7 +313,7 @@ function App() {
           gap: 2,
           bgcolor: 'background.default'
         }}>
-          <img src="/images/symbol.png" alt="Logo" style={{ width: 64, height: 64, animation: 'spin 1s linear infinite' }} />
+          <img src={mode === 'dark' ? "/images/symbol-darkmode.png" : "/images/symbol.png"} alt="Logo" style={{ width: 45, height: 45, animation: 'spin 1s linear infinite' }} />
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </Box>
       ) : (
@@ -362,7 +360,6 @@ function App() {
             sortBy={sortBy}
             sortDirection={sortDirection}
             selectedFileTypes={selectedFileTypes}
-            columnsCount={columnsCount}
             onSortByChange={handleSortByChange}
             onSortDirectionToggle={handleSortDirectionToggle}
             onFileTypeChange={handleFileTypeChange}

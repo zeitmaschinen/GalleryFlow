@@ -7,7 +7,6 @@ import {
   IconButton,
   Box,
   Typography,
-  Tooltip,
   alpha,
   CircularProgress,
 } from '@mui/material';
@@ -139,26 +138,24 @@ const FolderList: React.FC<FolderListProps> = ({
                 />
                 <ListItemText
                   primary={
-                    <Tooltip title={folder.path} enterDelay={300} arrow>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          transition: 'all 0.2s',
-                          fontWeight: isSelected ? '600' : '400',
-                          color: isSelected ? colors.primary[mode].main : 'text.primary',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          maxWidth: '120px',
-                          direction: 'rtl',
-                          textAlign: 'left',
-                          minWidth: 0,
-                          flexShrink: 1
-                        }}
-                      >
-                        {folder.path}
-                      </Typography>
-                    </Tooltip>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        transition: 'all 0.2s',
+                        fontWeight: isSelected ? '600' : '400',
+                        color: isSelected ? colors.primary[mode].main : 'text.primary',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '120px',
+                        direction: 'rtl',
+                        textAlign: 'left',
+                        minWidth: 0,
+                        flexShrink: 1
+                      }}
+                    >
+                      {folder.path}
+                    </Typography>
                   }
                   sx={{
                     minWidth: 0,
@@ -173,49 +170,45 @@ const FolderList: React.FC<FolderListProps> = ({
                 alignItems: 'center',
                 flexShrink: 0
               }}>
-                <Tooltip title="Refresh folder">
-                  <IconButton
-                    edge="end"
-                    size="small"
-                    onClick={(e) => handleRefresh(folder.id, e)}
-                    disabled={isRefreshing}
-                    sx={{
-                      color: 'text.secondary',
-                      p: '2px',
-                      '&:hover': {
-                        color: colors.primary[mode].main,
-                        bgcolor: alpha(colors.primary[mode].main, 0.08),
-                      }
-                    }}
-                  >
-                    {isRefreshing ? (
-                      <CircularProgress size={16} color="inherit" />
-                    ) : (
-                      <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                        refresh
-                      </span>
-                    )}
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete folder">
-                  <IconButton
-                    edge="end"
-                    size="small"
-                    onClick={(e) => handleDelete(folder.id, e)}
-                    sx={{
-                      color: 'text.secondary',
-                      p: '2px',
-                      '&:hover': {
-                        color: colors.common.error,
-                        bgcolor: alpha(colors.common.error, 0.08),
-                      }
-                    }}
-                  >
+                <IconButton
+                  edge="end"
+                  size="small"
+                  onClick={(e) => handleRefresh(folder.id, e)}
+                  disabled={isRefreshing}
+                  sx={{
+                    color: 'text.secondary',
+                    p: '2px',
+                    '&:hover': {
+                      color: colors.primary[mode].main,
+                      bgcolor: alpha(colors.primary[mode].main, 0.08),
+                    }
+                  }}
+                >
+                  {isRefreshing ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
                     <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                      delete
+                      refresh
                     </span>
-                  </IconButton>
-                </Tooltip>
+                  )}
+                </IconButton>
+                <IconButton
+                  edge="end"
+                  size="small"
+                  onClick={(e) => handleDelete(folder.id, e)}
+                  sx={{
+                    color: 'text.secondary',
+                    p: '2px',
+                    '&:hover': {
+                      color: colors.common.error,
+                      bgcolor: alpha(colors.common.error, 0.08),
+                    }
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                    delete
+                  </span>
+                </IconButton>
               </Box>
             </ListItemButton>
           </FolderItem>

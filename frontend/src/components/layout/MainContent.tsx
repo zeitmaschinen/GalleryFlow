@@ -122,7 +122,6 @@ const MainContent: React.FC<MainContentProps> = ({
               isLoading={isLoadingImages}
               error={errorImages}
               thumbnailSize={thumbnailSize}
-
               currentPage={currentPage}
               totalImages={totalImages}
               imagesPerPage={IMAGES_PER_PAGE}
@@ -153,7 +152,7 @@ const MainContent: React.FC<MainContentProps> = ({
             }}
           >
             <Stack spacing={2} alignItems="center">
-              <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Box sx={{ width: 70, height: 70, mb: 2 }}>
                 <img 
                   src={mode === 'dark' ? symbolDark : symbolLight} 
                   alt="Logo" 
