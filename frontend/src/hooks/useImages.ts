@@ -8,7 +8,7 @@ export function useImages(IMAGES_PER_PAGE: number) {
   const [thumbnailSize, setThumbnailSize] = useState<number>(150);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalImages, setTotalImages] = useState(0);
-  const [sortBy, setSortBy] = useState<'filename' | 'date' | 'folder'>('filename');
+  const [sortBy, setSortBy] = useState<'filename' | 'date' | 'folder'>('folder'); // Default to 'Subfolder'
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
 
@@ -22,7 +22,6 @@ export function useImages(IMAGES_PER_PAGE: number) {
     setIsLoadingImages(true);
     setErrorImages(null);
     try {
-      // console.log('[DEBUG] Fetching images...');
       const response = await api.getImages(
         folderId,
         page,
@@ -31,12 +30,11 @@ export function useImages(IMAGES_PER_PAGE: number) {
         currentSortDir,
         fileTypes
       );
-      // console.log('[DEBUG] Fetched images:', response);
       setImages(response.images);
       setTotalImages(response.total_count);
     } catch (err: unknown) {
-      // console.error('[DEBUG] Error fetching images:', err);
-      setErrorImages(err instanceof Error ? err.message : 'Could not load images.');
+      const errorMessage = err instanceof Error ? err.message : 'Could not load images.';
+      setErrorImages(errorMessage);
       setImages([]);
       setTotalImages(0);
     } finally {

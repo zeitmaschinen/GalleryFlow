@@ -51,7 +51,7 @@ export const refreshFolder = async (folderId: number): Promise<ScanProgress> => 
 export const getImages = async (
     folderId: number,
     page: number = 1,
-    limit: number = 100,
+    limit: number = 200,
     sortBy: string = "filename",
     sortDir: 'asc' | 'desc' = "asc",
     fileTypes?: string[]
@@ -75,7 +75,8 @@ export const getImages = async (
         fileTypes.forEach(type => params.append('file_types', type));
     }
     
-    const response = await apiClient.get<ImageListResponse>(`/images?${params.toString()}`);
+    const requestUrl = `/images?${params.toString()}`;
+    const response = await apiClient.get<ImageListResponse>(requestUrl);
     
     // Cache the response
     imageCache.set(folderId, page, sortBy, sortDir, fileTypes, response.data);
@@ -83,9 +84,10 @@ export const getImages = async (
     return response.data;
 };
 
-// Function to get the direct image URL (Keep existing)
+// Function to get the direct image URL with browser caching
 export const getImageUrl = (imagePath: string): string => {
-    return `${API_BASE_URL}/image?file_path=${encodeURIComponent(imagePath)}`;
+    // Enable browser caching for images
+    return `${API_BASE_URL}/image?file_path=${encodeURIComponent(imagePath)}&cache=true`;
 };
 
 // Function to reveal file in system's file explorer

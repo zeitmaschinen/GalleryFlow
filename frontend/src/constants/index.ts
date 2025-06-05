@@ -10,6 +10,6 @@ export const FILE_TYPE_OPTIONS = SUPPORTED_FILE_TYPES.map(type => ({
   label: type
 }));
 
-export const IMAGES_PER_PAGE = 100;
+export const IMAGES_PER_PAGE = 200;
 
 export const DEFAULT_THUMBNAIL_SIZE = 150;

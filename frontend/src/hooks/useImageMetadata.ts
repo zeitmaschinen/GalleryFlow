@@ -114,24 +114,26 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
       });
 
       // Find positive and negative prompts
-      const positivePromptNodes = textNodes.filter(node => {
-        const nodeId = node as { id?: unknown };
-        if (!nodeId || !('id' in nodeId)) return false;
-        return Object.values(workflow).some(n => {
-          const inputs = getInputs(n);
-          return Array.isArray(inputs.positive) && inputs.positive[0] === nodeId.id ||
-            Array.isArray(inputs.text_g) && inputs.text_g[0] === nodeId.id;
-        });
+      const positivePromptNode = textNodes.find(node => {
+        // Check if this node is connected to a positive input in a sampler
+        const nodeId = Object.keys(workflow).find(key => workflow[key] === node);
+        if (!nodeId) return false;
+        
+        return Object.values(workflow).some(n => 
+          n?.inputs?.positive?.[0] === nodeId || 
+          n?.inputs?.text_g?.[0] === nodeId
+        );
       });
-
-      const negativePromptNodes = textNodes.filter(node => {
-        const nodeId = node as { id?: unknown };
-        if (!nodeId || !('id' in nodeId)) return false;
-        return Object.values(workflow).some(n => {
-          const inputs = getInputs(n);
-          return Array.isArray(inputs.negative) && inputs.negative[0] === nodeId.id ||
-            Array.isArray(inputs.text_l) && inputs.text_l[0] === nodeId.id;
-        });
+      
+      const negativePromptNode = textNodes.find(node => {
+        // Check if this node is connected to a negative input in a sampler
+        const nodeId = Object.keys(workflow).find(key => workflow[key] === node);
+        if (!nodeId) return false;
+        
+        return Object.values(workflow).some(n => 
+          n?.inputs?.negative?.[0] === nodeId || 
+          n?.inputs?.text_l?.[0] === nodeId
+        );
       });
 
       // Find checkpoint loader nodes

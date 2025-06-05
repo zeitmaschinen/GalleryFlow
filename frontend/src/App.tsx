@@ -16,7 +16,9 @@ import { MainContent } from './components/layout';
 import { subscribeScanProgress } from './services/websocket';
 
 function App() {
-  const [mode, setMode] = useState<'light' | 'dark'>('light');
+  // Use system preference for initial theme mode
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const [mode, setMode] = useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : 'light');
   const [isInitializing, setIsInitializing] = useState(true);
   const theme = useMemo(() => getTheme(mode), [mode]);
   const muiTheme = theme;
@@ -53,11 +55,16 @@ function App() {
     selectedFileTypes,
     setSelectedFileTypes,
     fetchImages,
-  } = useImages(IMAGES_PER_PAGE);
+  } = useImages(200); // Force 200 images per page
 
   const handleDrawerOpen = () => setSidebarOpen(true);
   const handleDrawerClose = () => setSidebarOpen(false);
   const toggleColorMode = () => setMode(prev => prev === 'light' ? 'dark' : 'light');
+
+  // Listen for system color scheme changes
+  useEffect(() => {
+    setMode(prefersDarkMode ? 'dark' : 'light');
+  }, [prefersDarkMode]);
 
   // Initialize app
   useEffect(() => {
@@ -274,7 +281,7 @@ function App() {
       fetchImages(selectedFolder.id, pageToFetch, sortBy, sortDirection, selectedFileTypes)
         .then(() => {
           // This check remains useful if images get deleted, making the current page invalid
-          const totalPages = Math.max(1, Math.ceil(totalImages / IMAGES_PER_PAGE));
+          const totalPages = Math.max(1, Math.ceil(totalImages / 200)); // Force 200 images per page
           if (currentPage > totalPages) {
              setCurrentPage(totalPages);
           }

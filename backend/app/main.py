@@ -1,12 +1,9 @@
-print(">>> GalleryFlow backend main.py is running <<<")
 import logging
 
 logging.basicConfig(
-    level=logging.WARNING,  # Raised from INFO to WARNING to reduce log noise
+    level=logging.WARNING,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
-
-# File: backend/app/main.py
 
 import os
 import platform
@@ -28,7 +25,11 @@ import datetime
 from . import crud, models, schemas, database
 
 logger = logging.getLogger(__name__)
-app = FastAPI(title="GalleryFlow Backend")
+app = FastAPI(
+    title="GalleryFlow API",
+    version="1.3.0",
+    description="API for browsing and managing ComfyUI-generated images with advanced metadata support"
+)
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -53,14 +54,13 @@ async def watchdog_event_consumer():
     while True:
         folder_id, folder_path = await watchdog_event_queue.get()
         scan_id = str(uuid.uuid4())
-        logger.info(f"[Queue] Consuming event for folder_id={folder_id} (path={folder_path}) scan_id={scan_id}")
+        logger.info(f"Processing folder scan: id={folder_id}, path={folder_path}")
         async with database.AsyncSessionLocal() as db:
             try:
                 folder = await crud.get_folder(db, folder_id)
                 if folder:
                     scan_result = await crud.scan_folder_and_update_db(db, folder)
-                    logger.info(f"Scan complete for folder_id={folder_id}. Result: {scan_result}")
-                    logger.debug(f"[DEBUG] Scan result for folder_id={folder_id}: {scan_result}")
+                    logger.info(f"Scan complete for folder_id={folder_id}")
                     await broadcast_progress(folder_id, {"event": "folder_change", "folder_id": folder_id, "scan_id": scan_id})
                 else:
                     logger.warning(f"No folder found in DB for folder_id={folder_id} during watchdog-triggered scan.")
@@ -103,13 +103,13 @@ async def stop_all_watchdogs():
 
 @app.on_event("startup")
 async def on_startup():
-    print(">>> on_startup event running <<<")
     global MAIN_EVENT_LOOP, watchdog_event_queue
     MAIN_EVENT_LOOP = asyncio.get_running_loop()
     watchdog_event_queue = asyncio.Queue()
-    logger.info("Initializing database...")
+    
+    logger.info("Initializing application...")
     await database.create_db_and_tables()
-    logger.info("Database initialized.")
+    
     # Start watchdogs for all folders in DB
     db_gen = database.get_db()
     db = await db_gen.__anext__()
@@ -119,8 +119,10 @@ async def on_startup():
             await start_watchdog_for_folder(folder.id, folder.path)
     finally:
         await db_gen.aclose()
+    
     # Start the watchdog event consumer task
     asyncio.create_task(watchdog_event_consumer())
+    logger.info("Application startup complete")
 
 @app.on_event("shutdown")
 async def on_shutdown():
@@ -132,7 +134,7 @@ active_connections: Dict[int, List[WebSocket]] = {}
 @app.websocket("/ws/scan-progress/{folder_id}")
 async def websocket_endpoint(websocket: WebSocket, folder_id: int):
     await websocket.accept()
-    logger.warning(f"[WebSocket] Connection OPENED for folder_id={folder_id}")
+    logger.debug(f"WebSocket connection opened for folder_id={folder_id}")
     if folder_id not in active_connections:
         active_connections[folder_id] = []
     active_connections[folder_id].append(websocket)
@@ -148,25 +150,21 @@ async def websocket_endpoint(websocket: WebSocket, folder_id: int):
                     # If neither text nor bytes, just continue to keep alive
                     await asyncio.sleep(10)
     except Exception:
-        logger.warning(f"[WebSocket] Connection CLOSED for folder_id={folder_id}")
+        logger.debug(f"WebSocket connection closed for folder_id={folder_id}")
     finally:
         active_connections[folder_id].remove(websocket)
         if not active_connections[folder_id]:
             del active_connections[folder_id]
 
 async def broadcast_progress(folder_id: int, data: dict):
-    now = datetime.datetime.now().isoformat(timespec='milliseconds')
-    logger.info(f"[WebSocket] {now} Broadcasting event for folder_id={folder_id}: {data}")
-    logger.debug(f"[DEBUG] WebSocket broadcast data: {data}")
     if folder_id in active_connections:
         for connection in active_connections[folder_id][:]:
             try:
                 await connection.send_json(data)
-                logger.debug(f"[DEBUG] Sent WebSocket message to connection for folder_id={folder_id}")
             except Exception as e:
                 msg = str(e)
                 if "after sending 'websocket.close'" in msg or "already completed" in msg:
-                    logger.info(f"WebSocket send failed (connection already closed): {e}")
+                    logger.debug(f"WebSocket connection already closed: {e}")
                 else:
                     logger.error(f"WebSocket send failed: {e}")
                 active_connections[folder_id].remove(connection)
@@ -293,7 +291,7 @@ async def remove_folder(folder_id: int, db: AsyncSession = Depends(database.get_
 async def list_images(
     folder_id: int,
     skip: int = Query(0, ge=0), # Add skip query param, >= 0
-    limit: int = Query(100, ge=1, le=1000), # Add limit query param, 1 <= limit <= 1000
+    limit: int = Query(200, ge=1, le=1000), # Add limit query param, 1 <= limit <= 1000
     sort_by: str = Query("filename", description="Field to sort by (filename, date)"),
     sort_dir: str = Query("asc", description="Sort direction (asc, desc)"),
     file_types: Optional[List[str]] = Query(None, description="Filter by file extensions (e.g., .png, .jpg)"),
@@ -330,6 +328,7 @@ async def list_images(
 @app.get("/api/image")
 async def get_image_file(
     file_path: str = Query(..., description="Absolute path to the image file"),
+    cache: bool = Query(False, description="Enable browser caching for this image"),
     db: AsyncSession = Depends(database.get_db)
 ):
     logger.info(f"Received request for image file: {file_path}")
@@ -367,8 +366,23 @@ async def get_image_file(
     if resolved_requested_path.suffix.lower() == '.jpg':
         media_type = 'image/jpeg'
 
-    logger.info(f"Serving image: {resolved_requested_path} with media type {media_type}")
-    return FileResponse(str(resolved_requested_path), media_type=media_type)
+    logger.info(f"Serving image: {resolved_requested_path} with media type {media_type}, cache={cache}")
+    response = FileResponse(str(resolved_requested_path), media_type=media_type)
+    
+    # Add cache control headers if caching is requested
+    if cache:
+        # Cache for 7 days (604800 seconds)
+        response.headers["Cache-Control"] = "public, max-age=604800, immutable"
+        # Add ETag based on file modification time for cache validation
+        file_stat = resolved_requested_path.stat()
+        etag = f"\"{hash(str(file_stat.st_mtime) + str(file_stat.st_size))}\""
+        response.headers["ETag"] = etag
+    else:
+        # Prevent caching if not explicitly requested
+        response.headers["Cache-Control"] = "no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+    
+    return response
 
 @app.post("/api/reveal-in-explorer", status_code=200)
 async def reveal_file(

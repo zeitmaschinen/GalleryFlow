@@ -47,7 +47,7 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
     >
       <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img
-          src={getImageUrl(image.full_path)}
+          src={`${getImageUrl(image.full_path)}&t=${image.last_modified || Date.now()}`}
           alt={image.filename}
           style={{
             width: '100%',
@@ -59,7 +59,11 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
             borderRadius: 'inherit',
             display: 'block',
           }}
-          onLoad={() => {}} // The parent component handles this
+          onLoad={() => {
+            if (!loadedImages.has(getImageUrl(image.full_path))) {
+              loadedImages.add(getImageUrl(image.full_path));
+            }
+          }}
         />
         {!loadedImages.has(getImageUrl(image.full_path)) && (
           <Box
@@ -70,7 +74,7 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
               transform: 'translate(-50%, -50%)',
             }}
           >
-            <CircularProgress size={24} />
+            <CircularProgress size={18} sx={{ color: '#ccc' }} />
           </Box>
         )}
         <Box
@@ -78,9 +82,9 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
           sx={{
             position: 'absolute',
             bottom: 8,
-            right: 4,
+            right: 4, // Decreased right value to move icons more to the right side
             display: 'flex',
-            gap: 1,
+            gap: 0.5, // Keeping icons close together
             zIndex: 2,
             opacity: 0,
             pointerEvents: 'none',

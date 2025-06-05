@@ -33,7 +33,7 @@ const ImageGridContainer: React.FC<ImageGridContainerProps> = ({
   isMobile = false
 }) => {
   return (
-    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: spacing.md }}>
+    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: spacing.md, pb: spacing.lg }}>
       <Card>
         {/* Dynamic image count */}
         {!isLoading && !error && images.length > 0 && (

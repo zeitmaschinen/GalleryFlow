@@ -39,6 +39,7 @@ export function useWebSocketEvents({
     if (onRefreshFolderAndImages) {
       onRefreshFolderAndImages(folderId);
     }
+    onRefreshFolderAndImages?.(folderId);
   }, [onRefreshFolderAndImages]);
 
   // Helper: debounce for backend (WebSocket) events
@@ -47,9 +48,10 @@ export function useWebSocketEvents({
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    if (onRefreshFolderAndImages) {
-      onRefreshFolderAndImages(folderId);
-    }
+    backendRefreshTimeout.current = setTimeout(() => {
+      onRefreshFolderAndImages?.(folderId);
+      backendRefreshTimeout.current = null;
+    }, BACKEND_DEBOUNCE_MS);
   }, [onRefreshFolderAndImages]);
 
   // Expose immediate refresh for user actions
