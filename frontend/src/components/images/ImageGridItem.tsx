@@ -82,9 +82,9 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
           sx={{
             position: 'absolute',
             bottom: 8,
-            right: 4,
+            right: 4, // Decreased right value to move icons more to the right side
             display: 'flex',
-            gap: 1,
+            gap: 0.5, // Keeping icons close together
             zIndex: 2,
             opacity: 0,
             pointerEvents: 'none',
