@@ -1,9 +1,11 @@
-import React, { useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { AppContextValue, AppContextState } from './AppContextTypes';
 import type { Image } from '../services/api';
 import { config } from '../config';
 import { useSnackbar } from '../hooks/useSnackbar';
-import AppContext from './AppContextObject';
+
+// Create the context
+export const AppContext = createContext<AppContextValue | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppContextState>({
@@ -55,7 +57,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
+// Hook to use the app context
 export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) {
@@ -63,3 +65,6 @@ export const useApp = () => {
   }
   return context;
 };
+
+// Default export for compatibility
+export default AppProvider;

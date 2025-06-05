@@ -24,11 +24,11 @@ export class WebSocketService {
 
   connect(): void {
     try {
-      console.log(`[WebSocket] Attempting to connect to ${this.url}`);
+      logger.info(`WebSocket connecting to ${this.url}`);
       this.ws = new WebSocket(this.url);
       this.setupEventListeners();
     } catch (error) {
-      console.error('[WebSocket] Error creating connection:', error);
+      logger.error('WebSocket connection error', error instanceof Error ? error : new Error(String(error)));
       this.connectionFailed = true;
       this.handleReconnect();
     }
@@ -46,7 +46,7 @@ export class WebSocketService {
       try {
         this.ws?.send(JSON.stringify({ type: 'keepalive', timestamp: Date.now() }));
       } catch (error) {
-        console.error('[WebSocket] Error sending keepalive:', error);
+        logger.error('WebSocket keepalive error', error instanceof Error ? error : new Error(String(error)));
       }
     };
 
@@ -137,6 +137,11 @@ export class WebSocketService {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
+      // Clean up all handlers
+      this.messageHandlers.clear();
+      this.errorHandlers.clear();
+      this.reconnectAttempts = 0;
+      this.connectionFailed = false;
     }
   }
 

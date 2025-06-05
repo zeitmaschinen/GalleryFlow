@@ -4,7 +4,7 @@ from PIL import PngImagePlugin
 import logging
 from typing import Optional, Dict, Any
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 def extract_comfyui_metadata(image_path: str) -> Optional[Dict[str, Any]]:
     """Extracts ComfyUI metadata (often stored in 'prompt' or 'workflow' PNG chunks).

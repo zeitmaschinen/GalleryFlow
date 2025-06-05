@@ -1,5 +1,4 @@
 import { useEffect, useRef, useCallback } from 'react';
-import debounce from 'lodash.debounce';
 import type { Folder } from '../components/images/types';
 import { subscribeScanProgress } from '../services/websocket';
 import type { ScanProgress } from '../types/index';
@@ -41,7 +40,7 @@ export function useWebSocketEvents({
       clearTimeout(backendRefreshTimeout.current);
       backendRefreshTimeout.current = null;
     }
-    onRefreshFolderAndImages(folderId);
+    onRefreshFolderAndImages?.(folderId);
   }, [onRefreshFolderAndImages]);
 
   // Helper: debounce for backend (WebSocket) events
@@ -50,7 +49,7 @@ export function useWebSocketEvents({
       clearTimeout(backendRefreshTimeout.current);
     }
     backendRefreshTimeout.current = setTimeout(() => {
-      onRefreshFolderAndImages(folderId);
+      onRefreshFolderAndImages?.(folderId);
       backendRefreshTimeout.current = null;
     }, BACKEND_DEBOUNCE_MS);
   }, [onRefreshFolderAndImages]);

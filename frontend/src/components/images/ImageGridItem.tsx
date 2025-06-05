@@ -70,7 +70,7 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
               transform: 'translate(-50%, -50%)',
             }}
           >
-            <CircularProgress size={24} />
+            <CircularProgress size={18} sx={{ color: '#ccc' }} />
           </Box>
         )}
         <Box

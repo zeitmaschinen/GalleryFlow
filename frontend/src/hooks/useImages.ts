@@ -33,8 +33,8 @@ export function useImages(IMAGES_PER_PAGE: number) {
       setImages(response.images);
       setTotalImages(response.total_count);
     } catch (err: unknown) {
-      // console.error('[DEBUG] Error fetching images:', err);
-      setErrorImages(err instanceof Error ? err.message : 'Could not load images.');
+      const errorMessage = err instanceof Error ? err.message : 'Could not load images.';
+      setErrorImages(errorMessage);
       setImages([]);
       setTotalImages(0);
     } finally {

@@ -16,43 +16,45 @@ class Logger {
     }
   }
 
-  info(message: string, context?: object, showOnce = false): void {
-    // If this is a message that should only be shown once and has already been shown, skip it
+  private logWithShowOnce(level: LogLevel, message: string, context?: object, showOnce = false): void {
     if (showOnce && this.shownOnceMessages.has(message)) {
       return;
     }
-    
-    console.info(this.formatMessage('info', message, context));
-    
-    // If this is a message that should only be shown once, add it to the set
+
+    const formattedMessage = this.formatMessage(level, message, context);
+    switch (level) {
+      case 'info':
+        console.info(formattedMessage);
+        break;
+      case 'warn':
+        console.warn(formattedMessage);
+        break;
+    }
+
     if (showOnce) {
       this.shownOnceMessages.add(message);
     }
+  }
+
+  info(message: string, context?: object, showOnce = false): void {
+    this.logWithShowOnce('info', message, context, showOnce);
   }
 
   warn(message: string, context?: object, showOnce = false): void {
-    // If this is a message that should only be shown once and has already been shown, skip it
-    if (showOnce && this.shownOnceMessages.has(message)) {
-      return;
-    }
-    
-    console.warn(this.formatMessage('warn', message, context));
-    
-    // If this is a message that should only be shown once, add it to the set
-    if (showOnce) {
-      this.shownOnceMessages.add(message);
-    }
+    this.logWithShowOnce('warn', message, context, showOnce);
   }
 
   error(message: string, error?: Error, context?: object): void {
+    const errorContext = error ? {
+      message: error.message,
+      name: error.name,
+      stack: error.stack?.split('\n').slice(0, 5).join('\n') // Only include first 5 lines of stack
+    } : undefined;
+
     console.error(
       this.formatMessage('error', message, {
         ...context,
-        error: error ? {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        } : undefined
+        error: errorContext
       })
     );
   }
