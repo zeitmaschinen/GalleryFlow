@@ -46,8 +46,7 @@ export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value,
         max={MAX_SIZE}
         step={1}
         aria-label="Thumbnail size"
-        valueLabelDisplay="auto"
-        valueLabelFormat={(value) => `${value}px`}
+        valueLabelDisplay="off"
         size="medium"
         marks={false}
         sx={thumbnailSizeSliderSx}
