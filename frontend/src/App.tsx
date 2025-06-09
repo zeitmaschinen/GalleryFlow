@@ -169,16 +169,16 @@ function App() {
   // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
   const handleRefreshFolderAndImages = useCallback(
     async (folderId: number) => {
+      // Only refresh the folder metadata without affecting image display
       await handleRefreshFolder(folderId);
+      
+      // Only reload images if this is the currently selected folder
       if (selectedFolder && selectedFolder.id === folderId) {
         reloadImageGrid(true);
-      } else {
-        // Fallback: force fetch if state is out of sync
-        fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
-        setCurrentPage(1);
       }
+      // Remove the fallback fetch for non-active folders to prevent unwanted reloads
     },
-    [handleRefreshFolder, setCurrentPage, fetchImages, sortBy, sortDirection, selectedFileTypes, selectedFolder]
+    [handleRefreshFolder, selectedFolder]
   );
 
   // Track latest pagination/sort/filter state for WebSocket handler
