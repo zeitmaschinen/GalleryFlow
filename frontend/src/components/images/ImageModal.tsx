@@ -273,8 +273,8 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
                   )}
                 </Box>
               </Paper>
-              {/* Hires Fix Info */}
-              {(hiresUpscale !== undefined || hiresUpscaler !== undefined) && (
+              {/* Hires Fix Info - Only show when both values are meaningful */}
+              {(hiresUpscale && hiresUpscaler) && (
                 <>
                   <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
                     Hires Fix:
