@@ -171,13 +171,20 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
             onLoad={onModalImageLoad}
             src={getImageUrl(selectedImage?.full_path || '')}
             alt={selectedImage?.filename || ''}
+            onClick={() => {
+              if (selectedImage?.full_path) {
+                window.open(getImageUrl(selectedImage.full_path), '_blank');
+              }
+            }}
             style={{
               maxWidth: '100%',
               maxHeight: '60vh',
               objectFit: 'contain',
               borderRadius: borders.radius.md,
               marginBottom: 8,
+              cursor: 'pointer', // Add pointer cursor to indicate it's clickable
             }}
+            title="Click to open full-size image in new tab" // Add tooltip to indicate functionality
           />
           <Typography
             variant="caption"
