@@ -20,7 +20,7 @@ export const useWindowEvents = ({
   mobileBreakpoint = 768,
   tabletBreakpoint = 1024,
   debounceMs = 100,
-  visibilityChangeDelay = 300
+  visibilityChangeDelay = 800 // Increased delay to give browser more time to stabilize
 }: UseWindowEventsOptions = {}) => {
   const [windowSize, setWindowSize] = useState<WindowSize>({
     width: window.innerWidth,
@@ -32,8 +32,10 @@ export const useWindowEvents = ({
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isVisible, setIsVisible] = useState(!document.hidden);
+  const [isTabActive, setIsTabActive] = useState(true); // Track if tab is fully active and ready
   const resizeHandler = useRef<(() => void) | null>(null); // allow debounce assignment, no 'any'
   const visibilityTimer = useRef<number | null>(null);
+  const tabActiveTimer = useRef<number | null>(null);
 
   const updateWindowSize = useCallback(() => {
     const width = window.innerWidth;
@@ -56,19 +58,35 @@ export const useWindowEvents = ({
       const isDocumentVisible = !document.hidden;
       setIsVisible(isDocumentVisible);
       
-      // Clear any existing timer
+      // Clear any existing timers
       if (visibilityTimer.current !== null) {
         window.clearTimeout(visibilityTimer.current);
       }
       
-      // If becoming visible, delay heavy operations
+      if (tabActiveTimer.current !== null) {
+        window.clearTimeout(tabActiveTimer.current);
+      }
+      
+      // If becoming visible, implement a two-phase recovery
       if (isDocumentVisible) {
+        // Phase 1: Immediately mark tab as not fully active (UI will respond to this)
+        setIsTabActive(false);
+        
+        // Phase 2: Delay heavy operations
         visibilityTimer.current = window.setTimeout(() => {
           // Trigger a gentle resize to refresh layout calculations
-          // This helps prevent the app from freezing when returning to the tab
           updateWindowSize();
           visibilityTimer.current = null;
+          
+          // Phase 3: Mark tab as fully active after all operations complete
+          tabActiveTimer.current = window.setTimeout(() => {
+            setIsTabActive(true);
+            tabActiveTimer.current = null;
+          }, 500); // Additional delay after initial operations
         }, visibilityChangeDelay);
+      } else {
+        // Tab is hidden
+        setIsTabActive(false);
       }
     };
 
@@ -98,6 +116,7 @@ export const useWindowEvents = ({
     ...windowSize,
     isOnline,
     isVisible,
+    isTabActive, // Expose the tab active state
     calculateColumns
   };
 };

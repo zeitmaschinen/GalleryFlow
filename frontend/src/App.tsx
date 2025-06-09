@@ -5,6 +5,7 @@ import {
   ThemeProvider,
   useMediaQuery
 } from '@mui/material';
+import TabPerformanceManager from './components/common/TabPerformanceManager';
 import { BurgerMenu } from './components/layout/Navigation';
 import { useFolders } from './hooks/useFolders';
 import { useImages } from './hooks/useImages';
@@ -299,6 +300,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <TabPerformanceManager>
       {isInitializing ? (
         <Box sx={{
           position: 'fixed',
@@ -370,6 +372,7 @@ function App() {
           />
         </Box>
       )}
+      </TabPerformanceManager>
     </ThemeProvider>
   );
 }
