@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -20,6 +20,7 @@ import { getImageUrl } from '../../services/api';
 import type { Image } from './types';
 import { useImageMetadata } from '../../hooks/useImageMetadata';
 import { useImageModalNavigationHelpers } from '../../hooks/useImageModalNavigationHelpers';
+import { useWindowEvents } from '../../hooks/useWindowEvents';
 import ModalNavArrow from '../../theme/ModalNavArrow';
 import ModalSlideTransition from '../common/ModalSlideTransition';
 import { modalActionButtonSx, modalSecondaryActionButtonSx } from '../../theme/modalStyles';
@@ -64,6 +65,22 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
   images,
   setSelectedImage
 }) => {
+  // Use window events hook to get visibility state
+  const { isVisible } = useWindowEvents();
+  
+  // Track if we've opened an image in a new tab
+  const [openedInNewTab, setOpenedInNewTab] = useState(false);
+  
+  // Reset the openedInNewTab state when visibility changes
+  useEffect(() => {
+    if (isVisible && openedInNewTab) {
+      // Small delay to allow the browser to stabilize
+      const timer = setTimeout(() => {
+        setOpenedInNewTab(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, openedInNewTab]);
   // Use custom hook for extracting metadata fields
   const {
     model,
@@ -173,6 +190,8 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
             alt={selectedImage?.filename || ''}
             onClick={() => {
               if (selectedImage?.full_path) {
+                // Mark that we've opened an image in a new tab
+                setOpenedInNewTab(true);
                 window.open(getImageUrl(selectedImage.full_path), '_blank');
               }
             }}
@@ -183,6 +202,9 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
               borderRadius: borders.radius.md,
               marginBottom: 8,
               cursor: 'pointer', // Add pointer cursor to indicate it's clickable
+              // Reduce opacity during tab transition to improve performance
+              opacity: openedInNewTab && !isVisible ? 0.5 : 1,
+              transition: 'opacity 0.3s ease-in-out',
             }}
             title="Click to open full-size image in new tab" // Add tooltip to indicate functionality
           />
