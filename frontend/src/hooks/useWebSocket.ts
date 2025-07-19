@@ -65,7 +65,7 @@ export const useWebSocket = ({
         // Always log the raw message, very visibly
         console.warn('[WebSocket][ALWAYS] Message received:', event.data);
         try {
-          console.log('[WebSocket] Raw message received:', event.data);
+
           const data = JSON.parse(event.data);
           // Print timestamp and delta since last message for diagnostics
           const now = Date.now();

@@ -3,7 +3,6 @@ import {
   Box,
   Snackbar,
   Alert,
-  CircularProgress,
 } from '@mui/material';
 import { getImageUrl, revealInExplorer } from '../../services/api';
 import ImageGridItem from './ImageGridItem';
@@ -95,8 +94,11 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     return foundKey ? obj[foundKey] : undefined;
   }
 
-  const handleImageClick = (image: Image) => { 
-    // Ensure metadata_ is never null to prevent issues with the modal
+  const handleImageClick = (image: Image) => {
+    // If we're already transitioning, ignore the click
+    if (transitioning.current) return;
+    
+    // Set the selected image with safe metadata
     const safeMetadata = image.metadata_ || {};
     
     setSelectedImage({
@@ -109,6 +111,24 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     
     setImageDimensions(null);
     setIsPreviewOpen(true); 
+  };
+  
+  const handleOpenMetadata = (image: Image) => {
+    // If we're already transitioning, ignore the click
+    if (transitioning.current) return;
+    
+    // Set the selected image with safe metadata
+    const safeMetadata = image.metadata_ || {};
+    
+    setSelectedImage({
+      ...image,
+      metadata_: safeMetadata,
+      Workflow: Object.keys(safeMetadata).length > 0 ? JSON.stringify(safeMetadata) : "{}",
+      Prompt: getFieldInsensitive(safeMetadata, 'Prompt')
+    } as Image & { Workflow?: string; Prompt?: string });
+    
+    setImageDimensions(null);
+    setIsModalOpen(true);
   };
   
   const handleCloseModal = () => { 
@@ -193,15 +213,12 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   };
 
   // Add loading tracking for transitions
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const transitioning = useRef(false);
 
   useEffect(() => {
     transitioning.current = true;
-    setIsTransitioning(true);
     const timer = setTimeout(() => {
       transitioning.current = false;
-      setIsTransitioning(false);
     }, 1000); // Wait for images to start loading
     return () => clearTimeout(timer);
   }, [images]);
@@ -221,17 +238,6 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
 
   return (
     <>
-      {isTransitioning && (
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 1
-        }}>
-          <CircularProgress />
-        </Box>
-      )}
       <Box sx={{ 
         width: '100%', 
         p: 1,
@@ -253,6 +259,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
               loadedImages={loadedImages}
               handleImageClick={handleImageClick}
               handleOpenWorkflowModal={handleOpenWorkflowModal}
+              handleOpenMetadata={handleOpenMetadata}
             />
           ))}
         </Box>

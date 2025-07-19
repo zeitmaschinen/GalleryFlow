@@ -107,9 +107,13 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
         aria-labelledby="workflow-modal-title"
         BackdropProps={{
           timeout: 500, // Moderate backdrop transition (faster than 600ms but slower than default)
-          sx: {
-            transition: 'opacity 500ms cubic-bezier(0.3, 0, 0.3, 1) !important'
-          }
+          sx: theme => ({
+            transition: 'opacity 500ms cubic-bezier(0.3, 0, 0.3, 1) !important',
+            backgroundColor: 
+              theme.palette.mode === 'dark' 
+                ? 'rgba(0,0,0,0.7)' 
+                : 'rgba(44, 40, 73, 0.85)' // Purple tint for light mode with 0.85 opacity
+          })
         }}
         PaperProps={{ sx: { borderRadius: borders.radius.lg } }}
       >

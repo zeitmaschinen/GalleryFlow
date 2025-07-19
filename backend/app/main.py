@@ -382,6 +382,7 @@ async def get_image_file(
         response.headers["Cache-Control"] = "no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
     
+
     return response
 
 @app.post("/api/reveal-in-explorer", status_code=200)

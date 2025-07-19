@@ -9,8 +9,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import WorkflowIcon from '@mui/icons-material/AccountTree';
 import { getImageUrl } from '../../services/api';
-import { modalIconButtonSx } from '../../theme/modalStyles';
-import Fade from '@mui/material/Fade';
+
+import ModalSlideTransition from '../common/ModalSlideTransition';
 import ModalNavArrow from '../../theme/ModalNavArrow';
 import { useImageModalNavigationHelpers } from '../../hooks/useImageModalNavigationHelpers';
 import type { Image } from './types';
@@ -44,13 +44,16 @@ setSelectedImage,
       open={open}
       onClose={onClose}
       fullScreen
-      TransitionComponent={Fade}
+      TransitionComponent={ModalSlideTransition}
       BackdropProps={{
         timeout: 500,
-        sx: {
+        sx: theme => ({
           transition: 'opacity 500ms cubic-bezier(0.3, 0, 0.3, 1) !important',
-          backgroundColor: 'rgba(0,0,0,0.7)', // Pure black, nearly opaque
-        },
+          backgroundColor: 
+            theme.palette.mode === 'dark' 
+              ? 'rgba(0,0,0,0.7)' 
+              : 'rgba(44, 40, 73, 0.85)', // Purple tint for light mode with 0.85 opacity
+        }),
       }}
       PaperProps={{
         component: 'div', // Remove MUI Paper entirely
@@ -60,7 +63,19 @@ setSelectedImage,
           margin: 0,
           maxWidth: '100%',
           maxHeight: '100%',
-          '&:focus-visible': { outline: 'none' }, // Remove focus ring
+          border: 'none', // Explicitly remove border
+          outline: 'none', // Explicitly remove outline
+          '&:focus-visible, &::before, &::after': { 
+            outline: 'none !important',
+            border: 'none !important'
+          },
+          '& .MuiDialog-paper': {
+            border: 'none',
+            outline: 'none',
+            '&::before, &::after': {
+              display: 'none !important'
+            }
+          }
         },
       }}
     >
@@ -75,8 +90,7 @@ setSelectedImage,
       {/* Close button */}
       <IconButton
         onClick={onClose}
-        sx={theme => ({
-          ...modalIconButtonSx(theme),
+        sx={{
           top: 16,
           right: 16,
           zIndex: 1500,
@@ -85,7 +99,8 @@ setSelectedImage,
           '&:hover': { bgcolor: '#444' },
           p: 1,
           borderRadius: '50%',
-        })}
+          position: 'fixed',
+        }}
       >
         <CloseIcon />
       </IconButton>

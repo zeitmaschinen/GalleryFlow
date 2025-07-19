@@ -11,6 +11,7 @@ interface ImageGridItemProps {
   loadedImages: Set<string>;
   handleImageClick: (image: Image) => void;
   handleOpenWorkflowModal?: (image: Image) => void;
+  handleOpenMetadata?: (image: Image) => void;
 }
 
 const ImageGridItem: React.FC<ImageGridItemProps> = ({
@@ -18,6 +19,7 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
   loadedImages,
   handleImageClick,
   handleOpenWorkflowModal,
+  handleOpenMetadata = handleImageClick, // Default to handleImageClick for backward compatibility
 }) => {
   return (
     <Box
@@ -103,7 +105,7 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
               }} 
               onClick={(e) => {
                 e.stopPropagation();
-                handleImageClick(image);
+                handleOpenMetadata(image);
               }}
             >
               <InfoIcon sx={{ fontSize: 20 }} />

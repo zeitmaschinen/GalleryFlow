@@ -223,8 +223,6 @@ function App() {
           if (eventData.scan_id && lastScanIdRef.current[sf.id] !== eventData.scan_id) {
             handleRefreshFolderAndImages(sf.id);
             lastScanIdRef.current[sf.id] = eventData.scan_id;
-          } else {
-            // TODO: Implement logic or remove block
           }
         }
       };
