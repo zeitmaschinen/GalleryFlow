@@ -78,7 +78,6 @@ class FolderWatchdogHandler(FileSystemEventHandler):
         global watchdog_event_queue
         if not event.is_directory:
             logger.info(f"Watchdog event detected for folder_id={self.folder_id}: {event.event_type} {event.src_path}")
-            logger.debug(f"[DEBUG] Watchdog event details: {event}")
             asyncio.run_coroutine_threadsafe(
                 watchdog_event_queue.put((self.folder_id, self.folder_path)), MAIN_EVENT_LOOP
             )
@@ -298,7 +297,6 @@ async def list_images(
     db: AsyncSession = Depends(database.get_db)
 ):
     """Lists cached images for a specific folder with pagination, sorting, and filtering."""
-    logger.info(f"[DEBUG] /api/images called with folder_id={folder_id}, skip={skip}, limit={limit}, sort_by={sort_by}, sort_dir={sort_dir}, file_types={file_types}")
     logger.info(f"Request images: folder={folder_id}, skip={skip}, limit={limit}, sort={sort_by} {sort_dir}, types={file_types}")
 
     if sort_by not in ["filename", "date", "folder"]:
@@ -308,7 +306,6 @@ async def list_images(
 
     folder = await crud.get_folder(db, folder_id)
     if not folder:
-        logger.warning(f"[DEBUG] Folder with ID {folder_id} not found.")
         raise HTTPException(status_code=404, detail=f"Folder with ID {folder_id} not found")
 
     image_response = await crud.get_images_by_folder(
@@ -320,7 +317,6 @@ async def list_images(
         sort_dir=sort_dir,
         file_types=file_types
     )
-    logger.info(f"[DEBUG] Returning image response: {image_response}")
     return image_response
 
 

@@ -2,9 +2,6 @@
 import axios from 'axios';
 import { imageCache } from './cache';
 import type { Image, Folder, ScanProgress } from '../types/index';
-import { createErrorHandler } from '../utils/errorHandling';
-
-const handleError = createErrorHandler('API');
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
@@ -109,85 +106,6 @@ export const connectToScanProgress = (
     };
     
     return ws;
-};
-
-export const api = {
-  async getImages(): Promise<Image[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/images`);
-      if (!response.ok) throw new Error('Failed to fetch images');
-      return await response.json();
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async getFolders(): Promise<Folder[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/folders`);
-      if (!response.ok) throw new Error('Failed to fetch folders');
-      return await response.json();
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async addFolder(path: string): Promise<Folder> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/folders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path })
-      });
-      if (!response.ok) throw new Error('Failed to add folder');
-      return await response.json();
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async removeFolder(id: number): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to remove folder');
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async scanFolders(): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/scan`, {
-        method: 'POST'
-      });
-      if (!response.ok) throw new Error('Failed to initiate scan');
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async getScanProgress(): Promise<ScanProgress> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/scan/progress`);
-      if (!response.ok) throw new Error('Failed to get scan progress');
-      return await response.json();
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async deleteImage(id: number): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/images/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to delete image');
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  }
 };
 
 // Add export for Image, Folder, ScanProgress from types
