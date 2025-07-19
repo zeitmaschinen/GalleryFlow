@@ -381,6 +381,66 @@ async def get_image_file(
 
     return response
 
+@app.get("/api/thumbnail")
+async def get_thumbnail(
+    file_path: str = Query(..., description="Absolute path to the original image file"),
+    size: str = Query("medium", description="Thumbnail size: small (150px) or medium (300px)"),
+    db: AsyncSession = Depends(database.get_db)
+):
+    """Serve optimized thumbnails for faster loading."""
+    from .thumbnail_generator import thumbnail_generator
+    
+    # Security: Verify the image is in a mapped folder (same as main image endpoint)
+    requested_path = Path(file_path)
+    if not requested_path.is_absolute():
+        raise HTTPException(status_code=400, detail="File path must be absolute.")
+    try:
+        resolved_requested_path = requested_path.resolve(strict=True)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Image file not found at the specified path.")
+    except Exception as e:
+        logger.warning(f"Error resolving path '{file_path}': {e}")
+        raise HTTPException(status_code=400, detail="Invalid file path.")
+
+    mapped_folders = await crud.get_folders(db)
+    is_allowed = False
+    for folder in mapped_folders:
+        try:
+            mapped_folder_path = Path(folder.path).resolve()
+            if resolved_requested_path.is_relative_to(mapped_folder_path):
+                is_allowed = True
+                break
+        except Exception as e:
+             logger.warning(f"Error resolving mapped folder path '{folder.path}': {e}")
+             continue
+
+    if not is_allowed:
+        logger.warning(f"Access denied for thumbnail path: {resolved_requested_path}. Not within any mapped folder.")
+        raise HTTPException(status_code=403, detail="Access denied: File path is not within a registered folder.")
+
+    # Generate or get existing thumbnail
+    thumbnail_path = thumbnail_generator.generate_thumbnail(str(resolved_requested_path), size)
+    
+    if not thumbnail_path or not Path(thumbnail_path).exists():
+        # Fallback to original image if thumbnail generation fails
+        thumbnail_path = str(resolved_requested_path)
+        media_type = f'image/{resolved_requested_path.suffix.lstrip(".")}'
+        if resolved_requested_path.suffix.lower() == '.jpg':
+            media_type = 'image/jpeg'
+    else:
+        media_type = 'image/webp'  # Thumbnails are saved as WebP
+    
+    logger.info(f"Serving thumbnail: {thumbnail_path}")
+    response = FileResponse(thumbnail_path, media_type=media_type)
+    
+    # Add aggressive caching for thumbnails since they rarely change
+    response.headers["Cache-Control"] = "public, max-age=2592000, immutable"  # 30 days
+    file_stat = Path(thumbnail_path).stat()
+    etag = f'\"{hash(str(file_stat.st_mtime) + str(file_stat.st_size))}\"'
+    response.headers["ETag"] = etag
+    
+    return response
+
 @app.post("/api/reveal-in-explorer", status_code=200)
 async def reveal_file(
     file_path: str = Query(..., description="Absolute path to the image file to reveal"),

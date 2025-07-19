@@ -4,7 +4,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { getImageUrl, revealInExplorer } from '../../services/api';
+import { getImageUrl, revealInExplorer, getThumbnailUrl } from '../../services/api';
 import ImageGridItem from './ImageGridItem';
 import ImagePreviewModal from './ImagePreviewModal';
 import ImageModal from './ImageModal';
@@ -29,9 +29,9 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [workflowModalImage, setWorkflowModalImage] = React.useState<Image | null>(null);
 
-  // Preload images
+  // Preload thumbnails for faster grid display
   useEffect(() => {
-    const preloadImage = (src: string) => {
+    const preloadThumbnail = (src: string) => {
       const img = new Image();
       img.onload = () => {
         setLoadedImages(prev => new Set(prev).add(src));
@@ -40,8 +40,9 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     };
 
     images.forEach(image => {
-      if (!loadedImages.has(getImageUrl(image.full_path))) {
-        preloadImage(getImageUrl(image.full_path));
+      const thumbnailUrl = getThumbnailUrl(image.full_path, 'medium');
+      if (!loadedImages.has(thumbnailUrl)) {
+        preloadThumbnail(thumbnailUrl);
       }
     });
   }, [images, loadedImages]);

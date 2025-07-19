@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, CircularProgress, IconButton } from '@mui/material';
-import { getImageUrl } from '../../services/api';
+import { getImageUrl, getThumbnailUrl } from '../../services/api';
 import type { Image } from './types';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import WorkflowIcon from '@mui/icons-material/AccountTree';
@@ -21,6 +21,10 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
   handleOpenWorkflowModal,
   handleOpenMetadata = handleImageClick, // Default to handleImageClick for backward compatibility
 }) => {
+  // Use thumbnail for grid display, full image for preview
+  const thumbnailUrl = getThumbnailUrl(image.full_path, 'medium');
+  const fullImageUrl = getImageUrl(image.full_path);
+  
   return (
     <Box
       sx={{
@@ -49,25 +53,25 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
     >
       <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img
-          src={`${getImageUrl(image.full_path)}&t=${image.last_modified || Date.now()}`}
+          src={`${thumbnailUrl}&t=${image.last_modified || Date.now()}`}
           alt={image.filename}
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'cover',
             objectPosition: 'center',
-            opacity: loadedImages.has(getImageUrl(image.full_path)) ? 1 : 0,
+            opacity: loadedImages.has(thumbnailUrl) ? 1 : 0,
             transition: 'opacity 0.3s ease-in-out',
             borderRadius: 'inherit',
             display: 'block',
           }}
           onLoad={() => {
-            if (!loadedImages.has(getImageUrl(image.full_path))) {
-              loadedImages.add(getImageUrl(image.full_path));
+            if (!loadedImages.has(thumbnailUrl)) {
+              loadedImages.add(thumbnailUrl);
             }
           }}
         />
-        {!loadedImages.has(getImageUrl(image.full_path)) && (
+        {!loadedImages.has(thumbnailUrl) && (
           <Box
             sx={{
               position: 'absolute',

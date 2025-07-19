@@ -12,6 +12,7 @@ from sqlalchemy.dialects.sqlite import insert
 from typing import List, Optional, Set
 
 from . import models, schemas, metadata_extractor
+from .thumbnail_generator import thumbnail_generator
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +125,11 @@ async def create_or_update_image(db: AsyncSession, image_data: schemas.ImageCrea
         if 'metadata_' in update_data:
             existing_image.metadata_ = update_data['metadata_']
             needs_update = True
+        # Update new fields if they exist in the database schema
+        for field in ['width', 'height', 'file_size', 'thumbnail_path', 'has_thumbnail']:
+            if hasattr(existing_image, field) and field in update_data:
+                setattr(existing_image, field, update_data[field])
+                needs_update = True
 
         if needs_update:
             await db.commit()
@@ -199,7 +205,10 @@ async def scan_folder_and_update_db(
                     if existing_mod_time is not None and existing_mod_time.tzinfo is None:
                         existing_mod_time = existing_mod_time.replace(tzinfo=timezone.utc)
                     if existing_mod_time is None or last_modified_dt > existing_mod_time:
+                        # Extract metadata
                         metadata = metadata_extractor.extract_comfyui_metadata(full_path_str)
+                        
+                        # Create basic image data (compatible with old database schema)
                         image_data = schemas.ImageCreate(
                             filename=item.name,
                             full_path=full_path_str,
@@ -207,6 +216,23 @@ async def scan_folder_and_update_db(
                             metadata_=metadata,
                             folder_id=folder.id
                         )
+                        
+                        # Try to add performance fields if database supports them
+                        try:
+                            width, height = thumbnail_generator.get_image_dimensions(full_path_str)
+                            file_size = thumbnail_generator.get_file_size(full_path_str)
+                            thumbnail_path = thumbnail_generator.generate_thumbnail(full_path_str, "medium")
+                            has_thumbnail = thumbnail_path is not None
+                            
+                            # Update with performance fields
+                            image_data.width = width
+                            image_data.height = height
+                            image_data.file_size = file_size
+                            image_data.thumbnail_path = thumbnail_path
+                            image_data.has_thumbnail = has_thumbnail
+                        except Exception as e:
+                            # Database might not have new columns yet, continue without them
+                            logger.debug(f"Could not add performance fields for {full_path_str}: {e}")
                         batch.append(image_data)
                         if existing_mod_time is None:
                             stats['added_count'] += 1
@@ -266,15 +292,25 @@ async def process_image_batch(db: AsyncSession, batch: List[schemas.ImageCreate]
     batch = list(unique_images.values())
 
     for image_data in batch:
-        stmt = insert(models.Image).values(**image_data.model_dump())
+        stmt = insert(models.Image).values(**image_data.model_dump(exclude_none=True))
+        
+        # Build update dict with only fields that exist in the schema
+        update_dict = {
+            "last_modified": image_data.last_modified,
+            "metadata": image_data.metadata_,
+            "folder_id": image_data.folder_id,
+            "filename": image_data.filename,
+        }
+        
+        # Add new fields only if they exist in the image_data
+        for field in ['width', 'height', 'file_size', 'thumbnail_path', 'has_thumbnail']:
+            value = getattr(image_data, field, None)
+            if value is not None:
+                update_dict[field] = value
+        
         stmt = stmt.on_conflict_do_update(
             index_elements=['full_path'],
-            set_={
-                "last_modified": image_data.last_modified,
-                "metadata": image_data.metadata_,  # Use correct column name for DB
-                "folder_id": image_data.folder_id,
-                "filename": image_data.filename,
-            }
+            set_=update_dict
         )
         await db.execute(stmt)
     try:

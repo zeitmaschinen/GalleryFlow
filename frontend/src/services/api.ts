@@ -87,6 +87,14 @@ export const getImageUrl = (imagePath: string): string => {
     return `${API_BASE_URL}/image?file_path=${encodeURIComponent(imagePath)}&cache=true`;
 };
 
+// Function to get optimized thumbnail URL for faster grid loading
+export const getThumbnailUrl = (imagePath: string, size: 'small' | 'medium' = 'medium'): string => {
+    // For now, fallback to regular image URL until thumbnails are generated
+    // TODO: Switch back to thumbnail endpoint once database is migrated
+    return getImageUrl(imagePath);
+    // return `${API_BASE_URL}/thumbnail?file_path=${encodeURIComponent(imagePath)}&size=${size}`;
+};
+
 // Function to reveal file in system's file explorer
 export const revealInExplorer = async (filePath: string): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>(`/reveal-in-explorer?file_path=${encodeURIComponent(filePath)}`);
