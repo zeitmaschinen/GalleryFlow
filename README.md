@@ -21,19 +21,19 @@ Effortlessly connect to your ComfyUI output directory and instantly sort and fil
 
 <br>
 
-![Gallery screenshot](frontend/docs/images/gallery-dark.jpg)
+![Gallery screenshot](frontend/docs/images/gallery.png)
 
 <br>
 
-![Gallery screenshot](frontend/docs/images/gallery-light.jpg)
+![Image preview screenshot](frontend/docs/images/preview.png)
 
 <br>
 
-![Metadata modal screenshot](frontend/docs/images/metadata.jpg)
+![Metadata modal screenshot](frontend/docs/images/metadata.png)
 
 <br>
 
-![Workflow preview](frontend/docs/images/workflow.jpg)
+![Workflow preview](frontend/docs/images/workflow.png)
 
 <br>
 
