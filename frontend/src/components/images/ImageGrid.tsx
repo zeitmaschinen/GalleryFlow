@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import { getImageUrl, revealInExplorer } from '../../services/api';
 import ImageGridItem from './ImageGridItem';
+import ImagePreviewModal from './ImagePreviewModal';
 import ImageModal from './ImageModal';
 import WorkflowModal from '../workflow/WorkflowModal';
 import type { Image } from './types';
@@ -37,6 +38,7 @@ interface ImageGridProps {
 
 const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -105,8 +107,8 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
       Prompt: getFieldInsensitive(safeMetadata, 'Prompt')
     } as Image & { Workflow?: string; Prompt?: string });
     
-    setImageDimensions(null); 
-    setIsModalOpen(true); 
+    setImageDimensions(null);
+    setIsPreviewOpen(true); 
   };
   
   const handleCloseModal = () => { 
@@ -257,7 +259,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
       </Box>
 
       {/* OUTSIDE THE DIALOG: Render navigation arrows absolutely on the viewport when modal is open */}
-      {isModalOpen && selectedImage && (
+      {(isPreviewOpen || isModalOpen) && selectedImage && (
         <>
           <Box sx={{
             position: 'fixed',
@@ -316,6 +318,30 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
         </>
       )}
 
+      <ImagePreviewModal
+        open={isPreviewOpen}
+        selectedImage={selectedImage}
+        images={images}
+        setSelectedImage={setSelectedImage}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setTimeout(() => setSelectedImage(null), 300);
+        }}
+        onSeeMetadata={() => {
+          setIsPreviewOpen(false);
+          setTimeout(() => setIsModalOpen(true), 300);
+        }}
+        onSeeWorkflow={() => {
+          setIsPreviewOpen(false);
+          setTimeout(() => {
+            if (selectedImage) {
+              setWorkflowModalImage(selectedImage);
+              setWorkflowModalOpen(true);
+            }
+          }, 300);
+        }}
+      />
+
       <ImageModal
         open={isModalOpen}
         selectedImage={selectedImage}
@@ -337,6 +363,10 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
               setWorkflowModalOpen(true);
             }
           }, 300);
+        }}
+        onOpenPreview={() => {
+          setIsModalOpen(false);
+          setTimeout(() => setIsPreviewOpen(true), 300);
         }}
       />
 

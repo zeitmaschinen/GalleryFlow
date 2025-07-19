@@ -36,6 +36,7 @@ interface ImageModalProps {
   onRevealFile: () => void;
   onCopyToClipboard: (text: string, isNegative?: boolean) => void;
   onOpenWorkflow: () => void;
+  onOpenPreview?: () => void;
   images?: Image[];
   setSelectedImage?: (img: Image) => void;
 }
@@ -61,6 +62,7 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
   onRevealFile,
   onCopyToClipboard,
   onOpenWorkflow,
+  onOpenPreview,
   images,
   setSelectedImage
 }) => {
@@ -169,12 +171,14 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
           <img
             ref={modalImageRef}
             onLoad={onModalImageLoad}
+            onClick={onOpenPreview}
             src={getImageUrl(selectedImage?.full_path || '')}
             alt={selectedImage?.filename || ''}
             style={{
               maxWidth: '100%',
               maxHeight: '60vh',
               objectFit: 'contain',
+              cursor: 'pointer',
               borderRadius: borders.radius.md,
               marginBottom: 8,
             }}
