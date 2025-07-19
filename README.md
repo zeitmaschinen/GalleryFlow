@@ -1,4 +1,4 @@
-# GalleryFlow
+# GalleryFlow 1.4.0
 
 A modern web application for browsing and managing <a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" rel="noopener noreferrer">ComfyUI</a>-generated images with advanced metadata support.
 
