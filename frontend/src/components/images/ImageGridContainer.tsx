@@ -4,6 +4,7 @@ import { ImageGrid } from './';
 import type { Image } from './types';
 import { PaginationControls } from '../common';
 import { spacing } from '../../theme/themeConstants';
+import { IMAGES_PER_PAGE } from '../../constants';
 
 interface ImageGridContainerProps {
   images: Image[];

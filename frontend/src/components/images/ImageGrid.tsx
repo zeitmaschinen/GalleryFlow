@@ -4,7 +4,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { getImageUrl, revealInExplorer, getThumbnailUrl } from '../../services/api';
+import { revealInExplorer, getThumbnailUrl } from '../../services/api';
 import ImageGridItem from './ImageGridItem';
 import ImagePreviewModal from './ImagePreviewModal';
 import ImageModal from './ImageModal';

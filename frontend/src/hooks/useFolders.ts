@@ -49,7 +49,7 @@ export function useFolders() {
 
   const handleDeleteFolder = async (folderId: number) => {
     await api.deleteFolder(folderId);
-    setFolders(prev => prev.filter(f => f.id !== folderId));
+    await fetchFolders();
     if (selectedFolder?.id === folderId) {
       setSelectedFolder(null);
     }

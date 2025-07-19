@@ -1,1 +1,95 @@
-import { useState, useEffect, useRef } from 'react';\n\n/**\n * Hook for progressive image loading with intersection observer\n * Loads images only when they're about to enter the viewport\n */\nexport const useProgressiveImageLoading = (images: any[], rootMargin = '50px') => {\n  const [visibleImages, setVisibleImages] = useState<Set<string>>(new Set());\n  const observerRef = useRef<IntersectionObserver | null>(null);\n  const imageRefs = useRef<Map<string, HTMLElement>>(new Map());\n\n  useEffect(() => {\n    // Create intersection observer\n    observerRef.current = new IntersectionObserver(\n      (entries) => {\n        entries.forEach((entry) => {\n          if (entry.isIntersecting) {\n            const imageId = entry.target.getAttribute('data-image-id');\n            if (imageId) {\n              setVisibleImages(prev => new Set(prev).add(imageId));\n              // Stop observing this image once it's loaded\n              observerRef.current?.unobserve(entry.target);\n            }\n          }\n        });\n      },\n      {\n        rootMargin, // Load images slightly before they're visible\n        threshold: 0.1\n      }\n    );\n\n    return () => {\n      observerRef.current?.disconnect();\n    };\n  }, [rootMargin]);\n\n  const registerImageRef = (imageId: string, element: HTMLElement | null) => {\n    if (element) {\n      imageRefs.current.set(imageId, element);\n      observerRef.current?.observe(element);\n    } else {\n      const existingElement = imageRefs.current.get(imageId);\n      if (existingElement) {\n        observerRef.current?.unobserve(existingElement);\n        imageRefs.current.delete(imageId);\n      }\n    }\n  };\n\n  const isImageVisible = (imageId: string) => visibleImages.has(imageId);\n\n  return {\n    registerImageRef,\n    isImageVisible,\n    visibleImagesCount: visibleImages.size\n  };\n};\n\n/**\n * Hook for batched image loading to prevent overwhelming the browser\n */\nexport const useBatchedImageLoading = (images: any[], batchSize = 10) => {\n  const [loadedBatches, setLoadedBatches] = useState(0);\n  const [isLoading, setIsLoading] = useState(false);\n\n  const loadNextBatch = () => {\n    if (loadedBatches * batchSize < images.length && !isLoading) {\n      setIsLoading(true);\n      // Simulate batch loading delay\n      setTimeout(() => {\n        setLoadedBatches(prev => prev + 1);\n        setIsLoading(false);\n      }, 100);\n    }\n  };\n\n  const shouldLoadImage = (index: number) => {\n    return index < (loadedBatches + 1) * batchSize;\n  };\n\n  useEffect(() => {\n    // Load first batch immediately\n    if (images.length > 0 && loadedBatches === 0) {\n      loadNextBatch();\n    }\n  }, [images.length]);\n\n  return {\n    shouldLoadImage,\n    loadNextBatch,\n    isLoading,\n    hasMoreToLoad: loadedBatches * batchSize < images.length\n  };\n};\n
+import { useState, useEffect, useRef } from 'react';
+
+/**
+ * Hook for progressive image loading with intersection observer
+ * Loads images only when they're about to enter the viewport
+ */
+export const useProgressiveImageLoading = (images: unknown[], rootMargin = '50px') => {
+  const [visibleImages, setVisibleImages] = useState<Set<string>>(new Set());
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const imageRefs = useRef<Map<string, HTMLElement>>(new Map());
+
+  useEffect(() => {
+    // Create intersection observer
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const imageId = entry.target.getAttribute('data-image-id');
+            if (imageId) {
+              setVisibleImages(prev => new Set(prev).add(imageId));
+              // Stop observing this image once it's loaded
+              observerRef.current?.unobserve(entry.target);
+            }
+          }
+        });
+      },
+      {
+        rootMargin, // Load images slightly before they're visible
+        threshold: 0.1
+      }
+    );
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [rootMargin]);
+
+  const registerImageRef = (imageId: string, element: HTMLElement | null) => {
+    if (element) {
+      imageRefs.current.set(imageId, element);
+      observerRef.current?.observe(element);
+    } else {
+      const existingElement = imageRefs.current.get(imageId);
+      if (existingElement) {
+        observerRef.current?.unobserve(existingElement);
+        imageRefs.current.delete(imageId);
+      }
+    }
+  };
+
+  const isImageVisible = (imageId: string) => visibleImages.has(imageId);
+
+  return {
+    registerImageRef,
+    isImageVisible,
+    visibleImagesCount: visibleImages.size
+  };
+};
+
+/**
+ * Hook for batched image loading to prevent overwhelming the browser
+ */
+export const useBatchedImageLoading = (images: unknown[], batchSize = 10) => {
+  const [loadedBatches, setLoadedBatches] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadNextBatch = () => {
+    if (loadedBatches * batchSize < images.length && !isLoading) {
+      setIsLoading(true);
+      // Simulate batch loading delay
+      setTimeout(() => {
+        setLoadedBatches(prev => prev + 1);
+        setIsLoading(false);
+      }, 100);
+    }
+  };
+
+  const shouldLoadImage = (index: number) => {
+    return index < (loadedBatches + 1) * batchSize;
+  };
+
+  useEffect(() => {
+    // Load first batch immediately
+    if (images.length > 0 && loadedBatches === 0) {
+      loadNextBatch();
+    }
+  }, [images.length]);
+
+  return {
+    shouldLoadImage,
+    loadNextBatch,
+    isLoading,
+    hasMoreToLoad: loadedBatches * batchSize < images.length
+  };
+};

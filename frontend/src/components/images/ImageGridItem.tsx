@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, CircularProgress, IconButton } from '@mui/material';
-import { getImageUrl, getThumbnailUrl } from '../../services/api';
+import { getThumbnailUrl } from '../../services/api';
 import type { Image } from './types';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import WorkflowIcon from '@mui/icons-material/AccountTree';
@@ -23,7 +23,6 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
 }) => {
   // Use thumbnail for grid display, full image for preview
   const thumbnailUrl = getThumbnailUrl(image.full_path, 'medium');
-  const fullImageUrl = getImageUrl(image.full_path);
   
   return (
     <Box

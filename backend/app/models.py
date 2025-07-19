@@ -21,7 +21,7 @@ class Image(Base):
     last_modified = Column(DateTime, nullable=False)
     metadata_ = Column('metadata', JSON)
     folder_id = Column(Integer, ForeignKey("folders.id"), nullable=False)
-    
+
     # Performance optimization fields
     width = Column(Integer)  # Image dimensions for aspect ratio
     height = Column(Integer)

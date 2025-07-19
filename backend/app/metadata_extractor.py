@@ -1,10 +1,10 @@
 import json
 from PIL import Image as PILImage  # Use alias to avoid conflict with model name
-from PIL import PngImagePlugin
 import logging
 from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
+
 
 def extract_comfyui_metadata(image_path: str) -> Optional[Dict[str, Any]]:
     """Extracts ComfyUI metadata (often stored in 'prompt' or 'workflow' PNG chunks).
@@ -129,14 +129,12 @@ def extract_comfyui_metadata(image_path: str) -> Optional[Dict[str, Any]]:
                     if isinstance(metadata, dict):
                         metadata.update(gen_params)
                     return metadata  # Return the node graph as top-level dict, as frontend expects
-                except json.JSONDecodeError as json_err:
-                    pass
-                except Exception as e:
+                except Exception:
                     pass
         else:
             pass  # Only handle PNG for now
     except FileNotFoundError:
         pass
-    except Exception as e:
+    except Exception:
         pass
     return None  # Return None if no metadata found or error occurs

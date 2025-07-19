@@ -9,7 +9,8 @@ import { StatsCards, ControlsCard } from '../common';
 import { ImageGridContainer } from '../images';
 import { spacing, colors } from '../../theme/themeConstants';
 import type { SortField } from '../../types';
-import { Image } from '../images/ImageGrid';
+import type { Image } from '../../types';
+import { IMAGES_PER_PAGE } from '../../constants';
 
 // Define the Folder interface locally since it's not properly exported from types
 interface Folder {
@@ -104,7 +105,7 @@ const MainContent: React.FC<MainContentProps> = ({
             <StatsCards
               totalImages={totalImages}
               currentPage={currentPage}
-              totalPages={Math.ceil(totalImages / 200)} // Force 200 images per page
+              totalPages={Math.ceil(totalImages / IMAGES_PER_PAGE)}
             />
           </Box>
 
@@ -129,10 +130,9 @@ const MainContent: React.FC<MainContentProps> = ({
               isLoading={isLoadingImages}
               error={errorImages}
               thumbnailSize={thumbnailSize}
-              columnsCount={columnsCount}
               currentPage={currentPage}
               totalImages={totalImages}
-              imagesPerPage={200} // Force 200 images per page
+              imagesPerPage={IMAGES_PER_PAGE}
               onPageChange={onPageChange}
               onGoToFirstPage={onGoToFirstPage}
               onGoToLastPage={onGoToLastPage}
