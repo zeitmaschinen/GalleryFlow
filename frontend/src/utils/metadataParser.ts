@@ -414,24 +414,24 @@ function extractPrompts(nodes: Record<string, unknown>, kSamplerNode: unknown, r
 function extractModelInfoRobust(nodes: Record<string, unknown>): { model: string } | null {
   // Try Loader nodes with ckpt_name
   const loaderNode = Object.values(nodes).find((node) =>
+    hasRecordProp(node, 'inputs') && hasStringProp((node as Record<string, unknown>)['inputs'], 'ckpt_name') &&
     typeof node === 'object' && node !== null &&
     'class_type' in node && typeof (node as Record<string, unknown>)['class_type'] === 'string' &&
-    ((node as Record<string, unknown>)['class_type'] as string).includes('Loader') &&
-    'inputs' in node && typeof (node as Record<string, unknown>)['inputs'] === 'object' && (node as Record<string, unknown>)['inputs'] !== null &&
-    'ckpt_name' in (node as Record<string, unknown>)['inputs'] && typeof ((node as Record<string, unknown>)['inputs'] as Record<string, unknown>)['ckpt_name'] === 'string'
+    ((node as Record<string, unknown>)['class_type'] as string).includes('Loader')
   ) as Record<string, unknown> | undefined;
-  if (loaderNode && hasRecordProp(loaderNode, 'inputs') && hasStringProp(loaderNode['inputs'], 'ckpt_name')) {
-    return { model: loaderNode['inputs']['ckpt_name'] as string };
+  if (loaderNode && hasRecordProp(loaderNode, 'inputs') && hasStringProp((loaderNode as Record<string, unknown>)['inputs'], 'ckpt_name')) {
+    const inputs = (loaderNode as Record<string, unknown>)['inputs'];
+    return { model: (inputs as Record<string, unknown>)['ckpt_name'] as string };
   }
   // Try UNETLoader with unet_name
   const unetNode = Object.values(nodes).find((node) =>
+    hasRecordProp(node, 'inputs') && hasStringProp((node as Record<string, unknown>)['inputs'], 'unet_name') &&
     typeof node === 'object' && node !== null &&
-    'class_type' in node && (node as Record<string, unknown>)['class_type'] === 'UNETLoader' &&
-    'inputs' in node && typeof (node as Record<string, unknown>)['inputs'] === 'object' && (node as Record<string, unknown>)['inputs'] !== null &&
-    'unet_name' in (node as Record<string, unknown>)['inputs'] && typeof ((node as Record<string, unknown>)['inputs'] as Record<string, unknown>)['unet_name'] === 'string'
+    'class_type' in node && (node as Record<string, unknown>)['class_type'] === 'UNETLoader'
   ) as Record<string, unknown> | undefined;
-  if (unetNode && hasRecordProp(unetNode, 'inputs') && hasStringProp(unetNode['inputs'], 'unet_name')) {
-    return { model: unetNode['inputs']['unet_name'] as string };
+  if (unetNode && hasRecordProp(unetNode, 'inputs') && hasStringProp((unetNode as Record<string, unknown>)['inputs'], 'unet_name')) {
+    const inputs = (unetNode as Record<string, unknown>)['inputs'];
+    return { model: (inputs as Record<string, unknown>)['unet_name'] as string };
   }
   return null;
 }
@@ -463,14 +463,18 @@ function extractUpscaleInfo(nodes: Record<string, unknown>) {
     } else if (hasStringProp(upscaleNode['inputs'], 'upscale_model')) {
       hiresUpscaler = upscaleNode['inputs']['upscale_model'] as string;
     }
-    if (typeof upscaleNode['inputs']['scale'] === 'number') {
-      hiresUpscale = upscaleNode['inputs']['scale'];
-    } else if (typeof upscaleNode['inputs']['scale_by'] === 'number') {
-      hiresUpscale = upscaleNode['inputs']['scale_by'];
-    } else if (typeof upscaleNode['inputs']['upscale_factor'] === 'number') {
-      hiresUpscale = upscaleNode['inputs']['upscale_factor'];
-    } else if (typeof upscaleNode['inputs']['multiplier'] === 'number') {
-      hiresUpscale = upscaleNode['inputs']['multiplier'];
+    const inputs = (upscaleNode as { inputs?: unknown }).inputs;
+    if (inputs && typeof inputs === 'object') {
+      const rec = inputs as Record<string, unknown>;
+      if (typeof rec['scale'] === 'number') {
+        hiresUpscale = rec['scale'];
+      } else if (typeof rec['scale_by'] === 'number') {
+        hiresUpscale = rec['scale_by'];
+      } else if (typeof rec['upscale_factor'] === 'number') {
+        hiresUpscale = rec['upscale_factor'];
+      } else if (typeof rec['multiplier'] === 'number') {
+        hiresUpscale = rec['multiplier'];
+      }
     }
   }
 

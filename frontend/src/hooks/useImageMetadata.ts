@@ -50,7 +50,7 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
     
     // Extract ComfyUI or other metadata formats
     let metadataSource = selectedImageData;
-    let comfyWorkflow: Record<string, any> = {};
+    let comfyWorkflow: Record<string, unknown> = {};
     
     // Try to parse workflow JSON if it's a string
     if (typeof workflow === 'string') {
@@ -92,75 +92,86 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
     }
 
     // Function to extract metadata from ComfyUI workflow format
-    function extractComfyUIMetadata(workflow: Record<string, any>): Record<string, unknown> {
+    function extractComfyUIMetadata(workflow: Record<string, unknown>): Record<string, unknown> {
       const result: Record<string, unknown> = {};
       const nodes = Object.values(workflow);
       
+      // Type guard for node objects
+      function isComfyNode(obj: unknown): obj is { class_type?: string; inputs?: Record<string, unknown> } {
+        return typeof obj === 'object' && obj !== null;
+      }
+      
       // Extract text prompts
       const textNodes = nodes.filter(node => 
-        node?.class_type === 'ttN text' || 
-        node?.class_type === 'CLIPTextEncode' || 
-        node?.class_type === 'CLIPTextEncodeSDXL'
+        isComfyNode(node) && (
+          node.class_type === 'ttN text' || 
+          node.class_type === 'CLIPTextEncode' || 
+          node.class_type === 'CLIPTextEncodeSDXL'
+        )
       );
       
       // Find positive and negative prompts
       const positivePromptNode = textNodes.find(node => {
-        // Check if this node is connected to a positive input in a sampler
         const nodeId = Object.keys(workflow).find(key => workflow[key] === node);
         if (!nodeId) return false;
-        
-        return Object.values(workflow).some(n => 
-          n?.inputs?.positive?.[0] === nodeId || 
-          n?.inputs?.text_g?.[0] === nodeId
+        return Object.values(workflow).some(n =>
+          isComfyNode(n) && (
+            (Array.isArray(n.inputs?.positive) && n.inputs?.positive[0] === nodeId) ||
+            (Array.isArray(n.inputs?.text_g) && n.inputs?.text_g[0] === nodeId)
+          )
         );
       });
       
       const negativePromptNode = textNodes.find(node => {
-        // Check if this node is connected to a negative input in a sampler
         const nodeId = Object.keys(workflow).find(key => workflow[key] === node);
         if (!nodeId) return false;
-        
-        return Object.values(workflow).some(n => 
-          n?.inputs?.negative?.[0] === nodeId || 
-          n?.inputs?.text_l?.[0] === nodeId
+        return Object.values(workflow).some(n =>
+          isComfyNode(n) && (
+            (Array.isArray(n.inputs?.negative) && n.inputs?.negative[0] === nodeId) ||
+            (Array.isArray(n.inputs?.text_g) && n.inputs?.text_g[0] === nodeId)
+          )
         );
       });
       
       // Extract prompt text
-      if (positivePromptNode?.inputs?.text) {
+      if (isComfyNode(positivePromptNode) && positivePromptNode.inputs?.text) {
         result.positivePrompt = positivePromptNode.inputs.text;
       }
       
-      if (negativePromptNode?.inputs?.text) {
+      if (isComfyNode(negativePromptNode) && negativePromptNode.inputs?.text) {
         result.negativePrompt = negativePromptNode.inputs.text;
       }
       
       // Find checkpoint loader nodes
       const checkpointNodes = nodes.filter(node => 
-        node?.class_type?.includes('CheckpointLoader') || 
-        node?.class_type?.includes('Load Checkpoint')
+        isComfyNode(node) && (
+          (typeof node.class_type === 'string' && node.class_type.includes('CheckpointLoader')) ||
+          (typeof node.class_type === 'string' && node.class_type.includes('Load Checkpoint'))
+        )
       );
       
-      if (checkpointNodes.length > 0 && checkpointNodes[0]?.inputs?.ckpt_name) {
+      if (checkpointNodes.length > 0 && isComfyNode(checkpointNodes[0]) && checkpointNodes[0].inputs?.ckpt_name) {
         result.model = checkpointNodes[0].inputs.ckpt_name;
       }
       
       // Find LoRA loader nodes
       const loraNodes = nodes.filter(node => 
-        node?.class_type?.includes('LoraLoader') || 
-        node?.class_type?.includes('Load LoRA')
+        isComfyNode(node) && (
+          (typeof node.class_type === 'string' && node.class_type.includes('LoraLoader')) ||
+          (typeof node.class_type === 'string' && node.class_type.includes('Load LoRA'))
+        )
       );
       
       if (loraNodes.length > 0) {
-        result.loras = loraNodes.map(node => ({
+        result.loras = loraNodes.map(node => isComfyNode(node) ? ({
           name: node.inputs?.lora_name || 'Unknown LoRA',
           weight: node.inputs?.strength_model || 1.0
-        }));
+        }) : ({ name: 'Unknown LoRA', weight: 1.0 }));
       }
       
       // Find KSampler nodes first (prioritize these)
       const kSamplerNodes = nodes.filter(node => 
-        node?.class_type?.includes('KSampler')
+        isComfyNode(node) && typeof node.class_type === 'string' && node.class_type.includes('KSampler')
       );
       
       // If no KSampler nodes, look for other sampler types
@@ -172,7 +183,7 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
       // Prioritize KSampler nodes, then fall back to other sampler types
       const samplerNodes = kSamplerNodes.length > 0 ? kSamplerNodes : otherSamplerNodes;
       
-      if (samplerNodes.length > 0) {
+      if (samplerNodes.length > 0 && isComfyNode(samplerNodes[0])) {
         // Use the first KSampler node as the primary source of metadata
         const primarySampler = samplerNodes[0];
         
@@ -187,7 +198,7 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
         }
         
         // CFG Scale
-        if (primarySampler.inputs?.cfg) {
+        if (typeof primarySampler.inputs?.cfg === 'number') {
           result.cfg = formatNumberValue(primarySampler.inputs.cfg);
         }
         
@@ -202,27 +213,40 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
         }
         
         // Denoise - check various possible field names
-        const denoiseValue = 
-          primarySampler.inputs?.denoise || 
-          primarySampler.inputs?.denoise_strength || 
-          primarySampler.inputs?.denoising_strength ||
-          (primarySampler.inputs?.add_noise === 'enable' ? 1.0 : null) || 
-          (primarySampler.inputs?.start_at_step === 0 ? 1.0 : null) || 
-          (primarySampler.inputs?.start_at_step && primarySampler.inputs?.steps ? 
-            (1 - primarySampler.inputs.start_at_step / primarySampler.inputs.steps) : null);
-            
-        if (denoiseValue !== null) {
+        let denoiseValue: number | null = null;
+        if (typeof primarySampler.inputs?.denoise === 'number') {
+          denoiseValue = primarySampler.inputs.denoise;
+        } else if (typeof primarySampler.inputs?.denoise_strength === 'number') {
+          denoiseValue = primarySampler.inputs.denoise_strength;
+        } else if (typeof primarySampler.inputs?.denoising_strength === 'number') {
+          denoiseValue = primarySampler.inputs.denoising_strength;
+        } else if (primarySampler.inputs?.add_noise === 'enable') {
+          denoiseValue = 1.0;
+        } else if (primarySampler.inputs?.start_at_step === 0) {
+          denoiseValue = 1.0;
+        } else if (
+          typeof primarySampler.inputs?.start_at_step === 'number' &&
+          typeof primarySampler.inputs?.steps === 'number'
+        ) {
+          denoiseValue = 1 - primarySampler.inputs.start_at_step / primarySampler.inputs.steps;
+        }
+        if (typeof denoiseValue === 'number') {
           result.denoise = formatNumberValue(denoiseValue);
         }
       }
       
       // Find upscaler nodes
       const upscalerNodes = nodes.filter(node => 
-        node?.class_type?.includes('Upscale') || 
-        node?.class_type?.includes('ImageScale')
+        isComfyNode(node) && (
+          node.class_type === 'Upscale' || 
+          node.class_type === 'LatentUpscale' || 
+          node.class_type === 'ImageUpscale' || 
+          node.class_type === 'LatentUpscaleBy' || 
+          node.class_type === 'LatentUpscaleByFactor'
+        )
       );
       
-      if (upscalerNodes.length > 0) {
+      if (upscalerNodes.length > 0 && isComfyNode(upscalerNodes[0])) {
         const upscaler = upscalerNodes[0];
         if (upscaler.inputs?.upscale_method || upscaler.inputs?.upscaler) {
           result.hiresUpscaler = upscaler.inputs?.upscale_method || upscaler.inputs?.upscaler;

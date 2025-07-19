@@ -1,11 +1,9 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { AppContextValue, AppContextState } from './AppContextTypes';
 import type { Image } from '../services/api';
 import { config } from '../config';
 import { useSnackbar } from '../hooks/useSnackbar';
-
-// Create the context
-export const AppContext = createContext<AppContextValue | null>(null);
+import { AppContext } from './AppContextCore';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AppContextState>({
@@ -55,15 +53,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
-};
-
-// Hook to use the app context
-export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
-  return context;
 };
 
 // Default export for compatibility

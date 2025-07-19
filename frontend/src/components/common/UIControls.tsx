@@ -22,22 +22,17 @@ interface ThumbnailSizeSliderProps {
  * A slider component for adjusting thumbnail size in a grid view
  */
 export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value, onChange }) => {
-  // Define sizes with evenly spaced values (50px increments)
-  const thumbnailSizes = [100, 150, 200, 250, 300, 350, 400, 450, 500];
+  // Use a continuous approach for thumbnail sizes
+  // Define min and max sizes
+  const MIN_SIZE = 150;
+  const MAX_SIZE = 500;
   
-  // Find the closest valid size for the current value
-  const getClosestSize = (val: number) => {
-    return thumbnailSizes.reduce((prev, curr) => 
-      Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev
-    );
-  };
-  
-  // Map the continuous slider value to the closest meaningful size
+  // Handle slider change with continuous values
   const handleSliderChange = (event: Event, newValue: number | number[]) => {
     if (typeof newValue === 'number') {
-      // Find the closest size that will actually make a difference in the layout
-      const closestSize = getClosestSize(newValue);
-      onChange(event, closestSize);
+      // Round to nearest 5px for smoother experience
+      const roundedSize = Math.round(newValue / 5) * 5;
+      onChange(event, roundedSize);
     }
   };
 
@@ -47,13 +42,13 @@ export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value,
       <Slider
         value={value}
         onChange={handleSliderChange}
-        min={100}
-        max={500}
+        min={MIN_SIZE}
+        max={MAX_SIZE}
         step={1}
         aria-label="Thumbnail size"
         valueLabelDisplay="off"
         size="medium"
-        marks={thumbnailSizes.map(size => ({ value: size, label: '' }))}
+        marks={false}
         sx={thumbnailSizeSliderSx}
       />
     </Box>

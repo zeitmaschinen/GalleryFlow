@@ -30,23 +30,23 @@ export function useWebSocketEvents({
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const maxRetries = 3;
 
-  // Debounce logic for backend events
-  const backendRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const BACKEND_DEBOUNCE_MS = 150;
-
   // Helper: call refresh immediately, cancel backend debounce
   const immediateRefresh = useCallback((folderId: number) => {
-    if (backendRefreshTimeout.current) {
-      clearTimeout(backendRefreshTimeout.current);
-      backendRefreshTimeout.current = null;
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (onRefreshFolderAndImages) {
+      onRefreshFolderAndImages(folderId);
     }
     onRefreshFolderAndImages?.(folderId);
   }, [onRefreshFolderAndImages]);
 
   // Helper: debounce for backend (WebSocket) events
   const scheduleBackendRefresh = useCallback((folderId: number) => {
-    if (backendRefreshTimeout.current) {
-      clearTimeout(backendRefreshTimeout.current);
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
     }
     backendRefreshTimeout.current = setTimeout(() => {
       onRefreshFolderAndImages?.(folderId);
@@ -60,32 +60,58 @@ export function useWebSocketEvents({
   // (You may want to export this via return value if needed)
 
   // WebSocket message handler
-  const handleWebSocketMessage = useCallback((data: any) => {
+  const handleWebSocketMessage = useCallback((data: unknown) => {
     if (!data) return;
     connectionErrorsRef.current = 0;
-    if (data.event === 'scan_start') {
-      if (onFolderScanStart) onFolderScanStart();
-    } else if (data.event === 'scan_progress') {
-      if (onFolderScanProgress && data.progress) onFolderScanProgress(data.progress as ScanProgress);
-    } else if (data.event === 'scan_complete') {
-      if (onFolderScanComplete) onFolderScanComplete();
-    } else if (data.event === 'image_added' || data.event === 'image_updated' || data.event === 'image_removed') {
-      // Always batch backend events (WebSocket) with debounce
-      const folderId = typeof data.folder_id === 'string' ? parseInt(data.folder_id, 10) : data.folder_id as number;
-      scheduleBackendRefresh(folderId);
-      // Optionally, call onImageAdded/onImageRemoved/onImageUpdated if needed
-      if (data.event === 'image_added' && onImageAdded) onImageAdded(folderId);
-      if (data.event === 'image_updated' && onImageUpdated) onImageUpdated(folderId);
-      if (data.event === 'image_removed' && onImageRemoved) onImageRemoved(folderId);
+    if (typeof data === 'object' && data !== null && 'event' in data) {
+      const event = (data as { event: string }).event;
+      if (event === 'scan_start') {
+        if (onFolderScanStart) onFolderScanStart();
+      } else if (event === 'scan_progress') {
+        // Only call if data is a ScanProgress object and has all required fields
+        if (
+          onFolderScanProgress &&
+          typeof data === 'object' &&
+          data !== null &&
+          'progress' in data &&
+          'current' in data &&
+          'total' in data &&
+          'added_count' in data &&
+          'updated_count' in data &&
+          'removed_count' in data &&
+          'folder_id' in data &&
+          'event' in data &&
+          'skipped_count' in data &&
+          'processed_count' in data &&
+          'total_files' in data
+        ) {
+          onFolderScanProgress(data as ScanProgress);
+        }
+      } else if (event === 'scan_complete') {
+        if (onFolderScanComplete) onFolderScanComplete();
+      } else if (
+        event === 'image_added' ||
+        event === 'image_updated' ||
+        event === 'image_removed'
+      ) {
+        const folderIdRaw = (data as { folder_id?: unknown }).folder_id;
+        const folderId = typeof folderIdRaw === 'string' ? parseInt(folderIdRaw, 10) : typeof folderIdRaw === 'number' ? folderIdRaw : undefined;
+        if (folderId !== undefined) {
+          scheduleBackendRefresh(folderId);
+          if (event === 'image_added' && onImageAdded) onImageAdded(folderId);
+          if (event === 'image_updated' && onImageUpdated) onImageUpdated(folderId);
+          if (event === 'image_removed' && onImageRemoved) onImageRemoved(folderId);
+        }
+      }
     }
   }, [onFolderScanStart, onFolderScanProgress, onFolderScanComplete, onImageAdded, onImageUpdated, onImageRemoved, scheduleBackendRefresh]);
 
   // Cleanup backend debounce on unmount
   useEffect(() => {
     return () => {
-      if (backendRefreshTimeout.current) {
-        clearTimeout(backendRefreshTimeout.current);
-        backendRefreshTimeout.current = null;
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
     };
   }, []);

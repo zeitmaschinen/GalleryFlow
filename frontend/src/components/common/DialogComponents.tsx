@@ -16,8 +16,8 @@ import { useTheme } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
-import { colors, typography } from '../theme/themeConstants';
-import { parseMetadata } from '../utils/metadataParser';
+import { colors, typography } from '../../theme/themeConstants';
+import { parseMetadata } from '../../utils/metadataParser';
 
 // ===== ConfirmationDialog Component =====
 interface ConfirmationDialogProps {
@@ -112,7 +112,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 interface ImageDetailDialogProps {
   open: boolean;
   onClose: () => void;
-  image: import('../services/api').Image;
+  image: import('../../types/index').Image;
   onRevealInFolder?: () => void;
   onCopyPath?: () => void;
 }
@@ -258,12 +258,26 @@ export const ImageDetailDialog: React.FC<ImageDetailDialogProps> = ({
                   {fields.map(({ key, label }) => (
                     <Box key={key} sx={{ display: 'flex', mb: 0.5 }}>
                       <Typography sx={{ minWidth: 140, fontWeight: 500, color: metadataColor }}>{label}:</Typography>
-                      <Typography sx={{ color: metadataColor, wordBreak: 'break-word', ml: 1 }}>
-                        {parsed[key as keyof typeof parsed] && parsed[key as keyof typeof parsed] !== 'N/A' ? parsed[key as keyof typeof parsed] : <span style={{ opacity: 0.6 }}>Not found</span>}
-                      </Typography>
+                      {(() => {
+  const value = parsed[key as keyof typeof parsed];
+  if (!value || value === 'N/A') {
+    return <Typography sx={{ color: metadataColor, wordBreak: 'break-word', ml: 1 }}><span style={{ opacity: 0.6 }}>Not found</span></Typography>;
+  }
+  if (Array.isArray(value)) {
+    // Only join and render arrays of primitives
+    if (value.every(item => typeof item === 'string' || typeof item === 'number')) {
+      return <Typography sx={{ color: metadataColor, wordBreak: 'break-word', ml: 1 }}>{value.join(', ')}</Typography>;
+    } else {
+      // Skip rendering arrays of objects (like loras) in the generic block
+      return null;
+    }
+  }
+  return <Typography sx={{ color: metadataColor, wordBreak: 'break-word', ml: 1 }}>{value}</Typography>;
+})()}
+
                     </Box>
                   ))}
-                  {parsed.loras && Array.isArray(parsed.loras) && (parsed.loras as Array<{ name: string; weight: number }> ).length > 0 && (
+                  {parsed.loras && parsed.loras.length > 0 && (
                     <Box sx={{ mt: 1 }}>
                       <Typography sx={{ fontWeight: 500, color: metadataColor }}>Lora Models:</Typography>
                       {(parsed.loras as Array<{ name: string; weight: number }> ).map((lora, idx) => (

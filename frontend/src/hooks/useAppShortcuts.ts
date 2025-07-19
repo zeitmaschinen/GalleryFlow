@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useApp } from '../contexts/AppContext';
+import { useApp } from '../contexts/useApp';
 import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 import { useSnackbar } from './useSnackbar';
 

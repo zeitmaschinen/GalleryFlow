@@ -178,6 +178,11 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
             onClick={onOpenPreview}
             src={getImageUrl(selectedImage?.full_path || '')}
             alt={selectedImage?.filename || ''}
+            onClick={() => {
+              if (selectedImage?.full_path) {
+                window.open(getImageUrl(selectedImage.full_path), '_blank');
+              }
+            }}
             style={{
               maxWidth: '100%',
               maxHeight: '60vh',
@@ -185,7 +190,10 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
               cursor: 'pointer',
               borderRadius: borders.radius.md,
               marginBottom: 8,
+              cursor: 'pointer', // Add pointer cursor to indicate it's clickable
             }}
+            title="Click to open full-size image in new tab" // Add tooltip to indicate functionality
+            data-high-priority="true" // Mark as high priority for TabPerformanceManager
           />
           <Typography
             variant="caption"
@@ -273,8 +281,8 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
                   )}
                 </Box>
               </Paper>
-              {/* Hires Fix Info */}
-              {(hiresUpscale !== undefined || hiresUpscaler !== undefined) && (
+              {/* Hires Fix Info - Only show when both values are meaningful */}
+              {(hiresUpscale && hiresUpscaler) && (
                 <>
                   <Typography variant="body2" gutterBottom sx={{ fontWeight: typography.fontWeights.medium }}>
                     Hires Fix:

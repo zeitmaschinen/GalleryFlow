@@ -8,7 +8,7 @@ interface ComfyUINode {
   inputs: Record<string, unknown>;
 }
 
-interface ComfyUIWorkflow {
+export interface ComfyUIWorkflow {
   [key: string]: ComfyUINode;
 }
 

@@ -5,6 +5,7 @@ import {
   ThemeProvider,
   useMediaQuery
 } from '@mui/material';
+import TabPerformanceManager from './components/common/TabPerformanceManager';
 import { BurgerMenu } from './components/layout/Navigation';
 import { useFolders } from './hooks/useFolders';
 import { useImages } from './hooks/useImages';
@@ -13,7 +14,6 @@ import { SortField } from './types';
 import { getTheme } from './theme';
 import { SidebarContainer, MobileSidebar } from './components/layout';
 import { MainContent } from './components/layout';
-import { useLayoutCalculator } from './hooks/useLayoutCalculator';
 import { subscribeScanProgress } from './services/websocket';
 
 function App() {
@@ -169,16 +169,16 @@ function App() {
   // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
   const handleRefreshFolderAndImages = useCallback(
     async (folderId: number) => {
+      // Only refresh the folder metadata without affecting image display
       await handleRefreshFolder(folderId);
+      
+      // Only reload images if this is the currently selected folder
       if (selectedFolder && selectedFolder.id === folderId) {
         reloadImageGrid(true);
-      } else {
-        // Fallback: force fetch if state is out of sync
-        fetchImages(folderId, 1, sortBy, sortDirection, selectedFileTypes);
-        setCurrentPage(1);
       }
+      // Remove the fallback fetch for non-active folders to prevent unwanted reloads
     },
-    [handleRefreshFolder, setCurrentPage, fetchImages, sortBy, sortDirection, selectedFileTypes, selectedFolder]
+    [handleRefreshFolder, selectedFolder]
   );
 
   // Track latest pagination/sort/filter state for WebSocket handler
@@ -261,7 +261,6 @@ function App() {
   }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages, suppressionWindowMs]);
 
   // Layout calculator
-  const { columnsCount } = useLayoutCalculator({ thumbnailSize });
 
   // Fetch images when state changes
   useEffect(() => {
@@ -299,6 +298,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <TabPerformanceManager>
       {isInitializing ? (
         <Box sx={{
           position: 'fixed',
@@ -313,7 +313,7 @@ function App() {
           gap: 2,
           bgcolor: 'background.default'
         }}>
-          <img src="/images/symbol.png" alt="Logo" style={{ width: 64, height: 64, animation: 'spin 1s linear infinite' }} />
+          <img src={mode === 'dark' ? "/images/symbol-darkmode.png" : "/images/symbol.png"} alt="Logo" style={{ width: 45, height: 45, animation: 'spin 1s linear infinite' }} />
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </Box>
       ) : (
@@ -360,7 +360,6 @@ function App() {
             sortBy={sortBy}
             sortDirection={sortDirection}
             selectedFileTypes={selectedFileTypes}
-            columnsCount={columnsCount}
             onSortByChange={handleSortByChange}
             onSortDirectionToggle={handleSortDirectionToggle}
             onFileTypeChange={handleFileTypeChange}
@@ -371,6 +370,7 @@ function App() {
           />
         </Box>
       )}
+      </TabPerformanceManager>
     </ThemeProvider>
   );
 }
