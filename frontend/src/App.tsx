@@ -56,7 +56,7 @@ function App() {
     selectedFileTypes,
     setSelectedFileTypes,
     fetchImages,
-  } = useImages(200); // Force 200 images per page
+  } = useImages(100); // Use 100 images per page
 
   const handleDrawerOpen = () => setSidebarOpen(true);
   const handleDrawerClose = () => setSidebarOpen(false);
@@ -223,8 +223,6 @@ function App() {
           if (eventData.scan_id && lastScanIdRef.current[sf.id] !== eventData.scan_id) {
             handleRefreshFolderAndImages(sf.id);
             lastScanIdRef.current[sf.id] = eventData.scan_id;
-          } else {
-            // TODO: Implement logic or remove block
           }
         }
       };
@@ -282,7 +280,7 @@ function App() {
       fetchImages(selectedFolder.id, pageToFetch, sortBy, sortDirection, selectedFileTypes)
         .then(() => {
           // This check remains useful if images get deleted, making the current page invalid
-          const totalPages = Math.max(1, Math.ceil(totalImages / 200)); // Force 200 images per page
+          const totalPages = Math.max(1, Math.ceil(totalImages / 100)); // Use 100 images per page
           if (currentPage > totalPages) {
              setCurrentPage(totalPages);
           }

@@ -126,7 +126,7 @@ export function useWebSocketEvents({
 
     if (!selectedFolder || !onRefreshFolderAndImages) return;
 
-    console.log('[WebSocketEvents] Setting up polling fallback mechanism');
+
     
     // Set up polling interval
     pollingIntervalRef.current = setInterval(() => {
@@ -136,7 +136,7 @@ export function useWebSocketEvents({
           : selectedFolder.id as number;
           
         if (!userInitiatedReloads.current.has(folderId)) {
-          console.log('[Polling] Checking for changes in folder', folderId);
+
           onRefreshFolderAndImages(folderId).catch(error => {
             console.error('[Polling] Error refreshing folder:', error);
           });
@@ -175,7 +175,7 @@ export function useWebSocketEvents({
 
       // If we've had multiple connection errors, switch to polling
       if (connectionErrorsRef.current >= maxRetries) {
-        console.log('[WebSocket] Max retries reached, switching to polling');
+
         setupPolling();
       }
     };
@@ -186,7 +186,7 @@ export function useWebSocketEvents({
         ? parseInt(selectedFolder.id, 10) 
         : selectedFolder.id as number;
         
-      console.log('[WebSocketEvents] Attempting to connect to WebSocket for folder', folderId);
+
       scanProgressUnsubscribe.current = subscribeScanProgress(
         folderId,
         handleWebSocketMessage,

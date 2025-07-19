@@ -36,6 +36,7 @@ interface ImageModalProps {
   onRevealFile: () => void;
   onCopyToClipboard: (text: string, isNegative?: boolean) => void;
   onOpenWorkflow: () => void;
+  onOpenPreview?: () => void;
   images?: Image[];
   setSelectedImage?: (img: Image) => void;
 }
@@ -61,6 +62,7 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
   onRevealFile,
   onCopyToClipboard,
   onOpenWorkflow,
+  onOpenPreview,
   images,
   setSelectedImage
 }) => {
@@ -107,9 +109,13 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
       PaperProps={{ sx: { borderRadius: borders.radius.lg } }}
       BackdropProps={{
         timeout: 500, // Moderate backdrop transition (faster than 600ms but slower than default)
-        sx: {
-          transition: 'opacity 500ms cubic-bezier(0.3, 0, 0.3, 1) !important'
-        }
+        sx: theme => ({
+          transition: 'opacity 500ms cubic-bezier(0.3, 0, 0.3, 1) !important',
+          backgroundColor: 
+            theme.palette.mode === 'dark' 
+              ? 'rgba(0,0,0,0.7)' 
+              : 'rgba(44, 40, 73, 0.85)' // Purple tint for light mode with 0.85 opacity
+        })
       }}
     >
       <DialogTitle
@@ -169,6 +175,7 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
           <img
             ref={modalImageRef}
             onLoad={onModalImageLoad}
+            onClick={onOpenPreview}
             src={getImageUrl(selectedImage?.full_path || '')}
             alt={selectedImage?.filename || ''}
             onClick={() => {
@@ -180,6 +187,7 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
               maxWidth: '100%',
               maxHeight: '60vh',
               objectFit: 'contain',
+              cursor: 'pointer',
               borderRadius: borders.radius.md,
               marginBottom: 8,
               cursor: 'pointer', // Add pointer cursor to indicate it's clickable

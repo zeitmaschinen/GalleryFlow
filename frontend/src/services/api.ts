@@ -2,9 +2,6 @@
 import axios from 'axios';
 import { imageCache } from './cache';
 import type { Image, Folder, ScanProgress } from '../types/index';
-import { createErrorHandler } from '../utils/errorHandling';
-
-const handleError = createErrorHandler('API');
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
@@ -51,7 +48,7 @@ export const refreshFolder = async (folderId: number): Promise<ScanProgress> => 
 export const getImages = async (
     folderId: number,
     page: number = 1,
-    limit: number = 200,
+    limit: number = 100,
     sortBy: string = "filename",
     sortDir: 'asc' | 'desc' = "asc",
     fileTypes?: string[]
@@ -90,6 +87,14 @@ export const getImageUrl = (imagePath: string): string => {
     return `${API_BASE_URL}/image?file_path=${encodeURIComponent(imagePath)}&cache=true`;
 };
 
+// Function to get optimized thumbnail URL for faster grid loading
+export const getThumbnailUrl = (imagePath: string, size: 'small' | 'medium' = 'medium'): string => {
+    // For now, fallback to regular image URL until thumbnails are generated
+    // TODO: Switch back to thumbnail endpoint once database is migrated
+    return getImageUrl(imagePath);
+    // return `${API_BASE_URL}/thumbnail?file_path=${encodeURIComponent(imagePath)}&size=${size}`;
+};
+
 // Function to reveal file in system's file explorer
 export const revealInExplorer = async (filePath: string): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>(`/reveal-in-explorer?file_path=${encodeURIComponent(filePath)}`);
@@ -109,85 +114,6 @@ export const connectToScanProgress = (
     };
     
     return ws;
-};
-
-export const api = {
-  async getImages(): Promise<Image[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/images`);
-      if (!response.ok) throw new Error('Failed to fetch images');
-      return await response.json();
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async getFolders(): Promise<Folder[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/folders`);
-      if (!response.ok) throw new Error('Failed to fetch folders');
-      return await response.json();
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async addFolder(path: string): Promise<Folder> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/folders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path })
-      });
-      if (!response.ok) throw new Error('Failed to add folder');
-      return await response.json();
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async removeFolder(id: number): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/folders/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to remove folder');
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async scanFolders(): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/scan`, {
-        method: 'POST'
-      });
-      if (!response.ok) throw new Error('Failed to initiate scan');
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async getScanProgress(): Promise<ScanProgress> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/scan/progress`);
-      if (!response.ok) throw new Error('Failed to get scan progress');
-      return await response.json();
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  },
-
-  async deleteImage(id: number): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/images/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to delete image');
-    } catch (error) {
-      throw new Error(handleError(error));
-    }
-  }
 };
 
 // Add export for Image, Folder, ScanProgress from types

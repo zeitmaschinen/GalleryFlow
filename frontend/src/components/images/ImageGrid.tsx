@@ -3,32 +3,13 @@ import {
   Box,
   Snackbar,
   Alert,
-  CircularProgress,
 } from '@mui/material';
-import { getImageUrl, revealInExplorer } from '../../services/api';
+import { getImageUrl, revealInExplorer, getThumbnailUrl } from '../../services/api';
 import ImageGridItem from './ImageGridItem';
+import ImagePreviewModal from './ImagePreviewModal';
 import ImageModal from './ImageModal';
 import WorkflowModal from '../workflow/WorkflowModal';
 import type { Image } from './types';
-
-// Define the Image interface directly to avoid import issues
-// export interface Image {
-//   id: string;
-//   filename: string;
-//   full_path: string;
-//   created_at: string;
-//   updated_at: string;
-//   width: number;
-//   height: number;
-//   folder_id: string;
-//   metadata_: Record<string, unknown>;
-//   file_size: number;
-//   file_type: string;
-//   thumbnail_path?: string;
-//   is_favorite?: boolean;
-//   Workflow?: string;
-//   Prompt?: string;
-// }
 
 interface ImageGridProps {
   images: Image[];
@@ -37,6 +18,7 @@ interface ImageGridProps {
 
 const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const [selectedImage, setSelectedImage] = useState<Image | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -46,11 +28,10 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [workflowModalImage, setWorkflowModalImage] = React.useState<Image | null>(null);
-  const [columnsCount, setColumnsCount] = useState(Math.floor(window.innerWidth / thumbnailSize));
 
-  // Preload images
+  // Preload thumbnails for faster grid display
   useEffect(() => {
-    const preloadImage = (src: string) => {
+    const preloadThumbnail = (src: string) => {
       const img = new Image();
       img.onload = () => {
         setLoadedImages(prev => new Set(prev).add(src));
@@ -59,32 +40,12 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     };
 
     images.forEach(image => {
-      if (!loadedImages.has(getImageUrl(image.full_path))) {
-        preloadImage(getImageUrl(image.full_path));
+      const thumbnailUrl = getThumbnailUrl(image.full_path, 'medium');
+      if (!loadedImages.has(thumbnailUrl)) {
+        preloadThumbnail(thumbnailUrl);
       }
     });
   }, [images, loadedImages]);
-
-  // Update column count when window is resized or thumbnail size changes
-  useEffect(() => {
-    const calculateColumns = () => {
-      // Calculate available width (excluding padding)
-      const containerWidth = window.innerWidth - 16 * 2;
-      // Calculate columns with gap consideration
-      const columnWidth = thumbnailSize + 8; // thumbnail size + gap
-      const columns = Math.floor(containerWidth / columnWidth);
-      setColumnsCount(Math.max(1, columns));
-    };
-    
-    calculateColumns();
-    
-    const handleResize = () => {
-      calculateColumns();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [thumbnailSize]);
 
   // Função auxiliar para buscar campo ignorando case
   function getFieldInsensitive(obj: Record<string, unknown> | null, key: string) {
@@ -93,8 +54,11 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     return foundKey ? obj[foundKey] : undefined;
   }
 
-  const handleImageClick = (image: Image) => { 
-    // Ensure metadata_ is never null to prevent issues with the modal
+  const handleImageClick = (image: Image) => {
+    // If we're already transitioning, ignore the click
+    if (transitioning.current) return;
+    
+    // Set the selected image with safe metadata
     const safeMetadata = image.metadata_ || {};
     
     setSelectedImage({
@@ -105,8 +69,26 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
       Prompt: getFieldInsensitive(safeMetadata, 'Prompt')
     } as Image & { Workflow?: string; Prompt?: string });
     
-    setImageDimensions(null); 
-    setIsModalOpen(true); 
+    setImageDimensions(null);
+    setIsPreviewOpen(true); 
+  };
+  
+  const handleOpenMetadata = (image: Image) => {
+    // If we're already transitioning, ignore the click
+    if (transitioning.current) return;
+    
+    // Set the selected image with safe metadata
+    const safeMetadata = image.metadata_ || {};
+    
+    setSelectedImage({
+      ...image,
+      metadata_: safeMetadata,
+      Workflow: Object.keys(safeMetadata).length > 0 ? JSON.stringify(safeMetadata) : "{}",
+      Prompt: getFieldInsensitive(safeMetadata, 'Prompt')
+    } as Image & { Workflow?: string; Prompt?: string });
+    
+    setImageDimensions(null);
+    setIsModalOpen(true);
   };
   
   const handleCloseModal = () => { 
@@ -191,15 +173,12 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   };
 
   // Add loading tracking for transitions
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const transitioning = useRef(false);
 
   useEffect(() => {
     transitioning.current = true;
-    setIsTransitioning(true);
     const timer = setTimeout(() => {
       transitioning.current = false;
-      setIsTransitioning(false);
     }, 1000); // Wait for images to start loading
     return () => clearTimeout(timer);
   }, [images]);
@@ -213,23 +192,17 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     setWorkflowModalOpen(false);
   };
 
-  // Calculate columns based on container width and thumbnail size
-  // This approach allows us to eliminate the right-side gap by adjusting the column width
-  const gridTemplateColumns = `repeat(${columnsCount}, 1fr)`;
+  // Calculate columns based on container width and thumbnail size dynamically
+  const calculateColumns = () => {
+    const containerWidth = window.innerWidth - 16 * 2; // excluding padding
+    const columnWidth = thumbnailSize + 8; // thumbnail size + gap
+    return Math.max(1, Math.floor(containerWidth / columnWidth));
+  };
+  
+  const gridTemplateColumns = `repeat(${calculateColumns()}, 1fr)`;
 
   return (
     <>
-      {isTransitioning && (
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 1
-        }}>
-          <CircularProgress />
-        </Box>
-      )}
       <Box sx={{ 
         width: '100%', 
         p: 1,
@@ -251,13 +224,14 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
               loadedImages={loadedImages}
               handleImageClick={handleImageClick}
               handleOpenWorkflowModal={handleOpenWorkflowModal}
+              handleOpenMetadata={handleOpenMetadata}
             />
           ))}
         </Box>
       </Box>
 
       {/* OUTSIDE THE DIALOG: Render navigation arrows absolutely on the viewport when modal is open */}
-      {isModalOpen && selectedImage && (
+      {(isPreviewOpen || isModalOpen) && selectedImage && (
         <>
           <Box sx={{
             position: 'fixed',
@@ -316,6 +290,30 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
         </>
       )}
 
+      <ImagePreviewModal
+        open={isPreviewOpen}
+        selectedImage={selectedImage}
+        images={images}
+        setSelectedImage={setSelectedImage}
+        onClose={() => {
+          setIsPreviewOpen(false);
+          setTimeout(() => setSelectedImage(null), 300);
+        }}
+        onSeeMetadata={() => {
+          setIsPreviewOpen(false);
+          setTimeout(() => setIsModalOpen(true), 300);
+        }}
+        onSeeWorkflow={() => {
+          setIsPreviewOpen(false);
+          setTimeout(() => {
+            if (selectedImage) {
+              setWorkflowModalImage(selectedImage);
+              setWorkflowModalOpen(true);
+            }
+          }, 300);
+        }}
+      />
+
       <ImageModal
         open={isModalOpen}
         selectedImage={selectedImage}
@@ -337,6 +335,10 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
               setWorkflowModalOpen(true);
             }
           }, 300);
+        }}
+        onOpenPreview={() => {
+          setIsModalOpen(false);
+          setTimeout(() => setIsPreviewOpen(true), 300);
         }}
       />
 

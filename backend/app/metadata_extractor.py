@@ -109,6 +109,7 @@ def extract_comfyui_metadata(image_path: str) -> Optional[Dict[str, Any]]:
             result.pop('lora_models')
         return result
 
+
     try:
         img = PILImage.open(image_path)
         if img.format == "PNG":
@@ -127,7 +128,6 @@ def extract_comfyui_metadata(image_path: str) -> Optional[Dict[str, Any]]:
                     # Merge extracted fields into metadata dict for frontend
                     if isinstance(metadata, dict):
                         metadata.update(gen_params)
-                    pass
                     return metadata  # Return the node graph as top-level dict, as frontend expects
                 except json.JSONDecodeError as json_err:
                     pass

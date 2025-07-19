@@ -78,7 +78,6 @@ class FolderWatchdogHandler(FileSystemEventHandler):
         global watchdog_event_queue
         if not event.is_directory:
             logger.info(f"Watchdog event detected for folder_id={self.folder_id}: {event.event_type} {event.src_path}")
-            logger.debug(f"[DEBUG] Watchdog event details: {event}")
             asyncio.run_coroutine_threadsafe(
                 watchdog_event_queue.put((self.folder_id, self.folder_path)), MAIN_EVENT_LOOP
             )
@@ -291,14 +290,13 @@ async def remove_folder(folder_id: int, db: AsyncSession = Depends(database.get_
 async def list_images(
     folder_id: int,
     skip: int = Query(0, ge=0), # Add skip query param, >= 0
-    limit: int = Query(200, ge=1, le=1000), # Add limit query param, 1 <= limit <= 1000
+    limit: int = Query(100, ge=1, le=1000), # Add limit query param, 1 <= limit <= 1000
     sort_by: str = Query("filename", description="Field to sort by (filename, date)"),
     sort_dir: str = Query("asc", description="Sort direction (asc, desc)"),
     file_types: Optional[List[str]] = Query(None, description="Filter by file extensions (e.g., .png, .jpg)"),
     db: AsyncSession = Depends(database.get_db)
 ):
     """Lists cached images for a specific folder with pagination, sorting, and filtering."""
-    logger.info(f"[DEBUG] /api/images called with folder_id={folder_id}, skip={skip}, limit={limit}, sort_by={sort_by}, sort_dir={sort_dir}, file_types={file_types}")
     logger.info(f"Request images: folder={folder_id}, skip={skip}, limit={limit}, sort={sort_by} {sort_dir}, types={file_types}")
 
     if sort_by not in ["filename", "date", "folder"]:
@@ -308,7 +306,6 @@ async def list_images(
 
     folder = await crud.get_folder(db, folder_id)
     if not folder:
-        logger.warning(f"[DEBUG] Folder with ID {folder_id} not found.")
         raise HTTPException(status_code=404, detail=f"Folder with ID {folder_id} not found")
 
     image_response = await crud.get_images_by_folder(
@@ -320,7 +317,6 @@ async def list_images(
         sort_dir=sort_dir,
         file_types=file_types
     )
-    logger.info(f"[DEBUG] Returning image response: {image_response}")
     return image_response
 
 
@@ -381,6 +377,67 @@ async def get_image_file(
         # Prevent caching if not explicitly requested
         response.headers["Cache-Control"] = "no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
+    
+
+    return response
+
+@app.get("/api/thumbnail")
+async def get_thumbnail(
+    file_path: str = Query(..., description="Absolute path to the original image file"),
+    size: str = Query("medium", description="Thumbnail size: small (150px) or medium (300px)"),
+    db: AsyncSession = Depends(database.get_db)
+):
+    """Serve optimized thumbnails for faster loading."""
+    from .thumbnail_generator import thumbnail_generator
+    
+    # Security: Verify the image is in a mapped folder (same as main image endpoint)
+    requested_path = Path(file_path)
+    if not requested_path.is_absolute():
+        raise HTTPException(status_code=400, detail="File path must be absolute.")
+    try:
+        resolved_requested_path = requested_path.resolve(strict=True)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Image file not found at the specified path.")
+    except Exception as e:
+        logger.warning(f"Error resolving path '{file_path}': {e}")
+        raise HTTPException(status_code=400, detail="Invalid file path.")
+
+    mapped_folders = await crud.get_folders(db)
+    is_allowed = False
+    for folder in mapped_folders:
+        try:
+            mapped_folder_path = Path(folder.path).resolve()
+            if resolved_requested_path.is_relative_to(mapped_folder_path):
+                is_allowed = True
+                break
+        except Exception as e:
+             logger.warning(f"Error resolving mapped folder path '{folder.path}': {e}")
+             continue
+
+    if not is_allowed:
+        logger.warning(f"Access denied for thumbnail path: {resolved_requested_path}. Not within any mapped folder.")
+        raise HTTPException(status_code=403, detail="Access denied: File path is not within a registered folder.")
+
+    # Generate or get existing thumbnail
+    thumbnail_path = thumbnail_generator.generate_thumbnail(str(resolved_requested_path), size)
+    
+    if not thumbnail_path or not Path(thumbnail_path).exists():
+        # Fallback to original image if thumbnail generation fails
+        thumbnail_path = str(resolved_requested_path)
+        media_type = f'image/{resolved_requested_path.suffix.lstrip(".")}'
+        if resolved_requested_path.suffix.lower() == '.jpg':
+            media_type = 'image/jpeg'
+    else:
+        media_type = 'image/webp'  # Thumbnails are saved as WebP
+    
+    logger.info(f"Serving thumbnail: {thumbnail_path}")
+    response = FileResponse(thumbnail_path, media_type=media_type)
+    
+    # Add aggressive caching for thumbnails since they rarely change
+    response.headers["Cache-Control"] = "public, max-age=2592000, immutable"  # 30 days
+    file_stat = Path(thumbnail_path).stat()
+    etag = f'\"{hash(str(file_stat.st_mtime) + str(file_stat.st_size))}\"'
+    response.headers["ETag"] = etag
     
     return response
 

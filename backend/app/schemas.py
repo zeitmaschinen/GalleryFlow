@@ -16,13 +16,18 @@ class Folder(FolderBase):
     class Config:
         from_attributes = True
 
-# --- Image Schemas --- (Keep existing Image schemas)
+# --- Image Schemas --- (Updated with performance fields)
 class ImageBase(BaseModel):
     filename: str
     full_path: str
     last_modified: datetime
     metadata_: Optional[Dict[str, Any]] = None
     folder_id: int
+    width: Optional[int] = None
+    height: Optional[int] = None
+    file_size: Optional[int] = None
+    thumbnail_path: Optional[str] = None
+    has_thumbnail: bool = False
 
 class ImageCreate(ImageBase):
     pass
