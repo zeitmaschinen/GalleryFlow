@@ -51,7 +51,7 @@ export const refreshFolder = async (folderId: number): Promise<ScanProgress> => 
 export const getImages = async (
     folderId: number,
     page: number = 1,
-    limit: number = 200,
+    limit: number = 100,
     sortBy: string = "filename",
     sortDir: 'asc' | 'desc' = "asc",
     fileTypes?: string[]

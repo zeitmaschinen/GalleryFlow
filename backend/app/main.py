@@ -291,7 +291,7 @@ async def remove_folder(folder_id: int, db: AsyncSession = Depends(database.get_
 async def list_images(
     folder_id: int,
     skip: int = Query(0, ge=0), # Add skip query param, >= 0
-    limit: int = Query(200, ge=1, le=1000), # Add limit query param, 1 <= limit <= 1000
+    limit: int = Query(100, ge=1, le=1000), # Add limit query param, 1 <= limit <= 1000
     sort_by: str = Query("filename", description="Field to sort by (filename, date)"),
     sort_dir: str = Query("asc", description="Sort direction (asc, desc)"),
     file_types: Optional[List[str]] = Query(None, description="Filter by file extensions (e.g., .png, .jpg)"),

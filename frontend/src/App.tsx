@@ -56,7 +56,7 @@ function App() {
     selectedFileTypes,
     setSelectedFileTypes,
     fetchImages,
-  } = useImages(200); // Force 200 images per page
+  } = useImages(100); // Use 100 images per page
 
   const handleDrawerOpen = () => setSidebarOpen(true);
   const handleDrawerClose = () => setSidebarOpen(false);
@@ -281,7 +281,7 @@ function App() {
       fetchImages(selectedFolder.id, pageToFetch, sortBy, sortDirection, selectedFileTypes)
         .then(() => {
           // This check remains useful if images get deleted, making the current page invalid
-          const totalPages = Math.max(1, Math.ceil(totalImages / 200)); // Force 200 images per page
+          const totalPages = Math.max(1, Math.ceil(totalImages / 100)); // Use 100 images per page
           if (currentPage > totalPages) {
              setCurrentPage(totalPages);
           }

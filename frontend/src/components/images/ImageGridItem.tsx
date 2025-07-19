@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, CircularProgress, IconButton, Tooltip } from '@mui/material';
+import { Box, CircularProgress, IconButton } from '@mui/material';
 import { getImageUrl } from '../../services/api';
 import type { Image } from './types';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
@@ -94,7 +94,23 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Tooltip title="Metadata preview" arrow placement="top" enterDelay={300}>
+          <IconButton
+            size="medium" 
+            sx={{ 
+              bgcolor: '#23272E', 
+              color: '#fff', 
+              '&:hover': { bgcolor: '#444' }, 
+              p: 1 
+            }} 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenMetadata(image);
+            }}
+          >
+            <InfoIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+          
+          {handleOpenWorkflowModal && (
             <IconButton
               size="medium" 
               sx={{ 
@@ -105,31 +121,11 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
               }} 
               onClick={(e) => {
                 e.stopPropagation();
-                handleOpenMetadata(image);
+                handleOpenWorkflowModal(image);
               }}
             >
-              <InfoIcon sx={{ fontSize: 20 }} />
+              <WorkflowIcon sx={{ fontSize: 20 }} />
             </IconButton>
-          </Tooltip>
-          
-          {handleOpenWorkflowModal && (
-            <Tooltip title="Workflow preview" arrow placement="top" enterDelay={300}>
-              <IconButton
-                size="medium" 
-                sx={{ 
-                  bgcolor: '#23272E', 
-                  color: '#fff', 
-                  '&:hover': { bgcolor: '#444' }, 
-                  p: 1 
-                }} 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenWorkflowModal(image);
-                }}
-              >
-                <WorkflowIcon sx={{ fontSize: 20 }} />
-              </IconButton>
-            </Tooltip>
           )}
         </Box>
       </Box>
