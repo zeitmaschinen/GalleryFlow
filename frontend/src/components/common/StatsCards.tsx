@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Card, Typography } from '@mui/material';
-import { typography, spacing } from '../../theme/themeConstants';
+import { Box, Card, Typography, useTheme } from '@mui/material';
+import { typography, spacing, colors } from '../../theme/themeConstants';
 
 interface StatsCardsProps {
   totalImages: number;
@@ -8,38 +8,69 @@ interface StatsCardsProps {
   totalPages: number;
 }
 
-const StatsCards: React.FC<StatsCardsProps> = ({ totalImages, currentPage, totalPages }) => (
-  <Box sx={{ 
-    display: 'grid', 
-    gap: spacing.md, 
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    '& > *': { minWidth: 0 }
-  }}>
-    <Card sx={{ p: { xs: spacing.sm, sm: spacing.md } }}>
-      <Typography variant="subtitle2" color="text.secondary" noWrap sx={{ fontWeight: typography.fontWeights.medium }}>
-        Total Images
-      </Typography>
-      <Typography variant="h4" sx={{ mt: spacing.sm, mb: 1, fontSize: { xs: typography.sizes.xl, sm: typography.sizes['3xl'] }, fontWeight: typography.fontWeights.semibold }}>
-        {totalImages}
-      </Typography>
-    </Card>
-    <Card sx={{ p: { xs: spacing.sm, sm: spacing.md } }}>
-      <Typography variant="subtitle2" color="text.secondary" noWrap sx={{ fontWeight: typography.fontWeights.medium }}>
-        Current Page
-      </Typography>
-      <Typography variant="h4" sx={{ mt: spacing.sm, mb: 1, fontSize: { xs: typography.sizes.xl, sm: typography.sizes['3xl'] }, fontWeight: typography.fontWeights.semibold }}>
-        {currentPage}
-      </Typography>
-    </Card>
-    <Card sx={{ p: { xs: spacing.sm, sm: spacing.md } }}>
-      <Typography variant="subtitle2" color="text.secondary" noWrap sx={{ fontWeight: typography.fontWeights.medium }}>
-        Pages
-      </Typography>
-      <Typography variant="h4" sx={{ mt: spacing.sm, mb: 1, fontSize: { xs: typography.sizes.xl, sm: typography.sizes['3xl'] }, fontWeight: typography.fontWeights.semibold }}>
-        {totalPages}
-      </Typography>
-    </Card>
-  </Box>
-);
+const StatsCards: React.FC<StatsCardsProps> = ({ totalImages, currentPage, totalPages }) => {
+  const theme = useTheme();
+  const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
+  
+  return (
+    <Box sx={{ 
+      display: 'grid', 
+      gap: spacing.md, 
+      gridTemplateColumns: 'repeat(3, 1fr)', // Back to 3 columns as requested
+      '& > *': { minWidth: 0 }
+    }}>
+      {/* Total Images card with inline layout */}
+      <Card sx={{ p: { xs: spacing.sm, sm: spacing.md } }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            fontSize: { xs: typography.sizes.lg, sm: typography.sizes.xl }, 
+            fontWeight: typography.fontWeights.medium,
+            lineHeight: 1.2,
+            '& span': {
+              color: colors.primary[mode].main // Purple color for numbers, same as selected folder
+            }
+          }}
+        >
+          Total images: <span>{totalImages}</span>
+        </Typography>
+      </Card>
+      
+      {/* Current Page card with inline layout */}
+      <Card sx={{ p: { xs: spacing.sm, sm: spacing.md } }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            fontSize: { xs: typography.sizes.lg, sm: typography.sizes.xl }, 
+            fontWeight: typography.fontWeights.medium,
+            lineHeight: 1.2,
+            '& span': {
+              color: colors.primary[mode].main // Purple color for numbers, same as selected folder
+            }
+          }}
+        >
+          Current page: <span>{currentPage}</span>
+        </Typography>
+      </Card>
+      
+      {/* Total Pages card with inline layout */}
+      <Card sx={{ p: { xs: spacing.sm, sm: spacing.md } }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            fontSize: { xs: typography.sizes.lg, sm: typography.sizes.xl }, 
+            fontWeight: typography.fontWeights.medium,
+            lineHeight: 1.2,
+            '& span': {
+              color: colors.primary[mode].main // Purple color for numbers, same as selected folder
+            }
+          }}
+        >
+          Total pages: <span>{totalPages}</span>
+        </Typography>
+      </Card>
+    </Box>
+  );
+};
 
 export default StatsCards;
