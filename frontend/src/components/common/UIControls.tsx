@@ -25,7 +25,7 @@ export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value,
   // Use a continuous approach for thumbnail sizes
   // Define min and max sizes
   const MIN_SIZE = 150;
-  const MAX_SIZE = 500;
+  const MAX_SIZE = 250; // Reduced by half for more reasonable max thumbnail size
   
   // Handle slider change with continuous values
   const handleSliderChange = (event: Event, newValue: number | number[]) => {
