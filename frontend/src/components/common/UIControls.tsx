@@ -1,6 +1,6 @@
-import React from 'react';
 import { Box, Slider, CircularProgress, Typography } from '@mui/material';
 import GridViewIcon from '@mui/icons-material/GridView';
+import type { FC } from 'react';
 import { 
   thumbnailSizeSliderContainerSx, 
   thumbnailSizeIconSx, 
@@ -21,7 +21,7 @@ interface ThumbnailSizeSliderProps {
 /**
  * A slider component for adjusting thumbnail size in a grid view
  */
-export const ThumbnailSizeSlider: React.FC<ThumbnailSizeSliderProps> = ({ value, onChange }) => {
+export const ThumbnailSizeSlider: FC<ThumbnailSizeSliderProps> = ({ value, onChange }) => {
   // Use a continuous approach for thumbnail sizes
   // Define min and max sizes
   const MIN_SIZE = 150;
@@ -61,7 +61,7 @@ interface ProgressBarProps {
   label?: string;
 }
 
-export const ProgressBar: React.FC<ProgressBarProps> = ({ progress, label }) => {
+export const ProgressBar: FC<ProgressBarProps> = ({ progress, label }) => {
   return (
     <Box>
       {label && (
@@ -85,7 +85,7 @@ interface LoadingSpinnerProps {
   overlay?: boolean;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
+export const LoadingSpinner: FC<LoadingSpinnerProps> = ({ 
   size = 40,
   overlay = false
 }) => {

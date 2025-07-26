@@ -1,5 +1,5 @@
-import React from 'react';
 import { Box, Card, Typography, useTheme } from '@mui/material';
+import type { FC } from 'react';
 import { typography, spacing, colors } from '../../theme/themeConstants';
 
 interface StatsCardsProps {
@@ -8,7 +8,7 @@ interface StatsCardsProps {
   totalPages: number;
 }
 
-const StatsCards: React.FC<StatsCardsProps> = ({ totalImages, currentPage, totalPages }) => {
+const StatsCards: FC<StatsCardsProps> = ({ totalImages, currentPage, totalPages }) => {
   const theme = useTheme();
   const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
   
