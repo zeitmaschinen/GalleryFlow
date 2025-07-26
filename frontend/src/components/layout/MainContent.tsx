@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import symbolLight from '../../images/symbol.png';
 import symbolDark from '../../images/symbol-darkmode.png';
 import { Box, IconButton, Typography, Stack } from '@mui/material';
@@ -31,7 +31,6 @@ interface MainContentProps {
   sortBy: SortField;
   sortDirection: 'asc' | 'desc';
   selectedFileTypes: string[];
-  columnsCount: number;
   onSortByChange: (field: SortField) => void;
   onSortDirectionToggle: () => void;
   onFileTypeChange: (types: string[]) => void;
@@ -41,7 +40,7 @@ interface MainContentProps {
   onThumbnailSizeChange: (event: Event, newValue: number | number[]) => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({
+const MainContent: FC<MainContentProps> = ({
   mode,
   toggleColorMode,
   selectedFolder,
@@ -54,7 +53,6 @@ const MainContent: React.FC<MainContentProps> = ({
   sortBy,
   sortDirection,
   selectedFileTypes,
-  columnsCount,
   onSortByChange,
   onSortDirectionToggle,
   onFileTypeChange,

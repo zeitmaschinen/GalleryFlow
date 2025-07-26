@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { typography } from '../../theme/themeConstants';
@@ -7,7 +7,7 @@ interface FolderHeaderProps {
   selectedFolder: { path: string };
 }
 
-const FolderHeader: React.FC<FolderHeaderProps> = ({ selectedFolder }) => (
+const FolderHeader: FC<FolderHeaderProps> = ({ selectedFolder }) => (
   <Box sx={{
     px: { xs: 1, md: 2 },
     pt: 0.5,

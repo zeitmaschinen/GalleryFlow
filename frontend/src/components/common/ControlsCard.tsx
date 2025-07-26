@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card, Box, IconButton, Tooltip } from '@mui/material';
 import { ThumbnailSizeSlider } from './UIControls';
 import { FileTypeFilter, SortButton } from './FilterControls';
@@ -17,7 +17,7 @@ interface ControlsCardProps {
   onSortDirectionToggle: () => void;
 }
 
-const ControlsCard: React.FC<ControlsCardProps> = ({
+const ControlsCard: FC<ControlsCardProps> = ({
   thumbnailSize,
   onThumbnailSizeChange,
   selectedFileTypes,

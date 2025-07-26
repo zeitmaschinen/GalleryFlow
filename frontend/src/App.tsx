@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import type { ChangeEvent } from 'react';
 import {
   Box,
   CssBaseline,
@@ -22,8 +23,7 @@ function App() {
   const [mode, setMode] = useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : 'light');
   const [isInitializing, setIsInitializing] = useState(true);
   const theme = useMemo(() => getTheme(mode), [mode]);
-  const muiTheme = theme;
-  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -97,7 +97,7 @@ function App() {
   };
 
   // Handle page change
-  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (_event: ChangeEvent<unknown>, value: number) => {
     if (selectedFolder) {
       setCurrentPage(value);
       fetchImages(selectedFolder.id, value, sortBy, sortDirection, selectedFileTypes);

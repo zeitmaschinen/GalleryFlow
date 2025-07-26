@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { FC, MouseEvent } from 'react';
 import {
   List,
   ListItem,
@@ -63,7 +64,7 @@ interface FolderListProps {
   onSelectFolder: (folder: Folder) => void;
 }
 
-const FolderList: React.FC<FolderListProps> = ({
+const FolderList: FC<FolderListProps> = ({
   folders,
   selectedFolderId,
   onDeleteFolder,
@@ -74,7 +75,7 @@ const FolderList: React.FC<FolderListProps> = ({
   const theme = useTheme();
   const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
-  const handleRefresh = async (folderId: number, e: React.MouseEvent) => {
+  const handleRefresh = async (folderId: number, e: MouseEvent) => {
     e.stopPropagation();
     if (refreshingFolders.includes(folderId)) return;
 
@@ -86,7 +87,7 @@ const FolderList: React.FC<FolderListProps> = ({
     }
   };
 
-  const handleDelete = (folderId: number, e: React.MouseEvent) => {
+  const handleDelete = (folderId: number, e: MouseEvent) => {
     e.stopPropagation();
     onDeleteFolder(folderId);
   };
