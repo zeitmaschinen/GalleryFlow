@@ -34,7 +34,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
-    "axios": "^1.6.4",
+    "axios": "^1.12.0",
     "dagre": "^0.8.5",
     "litegraph.js": "^0.7.18",
     "path-browserify": "^1.0.1",
@@ -54,6 +54,6 @@
     "globals": "^13.24.0",
     "typescript": "~5.3.3",
     "typescript-eslint": "^8.31.0",
-    "vite": "~6.3.4"
+    "vite": "~6.3.6"
   }
 }
