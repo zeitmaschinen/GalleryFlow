@@ -3,6 +3,9 @@ import type { Folder } from '../components/images/types';
 import { subscribeScanProgress } from '../services/websocket';
 import type { ScanProgress } from '../types/index';
 
+const BACKEND_DEBOUNCE_MS = 300;
+let backendRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
+
 interface WebSocketHandlerOptions {
   selectedFolder: Folder | null;
   onFolderScanStart?: () => void;
@@ -48,9 +51,12 @@ export function useWebSocketEvents({
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
-    backendRefreshTimeout.current = setTimeout(() => {
+    if (backendRefreshTimeout) {
+      clearTimeout(backendRefreshTimeout);
+    }
+    backendRefreshTimeout = setTimeout(() => {
       onRefreshFolderAndImages?.(folderId);
-      backendRefreshTimeout.current = null;
+      backendRefreshTimeout = null;
     }, BACKEND_DEBOUNCE_MS);
   }, [onRefreshFolderAndImages]);
 
@@ -112,6 +118,10 @@ export function useWebSocketEvents({
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
+      }
+      if (backendRefreshTimeout) {
+        clearTimeout(backendRefreshTimeout);
+        backendRefreshTimeout = null;
       }
     };
   }, []);

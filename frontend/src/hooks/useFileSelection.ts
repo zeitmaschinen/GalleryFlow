@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useSnackbar } from './useSnackbar';
-import { api } from '../services/api';
+import { deleteImage } from '../services/api';
 import { logger } from '../services/logger';
 
 interface UseFileSelectionOptions {
@@ -39,7 +39,7 @@ export const useFileSelection = ({ onSelectionChange }: UseFileSelectionOptions 
 
   const deleteSelected = useCallback(async () => {
     try {
-      const promises = Array.from(selectedFiles).map(id => api.deleteImage(id));
+      const promises = Array.from(selectedFiles).map(id => deleteImage(id));
       await Promise.all(promises);
       showSnackbar(`Successfully deleted ${selectedFiles.size} files`, 'success');
       clearSelection();

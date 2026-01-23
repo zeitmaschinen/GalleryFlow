@@ -81,6 +81,11 @@ export const getImages = async (
     return response.data;
 };
 
+// Delete image by ID
+export const deleteImage = async (imageId: number): Promise<void> => {
+    await apiClient.delete(`/images/${imageId}`);
+};
+
 // Function to get the direct image URL with browser caching
 export const getImageUrl = (imagePath: string): string => {
     // Enable browser caching for images
@@ -88,11 +93,11 @@ export const getImageUrl = (imagePath: string): string => {
 };
 
 // Function to get optimized thumbnail URL for faster grid loading
-export const getThumbnailUrl = (imagePath: string, size: 'small' | 'medium' = 'medium'): string => {
+export const getThumbnailUrl = (imagePath: string, _size: 'small' | 'medium' = 'medium'): string => {
     // For now, fallback to regular image URL until thumbnails are generated
-    // TODO: Switch back to thumbnail endpoint once database is migrated
+    // TODO: Switch back to thumbnail endpoint once database is migrated and uncomment _size parameter
     return getImageUrl(imagePath);
-    // return `${API_BASE_URL}/thumbnail?file_path=${encodeURIComponent(imagePath)}&size=${size}`;
+    // return `${API_BASE_URL}/thumbnail?file_path=${encodeURIComponent(imagePath)}&size=${_size}`;
 };
 
 // Function to reveal file in system's file explorer

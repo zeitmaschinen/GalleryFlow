@@ -9,7 +9,7 @@ import { StatsCards, ControlsCard } from '../common';
 import { ImageGridContainer } from '../images';
 import { spacing, colors } from '../../theme/themeConstants';
 import type { SortField } from '../../types';
-import type { Image } from '../../types';
+import type { Image } from '../../services/api';
 import { IMAGES_PER_PAGE } from '../../constants';
 
 // Define the Folder interface locally since it's not properly exported from types

@@ -176,8 +176,10 @@ export function useImageMetadata(selectedImageData: Record<string, unknown> | nu
       
       // If no KSampler nodes, look for other sampler types
       const otherSamplerNodes = nodes.filter(node => 
-        !node?.class_type?.includes('KSampler') && 
-        (node?.class_type?.includes('Sampler') || node?.class_type?.includes('Unsampler'))
+        isComfyNode(node) && 
+        typeof node.class_type === 'string' &&
+        !node.class_type.includes('KSampler') && 
+        (node.class_type.includes('Sampler') || node.class_type.includes('Unsampler'))
       );
       
       // Prioritize KSampler nodes, then fall back to other sampler types

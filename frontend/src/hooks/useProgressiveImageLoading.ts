@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
  * Hook for progressive image loading with intersection observer
  * Loads images only when they're about to enter the viewport
  */
-export const useProgressiveImageLoading = (images: unknown[], rootMargin = '50px') => {
+export const useProgressiveImageLoading = (_images: unknown[], rootMargin = '50px') => {
   const [visibleImages, setVisibleImages] = useState<Set<string>>(new Set());
   const observerRef = useRef<IntersectionObserver | null>(null);
   const imageRefs = useRef<Map<string, HTMLElement>>(new Map());

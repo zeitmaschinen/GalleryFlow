@@ -99,6 +99,15 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
     setSelectedImage
   );
 
+  // Handle image click - opens full size in new tab
+  const handleImageClick = () => {
+    if (selectedImage?.full_path) {
+      window.open(getImageUrl(selectedImage.full_path), '_blank');
+    } else if (onOpenPreview) {
+      onOpenPreview();
+    }
+  };
+
   return (
     <Dialog
       open={open}
@@ -175,14 +184,9 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
           <img
             ref={modalImageRef}
             onLoad={onModalImageLoad}
-            onClick={onOpenPreview}
+            onClick={handleImageClick}
             src={getImageUrl(selectedImage?.full_path || '')}
             alt={selectedImage?.filename || ''}
-            onClick={() => {
-              if (selectedImage?.full_path) {
-                window.open(getImageUrl(selectedImage.full_path), '_blank');
-              }
-            }}
             style={{
               maxWidth: '100%',
               maxHeight: '60vh',
@@ -190,10 +194,9 @@ const ImageModalContent: React.FC<ImageModalProps> = ({
               cursor: 'pointer',
               borderRadius: borders.radius.md,
               marginBottom: 8,
-              cursor: 'pointer', // Add pointer cursor to indicate it's clickable
             }}
-            title="Click to open full-size image in new tab" // Add tooltip to indicate functionality
-            data-high-priority="true" // Mark as high priority for TabPerformanceManager
+            title="Click to open full-size image in new tab"
+            data-high-priority="true"
           />
           <Typography
             variant="caption"
