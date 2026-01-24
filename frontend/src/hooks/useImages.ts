@@ -142,7 +142,6 @@ export function useImages(IMAGES_PER_PAGE: number) {
       }
 
       // Always update state with whatever backend returns
-      // If 0 images during refresh, that's valid - show loading state via isLoadingImages flag
       if (DEBUG_ENABLED) {
         console.log(
           `%c[useImages] FETCH #${currentFetchId} - Updating state...`,
