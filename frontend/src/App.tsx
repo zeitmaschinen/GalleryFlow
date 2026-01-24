@@ -91,8 +91,13 @@ function App() {
 
   // Handle thumbnail size change
   const handleThumbnailSizeChange = (_event: Event, newValue: number | number[]) => {
+    console.log('[App] handleThumbnailSizeChange RECEIVED:', newValue);
     if (typeof newValue === 'number') {
+      console.log('[App] About to call setThumbnailSize with:', newValue);
       setThumbnailSize(newValue);
+      console.log('[App] setThumbnailSize called, thumbnailSize state should update');
+    } else {
+      console.log('[App] newValue is not a number:', newValue);
     }
   };
 
@@ -260,6 +265,13 @@ function App() {
     };
   }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages, suppressionWindowMs]);
 
+  // Paginate images - slice to show only current page
+  const paginatedImages = useMemo(() => {
+    const startIndex = (currentPage - 1) * IMAGES_PER_PAGE;
+    const endIndex = startIndex + IMAGES_PER_PAGE;
+    return images.slice(startIndex, endIndex);
+  }, [images, currentPage, IMAGES_PER_PAGE]);
+
   // Layout calculator
 
   // Fetch images when state changes
@@ -351,7 +363,7 @@ function App() {
             mode={mode}
             toggleColorMode={toggleColorMode}
             selectedFolder={selectedFolder}
-            images={images}
+            images={paginatedImages}
             isLoadingImages={isLoadingImages}
             errorImages={errorImages}
             thumbnailSize={thumbnailSize}

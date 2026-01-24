@@ -31,13 +31,19 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   onClose,
   onSeeMetadata,
   onSeeWorkflow,
-images,
-setSelectedImage,
+  images,
+  setSelectedImage,
 }) => {
-  if (!selectedImage) return null;
+  // IMPORTANT: Call hooks BEFORE any conditional returns
+  const { hasPrev, hasNext, goPrev, goNext } = useImageModalNavigationHelpers(
+    open,
+    images,
+    selectedImage,
+    setSelectedImage
+  );
 
-  // navigation helpers
-  const { hasPrev, hasNext, goPrev, goNext } = useImageModalNavigationHelpers(open, images, selectedImage, setSelectedImage);
+  // Now safe to return early if no image selected
+  if (!selectedImage) return null;
 
   return (
     <Dialog

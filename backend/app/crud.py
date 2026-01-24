@@ -79,8 +79,6 @@ async def get_images_by_folder(
     if not folder:
         return schemas.ImageListResponse(images=[], total_count=0)
 
-    folder_path = str(Path(folder.path).resolve())
-
     allowed_sort_fields = {
         "filename": models.Image.filename,
         "date": models.Image.last_modified,
@@ -90,10 +88,11 @@ async def get_images_by_folder(
     sort_direction = desc if sort_dir.lower() == "desc" else asc
 
     # Base query with file type filtering
+    # Fixed: Use folder_id for reliable filtering instead of LIKE pattern matching
+    # which could cause path prefix collisions (e.g., /output_backup would match /output)
     base_query = select(
         models.Image).filter(
-        models.Image.full_path.like(
-            f"{folder_path}%"))
+        models.Image.folder_id == folder.id)
 
     if file_types:
         # Convert extensions to lowercase for comparison

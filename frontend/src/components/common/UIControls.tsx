@@ -20,15 +20,14 @@ interface ThumbnailSizeSliderProps {
 
 /**
  * A slider component for adjusting thumbnail size in a grid view
+ * Uses onChangeCommitted for consistent cross-browser behavior
  */
 export const ThumbnailSizeSlider: FC<ThumbnailSizeSliderProps> = ({ value, onChange }) => {
-  // Use a continuous approach for thumbnail sizes
-  // Define min and max sizes
   const MIN_SIZE = 150;
-  const MAX_SIZE = 250; // Reduced by half for more reasonable max thumbnail size
+  const MAX_SIZE = 250;
   
-  // Handle slider change with continuous values
-  const handleSliderChange = (event: Event, newValue: number | number[]) => {
+  // Handle slider change after commit - fires when user finishes dragging or clicking
+  const handleSliderChangeCommitted = (event: Event, newValue: number | number[]) => {
     if (typeof newValue === 'number') {
       // Round to nearest 5px for smoother experience
       const roundedSize = Math.round(newValue / 5) * 5;
@@ -41,7 +40,7 @@ export const ThumbnailSizeSlider: FC<ThumbnailSizeSliderProps> = ({ value, onCha
       <GridViewIcon sx={thumbnailSizeIconSx} />
       <Slider
         value={value}
-        onChange={handleSliderChange}
+        onChangeCommitted={handleSliderChangeCommitted}
         min={MIN_SIZE}
         max={MAX_SIZE}
         step={1}

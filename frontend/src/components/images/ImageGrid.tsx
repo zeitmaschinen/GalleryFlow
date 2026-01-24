@@ -29,11 +29,22 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [workflowModalImage, setWorkflowModalImage] = React.useState<Image | null>(null);
 
-  // Preload thumbnails for faster grid display
+  // Clear loaded images when the image list changes (e.g., after file deletion)
+  // This ensures new images don't show loading spinner because they're not in the stale loadedImages Set
+  useEffect(() => {
+    setLoadedImages(new Set());
+  }, [images]);
+
+  // Preload all thumbnails for current page (pagination already limits to ~100 images)
   useEffect(() => {
     const preloadThumbnail = (src: string) => {
       const img = new Image();
       img.onload = () => {
+        setLoadedImages(prev => new Set(prev).add(src));
+      };
+      // Handle failed image loads (e.g., deleted files, 404 errors)
+      // Mark as loaded even on error to prevent infinite loading spinner
+      img.onerror = () => {
         setLoadedImages(prev => new Set(prev).add(src));
       };
       img.src = src;
@@ -45,9 +56,9 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
         preloadThumbnail(thumbnailUrl);
       }
     });
-  }, [images, loadedImages]);
+  }, [images]);
 
-  // Função auxiliar para buscar campo ignorando case
+  // Helper function to get field ignoring case
   function getFieldInsensitive(obj: Record<string, unknown> | null, key: string) {
     if (!obj) return undefined;
     const foundKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
@@ -63,8 +74,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     
     setSelectedImage({
       ...image,
-      metadata_: safeMetadata, // Ensure metadata is never null
-      // O workflow é o próprio objeto metadata_
+      metadata_: safeMetadata,
       Workflow: Object.keys(safeMetadata).length > 0 ? JSON.stringify(safeMetadata) : "{}",
       Prompt: getFieldInsensitive(safeMetadata, 'Prompt')
     } as Image & { Workflow?: string; Prompt?: string });
@@ -179,7 +189,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     transitioning.current = true;
     const timer = setTimeout(() => {
       transitioning.current = false;
-    }, 1000); // Wait for images to start loading
+    }, 1000);
     return () => clearTimeout(timer);
   }, [images]);
 
@@ -193,6 +203,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   };
 
   // Calculate columns based on container width and thumbnail size dynamically
+  // Calculate grid columns based on thumbnail size dynamically
   const calculateColumns = () => {
     const containerWidth = window.innerWidth - 16 * 2; // excluding padding
     const columnWidth = thumbnailSize + 8; // thumbnail size + gap
