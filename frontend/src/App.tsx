@@ -101,29 +101,20 @@ function App() {
     }
   };
 
-  // Handle page change
+  // Handle page change - just update state, let the effect handle the fetch
   const handlePageChange = (_event: ChangeEvent<unknown>, value: number) => {
-    if (selectedFolder) {
-      setCurrentPage(value);
-      fetchImages(selectedFolder.id, value, sortBy, sortDirection, selectedFileTypes);
-    }
+    setCurrentPage(value);
   };
 
-  // Handle go to first page
+  // Handle go to first page - just update state, let the effect handle the fetch
   const handleGoToFirstPage = () => {
-    if (selectedFolder) {
-      setCurrentPage(1);
-      fetchImages(selectedFolder.id, 1, sortBy, sortDirection, selectedFileTypes);
-    }
+    setCurrentPage(1);
   };
 
-  // Handle go to last page
+  // Handle go to last page - just update state, let the effect handle the fetch
   const handleGoToLastPage = () => {
-    if (selectedFolder) {
-      const lastPage = Math.ceil(totalImages / IMAGES_PER_PAGE);
-      setCurrentPage(lastPage);
-      fetchImages(selectedFolder.id, lastPage, sortBy, sortDirection, selectedFileTypes);
-    }
+    const lastPage = Math.ceil(totalImages / IMAGES_PER_PAGE);
+    setCurrentPage(lastPage);
   };
 
   // Handle file type change
@@ -305,7 +296,8 @@ function App() {
 
     // Update the ref *after* the logic runs
     prevFolderIdRef.current = currentFolderId;
-  }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey, fetchImages, totalImages, setCurrentPage]);
+  }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey, fetchImages, setCurrentPage]);
+  // NOTE: totalImages removed from deps - it shouldn't trigger a refetch. Only user actions (page, sort, filter) should.
 
   return (
     <ThemeProvider theme={theme}>
