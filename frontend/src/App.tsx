@@ -79,14 +79,11 @@ function App() {
     initializeApp();
   }, [fetchFolders]);
 
-  // Handle sort direction toggle
+  // Handle sort direction toggle - just update state, let effect handle the fetch
   const handleSortDirectionToggle = () => {
     const newSortDir = sortDirection === 'asc' ? 'desc' : 'asc';
     setSortDirection(newSortDir);
     setCurrentPage(1);
-    if (selectedFolder) {
-      fetchImages(selectedFolder.id, 1, sortBy, newSortDir, selectedFileTypes);
-    }
   };
 
   // Handle thumbnail size change
@@ -117,22 +114,16 @@ function App() {
     setCurrentPage(lastPage);
   };
 
-  // Handle file type change
+  // Handle file type change - just update state, let effect handle the fetch
   const handleFileTypeChange = (types: string[]) => {
     setSelectedFileTypes(types);
-    if (selectedFolder) {
-      setCurrentPage(1);
-      fetchImages(selectedFolder.id, 1, sortBy, sortDirection, types);
-    }
+    setCurrentPage(1);
   };
 
-  // Handle sort by change
+  // Handle sort by change - just update state, let effect handle the fetch
   const handleSortByChange = (field: SortField) => {
     setSortBy(field);
     setCurrentPage(1);
-    if (selectedFolder) {
-      fetchImages(selectedFolder.id, 1, field, sortDirection, selectedFileTypes);
-    }
   };
 
   // --- Track last user-initiated reload per folder to suppress redundant WebSocket reloads ---
@@ -256,12 +247,9 @@ function App() {
     };
   }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages, suppressionWindowMs]);
 
-  // Paginate images - slice to show only current page
-  const paginatedImages = useMemo(() => {
-    const startIndex = (currentPage - 1) * IMAGES_PER_PAGE;
-    const endIndex = startIndex + IMAGES_PER_PAGE;
-    return images.slice(startIndex, endIndex);
-  }, [images, currentPage, IMAGES_PER_PAGE]);
+  // Backend now returns only the requested page, so use images directly
+  // No need for local slicing - removed paginatedImages since it was causing double pagination
+  const paginatedImages = images; // images is already the current page from backend
 
   // Layout calculator
 
