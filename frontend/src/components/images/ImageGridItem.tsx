@@ -65,15 +65,12 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
             display: 'block',
           }}
           onLoad={() => {
-            // Debug log only - don't mutate the Set directly!
-            console.log('[ImageGridItem] ✅ onLoad:', image.filename);
             // The parent's preload effect handles updating loadedImages Set
             // Direct mutation here won't trigger parent re-renders anyway
           }}
           // Fixed: Handle image load failures (e.g., deleted files, 404 errors)
           // Mark as loaded even on error to prevent infinite loading spinner
           onError={() => {
-            console.log('[ImageGridItem] ❌ onError:', image.filename);
             // The parent's preload effect handles updating loadedImages Set
           }}
         />
@@ -86,7 +83,6 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
               transform: 'translate(-50%, -50%)',
             }}
           >
-            {console.log('[ImageGridItem] 🔄 Showing spinner for:', image.filename)}
             <CircularProgress size={18} sx={{ color: '#ccc' }} />
           </Box>
         )}
