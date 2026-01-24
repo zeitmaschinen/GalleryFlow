@@ -13,7 +13,6 @@ export function useImages(IMAGES_PER_PAGE: number) {
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
   const fetchIdRef = useRef<number>(0);
-  const previousValidImageCountRef = useRef<number>(0); // Track last valid image count
 
   const fetchImages = useCallback(async (
     folderId: number,
@@ -142,19 +141,8 @@ export function useImages(IMAGES_PER_PAGE: number) {
         return;
       }
 
-      // Don't update with 0 images if we previously had data
-      if (allImages.length === 0 && previousValidImageCountRef.current > 0) {
-        if (DEBUG_ENABLED) {
-          console.warn(
-            `%c[useImages] FETCH #${currentFetchId} returned 0 images but we had ${previousValidImageCountRef.current} previously - SKIPPING STATE UPDATE`,
-            'color: #FF9800; font-weight: bold;',
-            { reason: 'Backend may be scanning/refreshing' }
-          );
-        }
-        setIsLoadingImages(false);
-        return;
-      }
-
+      // Always update state with whatever backend returns
+      // If 0 images during refresh, that's valid - show loading state via isLoadingImages flag
       if (DEBUG_ENABLED) {
         console.log(
           `%c[useImages] FETCH #${currentFetchId} - Updating state...`,
@@ -164,11 +152,6 @@ export function useImages(IMAGES_PER_PAGE: number) {
 
       setImages(allImages);
       setTotalImages(totalCount);
-
-      // Track valid image count
-      if (allImages.length > 0) {
-        previousValidImageCountRef.current = allImages.length;
-      }
 
       const fetchDuration = (performance.now() - fetchStartTime).toFixed(2);
       const totalPages = Math.ceil(totalCount / IMAGES_PER_PAGE) || 0;

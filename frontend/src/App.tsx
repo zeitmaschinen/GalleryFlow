@@ -126,10 +126,12 @@ function App() {
     setCurrentPage(1);
   };
 
-  // --- Track last user-initiated reload per folder to suppress redundant WebSocket reloads ---
+  // Reset to page 1 when switching folders so user sees page 1 of new folder
+  // This is also called by refresh (userInitiated=true)
   const lastUserReloadRef = useRef<{ [folderId: number]: number }>({});
   const lastScanIdRef = useRef<{ [folderId: number]: string }>({});
   const prevFolderIdRef = useRef<number | null | undefined>(undefined);
+  const prevReloadKeyRef = useRef<number>(0); // Track reload key changes to detect refresh
 
   // --- Patch: Debounced but Always Latest Reload ---
   const suppressionWindowMs = 5000; // 5 seconds (or change as desired)
@@ -138,7 +140,9 @@ function App() {
 
   const reloadImageGrid = (userInitiated = false) => {
     if (selectedFolder) {
+      console.log('[App] reloadImageGrid called, userInitiated:', userInitiated, 'folderId:', selectedFolder.id);
       if (userInitiated) {
+        console.log('[App] User-initiated refresh - resetting to page 1');
         lastUserReloadRef.current[selectedFolder.id] = Date.now();
         // Start suppression window
         if (suppressionTimeoutRef.current) clearTimeout(suppressionTimeoutRef.current as unknown as number);
@@ -148,8 +152,13 @@ function App() {
             pendingReloadRef.current[selectedFolder.id] = false;
           }
         }, suppressionWindowMs);
+        // Reset to page 1 so user sees refreshed page 1 images
+        console.log('[App] Before setCurrentPage(1), currentPage is:', currentPage);
+        setCurrentPage(1);
+        console.log('[App] setCurrentPage(1) called');
       }
-      setReloadKey(k => k + 1); // Always reload, but do NOT reset currentPage
+      console.log('[App] Incrementing reloadKey');
+      setReloadKey(k => k + 1);
     }
   };
 
@@ -257,13 +266,18 @@ function App() {
   useEffect(() => {
     const currentFolderId = selectedFolder?.id;
     let pageToFetch = currentPage;
+    
+    // Check if reloadKey changed (user clicked refresh) - if so, always fetch page 1
+    const reloadKeyChanged = reloadKey !== prevReloadKeyRef.current;
+    if (reloadKeyChanged) {
+      console.log('[App] Reload detected! Forcing page 1 fetch');
+      pageToFetch = 1;
+      prevReloadKeyRef.current = reloadKey;
+    }
 
     // Check if the selected folder has actually changed
     if (currentFolderId !== undefined && currentFolderId !== prevFolderIdRef.current) {
       pageToFetch = 1;
-      // Important: Update state synchronoously if possible or ensure fetch uses page 1
-      // If setCurrentPage is async, this might still fetch with old page briefly.
-      // Consider passing pageToFetch directly to fetchImages if setCurrentPage doesn't update immediately for the fetch.
       setCurrentPage(1); 
     }
 
@@ -272,20 +286,19 @@ function App() {
         .then(() => {
           // This check remains useful if images get deleted, making the current page invalid
           const totalPages = Math.max(1, Math.ceil(totalImages / 100)); // Use 100 images per page
-          if (currentPage > totalPages) {
+          if (pageToFetch > totalPages) {
              setCurrentPage(totalPages);
           }
         })
         .catch(error => {
            console.error("Error fetching images after state change:", error);
-           // Handle fetch error appropriately, maybe show a message
         });
     }
 
     // Update the ref *after* the logic runs
     prevFolderIdRef.current = currentFolderId;
-  }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey, fetchImages, setCurrentPage]);
-  // NOTE: totalImages removed from deps - it shouldn't trigger a refetch. Only user actions (page, sort, filter) should.
+  }, [selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes, reloadKey, fetchImages, setCurrentPage, totalImages]);
+  // NOTE: reloadKey is now in deps to detect refresh
 
   return (
     <ThemeProvider theme={theme}>
