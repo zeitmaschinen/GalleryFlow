@@ -8,7 +8,7 @@ import { spacing } from '../../theme/themeConstants';
 
 interface ControlsCardProps {
   thumbnailSize: number;
-  onThumbnailSizeChange: (event: Event, value: number | number[]) => void;
+  onThumbnailSizeChange: (event: Event | React.SyntheticEvent<Element, Event>, value: number | number[]) => void;
   selectedFileTypes: string[];
   onFileTypeChange: (types: string[]) => void;
   sortBy: string;
@@ -28,12 +28,12 @@ const ControlsCard: FC<ControlsCardProps> = ({
   onSortDirectionToggle,
 }) => (
   <Card sx={{ p: spacing.md }}>
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: { xs: 'column', sm: 'row' }, 
-      gap: { xs: '8px', sm: '16px' }, 
-      width: { xs: '100%', sm: 'auto' }, 
-      alignItems: { xs: 'stretch', sm: 'center' } 
+    <Box sx={{
+      display: 'flex',
+      flexDirection: { xs: 'column', sm: 'row' },
+      gap: { xs: '8px', sm: '16px' },
+      width: { xs: '100%', sm: 'auto' },
+      alignItems: { xs: 'stretch', sm: 'center' }
     }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', gap: { xs: 3, sm: 5 }, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
         <ThumbnailSizeSlider value={thumbnailSize} onChange={onThumbnailSizeChange} />

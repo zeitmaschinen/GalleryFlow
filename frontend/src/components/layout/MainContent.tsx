@@ -37,7 +37,7 @@ interface MainContentProps {
   onPageChange: (event: React.ChangeEvent<unknown>, value: number) => void;
   onGoToFirstPage: () => void;
   onGoToLastPage: () => void;
-  onThumbnailSizeChange: (event: Event, newValue: number | number[]) => void;
+  onThumbnailSizeChange: (event: Event | React.SyntheticEvent<Element, Event>, newValue: number | number[]) => void;
 }
 
 const MainContent: FC<MainContentProps> = ({
@@ -76,8 +76,8 @@ const MainContent: FC<MainContentProps> = ({
     >
       {selectedFolder ? (
         /* Main content container */
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             display: 'flex',
             flexDirection: 'column',
             width: '100%',
@@ -89,12 +89,12 @@ const MainContent: FC<MainContentProps> = ({
               {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
             </IconButton>
           </Box>
-          
+
           {/* Folder header with more space below the theme toggle */}
           <Box sx={{ mb: spacing.lg }}>
             <FolderHeader selectedFolder={selectedFolder} />
           </Box>
-          
+
           {/* Additional spacer between header and content */}
           <Box sx={{ height: spacing.md }} />
 
@@ -145,7 +145,7 @@ const MainContent: FC<MainContentProps> = ({
               {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
             </IconButton>
           </Box>
-          
+
           <Box
             sx={{
               display: 'flex',
@@ -159,19 +159,19 @@ const MainContent: FC<MainContentProps> = ({
           >
             <Stack spacing={2} alignItems="center">
               <Box sx={{ width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img 
-                  src={mode === 'dark' ? symbolDark : symbolLight} 
-                  alt="Logo" 
-                  style={{ 
+                <img
+                  src={mode === 'dark' ? symbolDark : symbolLight}
+                  alt="Logo"
+                  style={{
                     maxWidth: '100%',
                     maxHeight: '100%',
                     objectFit: 'contain'
-                  }} 
+                  }}
                 />
               </Box>
               <Typography variant="h5" component="h1">
-                <span style={{ 
-                  fontFamily: "'Space Mono', monospace", 
+                <span style={{
+                  fontFamily: "'Space Mono', monospace",
                   fontWeight: 400,
                   color: mode === 'dark' ? colors.primary.dark.main : colors.primary.light.dark
                 }}>

@@ -1,6 +1,6 @@
 import { Box, Slider, CircularProgress, Typography } from '@mui/material';
 import GridViewIcon from '@mui/icons-material/GridView';
-import type { FC } from 'react';
+import type { FC, SyntheticEvent } from 'react';
 import { 
   thumbnailSizeSliderContainerSx, 
   thumbnailSizeIconSx, 
@@ -15,7 +15,7 @@ import {
 // ===== ThumbnailSizeSlider Component =====
 interface ThumbnailSizeSliderProps {
   value: number;
-  onChange: (event: Event, newValue: number | number[]) => void;
+  onChange: (event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => void;
 }
 
 /**
@@ -27,7 +27,7 @@ export const ThumbnailSizeSlider: FC<ThumbnailSizeSliderProps> = ({ value, onCha
   const MAX_SIZE = 250;
   
   // Handle slider change after commit - fires when user finishes dragging or clicking
-  const handleSliderChangeCommitted = (event: Event, newValue: number | number[]) => {
+  const handleSliderChangeCommitted = (event: Event | SyntheticEvent<Element, Event>, newValue: number | number[]) => {
     if (typeof newValue === 'number') {
       // Round to nearest 5px for smoother experience
       const roundedSize = Math.round(newValue / 5) * 5;

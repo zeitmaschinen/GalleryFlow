@@ -87,7 +87,7 @@ function App() {
   };
 
   // Handle thumbnail size change
-  const handleThumbnailSizeChange = (_event: Event, newValue: number | number[]) => {
+  const handleThumbnailSizeChange = (_event: Event | React.SyntheticEvent<Element, Event>, newValue: number | number[]) => {
     console.log('[App] handleThumbnailSizeChange RECEIVED:', newValue);
     if (typeof newValue === 'number') {
       console.log('[App] About to call setThumbnailSize with:', newValue);
@@ -167,7 +167,7 @@ function App() {
     async (folderId: number) => {
       // Only refresh the folder metadata without affecting image display
       await handleRefreshFolder(folderId);
-      
+
       // Only reload images if this is the currently selected folder
       if (selectedFolder && selectedFolder.id === folderId) {
         reloadImageGrid(true);
@@ -202,7 +202,7 @@ function App() {
   // --- Patch: WebSocket event triggers the SAME code as the sidebar refresh button ---
   useEffect(() => {
     if (isLoadingFolders || !selectedFolder || folders.length === 0) return;
-    
+
     // Debounce WebSocket connection until folders exist and selectedFolder is set
     const debounceTimeout = setTimeout(() => {
       const handleWsEvent = (data: unknown) => {
@@ -222,13 +222,13 @@ function App() {
           }
         }
       };
-      
+
       // Set up polling as fallback in case WebSocket fails
       let pollingInterval: ReturnType<typeof setInterval> | null = null;
-      
+
       try {
         const unsubscribe = subscribeScanProgress(selectedFolder.id, handleWsEvent);
-        
+
         // Return cleanup function
         return () => {
           unsubscribe();
@@ -236,7 +236,7 @@ function App() {
         };
       } catch (error) {
         console.error('[WebSocket] Failed to connect:', error);
-        
+
         // Set up polling as fallback
         pollingInterval = setInterval(() => {
           if (selectedFolder) {
@@ -244,13 +244,13 @@ function App() {
             handleRefreshFolderAndImages(folderId);
           }
         }, 10000); // Poll every 10 seconds
-        
+
         return () => {
           if (pollingInterval) clearInterval(pollingInterval);
         };
       }
     }, 400); // 400ms debounce
-    
+
     return () => {
       clearTimeout(debounceTimeout as unknown as number);
     };
@@ -266,7 +266,7 @@ function App() {
   useEffect(() => {
     const currentFolderId = selectedFolder?.id;
     let pageToFetch = currentPage;
-    
+
     // Check if reloadKey changed (user clicked refresh) - if so, always fetch page 1
     const reloadKeyChanged = reloadKey !== prevReloadKeyRef.current;
     if (reloadKeyChanged) {
@@ -278,7 +278,7 @@ function App() {
     // Check if the selected folder has actually changed
     if (currentFolderId !== undefined && currentFolderId !== prevFolderIdRef.current) {
       pageToFetch = 1;
-      setCurrentPage(1); 
+      setCurrentPage(1);
     }
 
     if (selectedFolder) {
@@ -287,11 +287,11 @@ function App() {
           // This check remains useful if images get deleted, making the current page invalid
           const totalPages = Math.max(1, Math.ceil(totalImages / 100)); // Use 100 images per page
           if (pageToFetch > totalPages) {
-             setCurrentPage(totalPages);
+            setCurrentPage(totalPages);
           }
         })
         .catch(error => {
-           console.error("Error fetching images after state change:", error);
+          console.error("Error fetching images after state change:", error);
         });
     }
 
@@ -304,33 +304,44 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <TabPerformanceManager>
-      {isInitializing ? (
-        <Box sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 2,
-          bgcolor: 'background.default'
-        }}>
-          <img src={mode === 'dark' ? "/images/symbol-darkmode.png" : "/images/symbol.png"} alt="Logo" style={{ width: 45, height: 45, animation: 'spin 1s linear infinite' }} />
-          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-        </Box>
-      ) : (
-        <Box sx={{ display: 'flex', height: '100vh', width: '100%' }}>
-          {isMobile ? (
-            <>
-              {!sidebarOpen && (
-                <BurgerMenu onClick={handleDrawerOpen} sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1301 }} />
-              )}
-              <MobileSidebar
-                open={sidebarOpen}
-                onClose={handleDrawerClose}
+        {isInitializing ? (
+          <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            bgcolor: 'background.default'
+          }}>
+            <img src={mode === 'dark' ? "/images/symbol-darkmode.png" : "/images/symbol.png"} alt="Logo" style={{ width: 45, height: 45, animation: 'spin 1s linear infinite' }} />
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', height: '100vh', width: '100%' }}>
+            {isMobile ? (
+              <>
+                {!sidebarOpen && (
+                  <BurgerMenu onClick={handleDrawerOpen} sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1301 }} />
+                )}
+                <MobileSidebar
+                  open={sidebarOpen}
+                  onClose={handleDrawerClose}
+                  folders={folders}
+                  isLoadingFolders={isLoadingFolders}
+                  selectedFolderId={selectedFolder?.id ?? null}
+                  onAddFolder={handleAddFolder}
+                  onDeleteFolder={handleDeleteFolder}
+                  onRefreshFolder={handleRefreshFolderAndImages}
+                  onSelectFolder={handleSelectFolder}
+                />
+              </>
+            ) : (
+              <SidebarContainer
                 folders={folders}
                 isLoadingFolders={isLoadingFolders}
                 selectedFolderId={selectedFolder?.id ?? null}
@@ -339,42 +350,31 @@ function App() {
                 onRefreshFolder={handleRefreshFolderAndImages}
                 onSelectFolder={handleSelectFolder}
               />
-            </>
-          ) : (
-            <SidebarContainer
-              folders={folders}
-              isLoadingFolders={isLoadingFolders}
-              selectedFolderId={selectedFolder?.id ?? null}
-              onAddFolder={handleAddFolder}
-              onDeleteFolder={handleDeleteFolder}
-              onRefreshFolder={handleRefreshFolderAndImages}
-              onSelectFolder={handleSelectFolder}
-            />
-          )}
+            )}
 
-          <MainContent
-            mode={mode}
-            toggleColorMode={toggleColorMode}
-            selectedFolder={selectedFolder}
-            images={paginatedImages}
-            isLoadingImages={isLoadingImages}
-            errorImages={errorImages}
-            thumbnailSize={thumbnailSize}
-            currentPage={currentPage}
-            totalImages={totalImages}
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            selectedFileTypes={selectedFileTypes}
-            onSortByChange={handleSortByChange}
-            onSortDirectionToggle={handleSortDirectionToggle}
-            onFileTypeChange={handleFileTypeChange}
-            onPageChange={handlePageChange}
-            onGoToFirstPage={handleGoToFirstPage}
-            onGoToLastPage={handleGoToLastPage}
-            onThumbnailSizeChange={handleThumbnailSizeChange}
-          />
-        </Box>
-      )}
+            <MainContent
+              mode={mode}
+              toggleColorMode={toggleColorMode}
+              selectedFolder={selectedFolder}
+              images={paginatedImages}
+              isLoadingImages={isLoadingImages}
+              errorImages={errorImages}
+              thumbnailSize={thumbnailSize}
+              currentPage={currentPage}
+              totalImages={totalImages}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              selectedFileTypes={selectedFileTypes}
+              onSortByChange={handleSortByChange}
+              onSortDirectionToggle={handleSortDirectionToggle}
+              onFileTypeChange={handleFileTypeChange}
+              onPageChange={handlePageChange}
+              onGoToFirstPage={handleGoToFirstPage}
+              onGoToLastPage={handleGoToLastPage}
+              onThumbnailSizeChange={handleThumbnailSizeChange}
+            />
+          </Box>
+        )}
       </TabPerformanceManager>
     </ThemeProvider>
   );

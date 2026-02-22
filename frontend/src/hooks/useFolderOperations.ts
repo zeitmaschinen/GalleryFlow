@@ -17,7 +17,7 @@ export const useFolderOperations = (folderId: number | null) => {
 
   const handleScanProgress = useCallback((progress: ScanProgress) => {
     setScanProgress(progress);
-    
+
     // Only show completion message if scan completed successfully
     if (progress.current === progress.total) {
       setIsScanning(false);
@@ -41,15 +41,15 @@ export const useFolderOperations = (folderId: number | null) => {
     try {
       setIsScanning(true);
       setScanProgress(null);
-      
+
       // Simulate scan completion after a short delay
       // In a real scenario, this would connect to a WebSocket or call an API endpoint
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       setIsScanning(false);
       // Images will be loaded separately via getImages()
       logger.info(`Folder ${folderId} ready to load images`);
-      
+
     } catch (error: unknown) {
       setIsScanning(false);
       setScanProgress(null);
@@ -72,9 +72,10 @@ export const useFolderOperations = (folderId: number | null) => {
   return {
     isScanning,
     scanProgress,
+    handleScanProgress,
     startScan,
     stopScan,
-    scanPercentage: scanProgress 
+    scanPercentage: scanProgress
       ? Math.round((scanProgress.current / scanProgress.total) * 100)
       : 0
   };
