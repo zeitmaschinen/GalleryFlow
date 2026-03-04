@@ -68,60 +68,60 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const handleImageClick = (image: Image) => {
     // If we're already transitioning, ignore the click
     if (transitioning.current) return;
-    
+
     // Set the selected image with safe metadata
     const safeMetadata = image.metadata_ || {};
-    
+
     setSelectedImage({
       ...image,
       metadata_: safeMetadata,
       Workflow: Object.keys(safeMetadata).length > 0 ? JSON.stringify(safeMetadata) : "{}",
       Prompt: getFieldInsensitive(safeMetadata, 'Prompt')
     } as Image & { Workflow?: string; Prompt?: string });
-    
+
     setImageDimensions(null);
-    setIsPreviewOpen(true); 
+    setIsPreviewOpen(true);
   };
-  
+
   const handleOpenMetadata = (image: Image) => {
     // If we're already transitioning, ignore the click
     if (transitioning.current) return;
-    
+
     // Set the selected image with safe metadata
     const safeMetadata = image.metadata_ || {};
-    
+
     setSelectedImage({
       ...image,
       metadata_: safeMetadata,
       Workflow: Object.keys(safeMetadata).length > 0 ? JSON.stringify(safeMetadata) : "{}",
       Prompt: getFieldInsensitive(safeMetadata, 'Prompt')
     } as Image & { Workflow?: string; Prompt?: string });
-    
+
     setImageDimensions(null);
     setIsModalOpen(true);
   };
-  
-  const handleCloseModal = () => { 
-    setIsModalOpen(false); 
-    setImageDimensions(null); 
-    setTimeout(() => setSelectedImage(null), 300); 
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setImageDimensions(null);
+    setTimeout(() => setSelectedImage(null), 300);
   };
-  
-  const handleCloseSnackbar = () => { 
-    setSnackbarOpen(false); 
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
-  
-  const handleCopyToClipboard = async (text: string, isNegative = false) => { 
-    if (!navigator.clipboard) { 
-      setSnackbarMessage('Clipboard API not available.'); 
-      setSnackbarOpen(true); 
-      return; 
-    } 
-    
-    try { 
+
+  const handleCopyToClipboard = async (text: string, isNegative = false) => {
+    if (!navigator.clipboard) {
+      setSnackbarMessage('Clipboard API not available.');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
       await navigator.clipboard.writeText(text);
       let message;
-      
+
       if (isNegative) {
         message = 'Negative prompt copied!';
       } else if (selectedImage && text === selectedImage.filename) {
@@ -129,45 +129,45 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
       } else {
         message = 'Positive prompt copied!';
       }
-      
-      setSnackbarMessage(message); 
-      setSnackbarOpen(true); 
-    } catch (err) { 
-      console.error('Failed to copy text: ', err); 
-      setSnackbarMessage('Failed to copy text.'); 
-      setSnackbarOpen(true); 
+
+      setSnackbarMessage(message);
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      setSnackbarMessage('Failed to copy text.');
+      setSnackbarOpen(true);
     }
   };
-  
+
   const selectedImageData = selectedImage ? selectedImage.metadata_ : null;
 
-  const handleModalImageLoad = () => { 
-    if (modalImageRef.current) { 
-      setImageDimensions({ 
-        width: modalImageRef.current.naturalWidth, 
-        height: modalImageRef.current.naturalHeight 
-      }); 
+  const handleModalImageLoad = () => {
+    if (modalImageRef.current) {
+      setImageDimensions({
+        width: modalImageRef.current.naturalWidth,
+        height: modalImageRef.current.naturalHeight
+      });
     }
   };
-  
-  const handleRevealFile = async () => { 
-    if (!selectedImage) return; 
-    
-    setIsRevealing(true); 
-    setSnackbarMessage(''); 
-    
-    try { 
-      const result = await revealInExplorer(selectedImage.full_path); 
-      setSnackbarMessage(result.message || 'Reveal command sent.'); 
-      setSnackbarOpen(true); 
+
+  const handleRevealFile = async () => {
+    if (!selectedImage) return;
+
+    setIsRevealing(true);
+    setSnackbarMessage('');
+
+    try {
+      const result = await revealInExplorer(selectedImage.full_path);
+      setSnackbarMessage(result.message || 'Reveal command sent.');
+      setSnackbarOpen(true);
     } catch (error: unknown) {
       console.error("Failed to reveal file:", error);
       const detail = (error as { response?: { data?: { detail?: string } } }).response?.data?.detail || 'Failed to reveal file.';
       setSnackbarMessage(`Error: ${detail}`);
       setSnackbarOpen(true);
-    } finally { 
-      setIsRevealing(false); 
-    } 
+    } finally {
+      setIsRevealing(false);
+    }
   };
 
   const handlePrevImage = () => {
@@ -197,7 +197,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     setWorkflowModalImage(image);
     setWorkflowModalOpen(true);
   };
-  
+
   const handleCloseWorkflowModal = () => {
     setWorkflowModalOpen(false);
   };
@@ -209,13 +209,13 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     const columnWidth = thumbnailSize + 8; // thumbnail size + gap
     return Math.max(1, Math.floor(containerWidth / columnWidth));
   };
-  
+
   const gridTemplateColumns = `repeat(${calculateColumns()}, 1fr)`;
 
   return (
     <>
-      <Box sx={{ 
-        width: '100%', 
+      <Box sx={{
+        width: '100%',
         p: 1,
         overflowX: 'hidden' // Prevent horizontal scrollbar
       }}>
@@ -371,12 +371,12 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
         }}
       />
 
-      <Snackbar 
-        open={snackbarOpen} 
-        autoHideDuration={4000} 
-        onClose={handleCloseSnackbar} 
-        message={snackbarMessage} 
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} 
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
           onClose={handleCloseSnackbar}

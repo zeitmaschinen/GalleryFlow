@@ -23,7 +23,7 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
 }) => {
   // Use thumbnail for grid display, full image for preview
   const thumbnailUrl = getThumbnailUrl(image.full_path, 'medium');
-  
+
   return (
     <Box
       sx={{
@@ -102,13 +102,13 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <IconButton
-            size="medium" 
-            sx={{ 
-              bgcolor: '#23272E', 
-              color: '#fff', 
-              '&:hover': { bgcolor: '#444' }, 
-              p: 1 
-            }} 
+            size="medium"
+            sx={{
+              bgcolor: '#23272E',
+              color: '#fff',
+              '&:hover': { bgcolor: '#444' },
+              p: 1
+            }}
             onClick={(e) => {
               e.stopPropagation();
               handleOpenMetadata(image);
@@ -116,16 +116,16 @@ const ImageGridItem: React.FC<ImageGridItemProps> = ({
           >
             <InfoIcon sx={{ fontSize: 20 }} />
           </IconButton>
-          
+
           {handleOpenWorkflowModal && (
             <IconButton
-              size="medium" 
-              sx={{ 
-                bgcolor: '#23272E', 
-                color: '#fff', 
-                '&:hover': { bgcolor: '#444' }, 
-                p: 1 
-              }} 
+              size="medium"
+              sx={{
+                bgcolor: '#23272E',
+                color: '#fff',
+                '&:hover': { bgcolor: '#444' },
+                p: 1
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 handleOpenWorkflowModal(image);
