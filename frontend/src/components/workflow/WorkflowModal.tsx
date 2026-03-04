@@ -45,7 +45,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
   const [currentIdx, setCurrentIdx] = useState<number>(-1);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  
+
   // Find the current image index in the images array
   useEffect(() => {
     if (image && images.length > 0) {
@@ -53,17 +53,17 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
       setCurrentIdx(idx);
     }
   }, [image, images]);
-  
+
   const hasPrev = currentIdx > 0;
   const hasNext = currentIdx < images.length - 1;
-  
+
   const handlePrevImage = () => {
     if (images.length > 0 && currentIdx > 0 && setSelectedImage) {
       const prevImage = images[currentIdx - 1];
       setSelectedImage(prevImage);
     }
   };
-  
+
   const handleNextImage = () => {
     if (images.length > 0 && currentIdx < images.length - 1 && setSelectedImage) {
       const nextImage = images[currentIdx + 1];
@@ -91,7 +91,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
       setSnackbarOpen(true);
     }
   };
-  
+
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
@@ -101,7 +101,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
       <Dialog
         open={open}
         onClose={onClose}
-        maxWidth="xl"
+        maxWidth={false}
         fullWidth
         TransitionComponent={ModalSlideTransition}
         aria-labelledby="workflow-modal-title"
@@ -109,13 +109,22 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
           timeout: 500, // Moderate backdrop transition (faster than 600ms but slower than default)
           sx: theme => ({
             transition: 'opacity 500ms cubic-bezier(0.3, 0, 0.3, 1) !important',
-            backgroundColor: 
-              theme.palette.mode === 'dark' 
-                ? 'rgba(0,0,0,0.7)' 
+            backgroundColor:
+              theme.palette.mode === 'dark'
+                ? 'rgba(0,0,0,0.7)'
                 : 'rgba(44, 40, 73, 0.85)' // Purple tint for light mode with 0.85 opacity
           })
         }}
-        PaperProps={{ sx: { borderRadius: borders.radius.lg } }}
+        PaperProps={{
+          sx: {
+            borderRadius: borders.radius.lg,
+            width: 'calc(100vw - 120px)',
+            maxWidth: 'none',
+            height: 'calc(100vh - 80px)',
+            maxHeight: 'none',
+            m: 2
+          }
+        }}
       >
         <DialogTitle
           sx={{
@@ -167,16 +176,16 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'stretch',
-            minHeight: 400,
+            flexGrow: 1,
             bgcolor: 'background.paper',
+            overflow: 'hidden'
           }}
         >
           <Paper
             elevation={0}
             sx={{
               width: '100%',
-              height: 600,
-              minHeight: 400,
+              height: '100%',
               overflow: 'hidden',
               bgcolor: 'background.paper',
               borderRadius: borders.radius.md,
@@ -190,11 +199,11 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
           >
             {isValid ? (
               <div className={`workflow-visualization-wrapper workflow-visualization-${isDarkMode ? 'dark' : 'light'}`}>
-                <WorkflowViewer workflowJson={workflowJson} height={600} />
+                <WorkflowViewer workflowJson={workflowJson} height="100%" />
               </div>
             ) : (
-              <Box sx={{ 
-                textAlign: 'center', 
+              <Box sx={{
+                textAlign: 'center',
                 mt: 6,
                 color: 'text.secondary',
                 height: '100%',
@@ -228,7 +237,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
           >
             Copy workflow JSON
           </Button>
-          
+
           <Button
             variant="contained"
             size="small"
@@ -239,7 +248,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Navigation arrows outside the dialog */}
       {open && hasPrev && (
         <ModalNavArrow
@@ -257,14 +266,14 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
           sx={{ display: 'flex' }} // always visible
         />
       )}
-      
+
       {/* Snackbar notification */}
-      <Snackbar 
-        open={snackbarOpen} 
-        autoHideDuration={4000} 
-        onClose={handleCloseSnackbar} 
-        message={snackbarMessage} 
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} 
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
           onClose={handleCloseSnackbar}
