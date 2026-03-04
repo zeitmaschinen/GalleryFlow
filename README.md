@@ -38,7 +38,7 @@ Effortlessly connect to your ComfyUI output directory and instantly sort and fil
 ## Tech Stack
 - **Frontend:** React 18, TypeScript, Material UI
 - **Backend:** FastAPI, SQLAlchemy, Python 3.10+
-- **Other:** React Flow, custom theming, responsive design
+- **Other:** React Flow, light/dark mode, responsive design
 
 ---
 
