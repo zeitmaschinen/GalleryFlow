@@ -11,7 +11,6 @@ Effortlessly connect to your ComfyUI output directory and instantly sort and fil
 - 🎨 Image preview
 - 📋 Metadata extraction and visualization
 - 🧩 Workflow visualization for each image and copy JSON to clipboard
-- 🚀 Automatic real-time gallery updates
 - 📂 Recursively reads all folders, so you never miss an image
 - 🔄 Real-time sorting and filtering options
 - ⚡ Fast and responsive interface
