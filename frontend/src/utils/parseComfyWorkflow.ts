@@ -25,19 +25,31 @@ export function parseComfyWorkflow(
   const edges: Edge[] = [];
   const edgeIds = new Set<string>(); // Para evitar duplicatas
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: 'LR' }); // Left-to-right layout
+  g.setGraph({
+    rankdir: 'LR',
+    nodesep: 80, // Vertical separation between nodes
+    ranksep: 120 // Horizontal separation between layers
+  });
   g.setDefaultEdgeLabel(() => ({}));
 
   // 1. Create nodes
   Object.entries(workflow).forEach(([id, node]) => {
     const label = typeof node === 'object' && node && 'class_type' in node ? node.class_type : id;
+
+    // Estimate height based on the number of inputs to prevent vertical overlap
+    const inputCount = (typeof node === 'object' && node && 'inputs' in node)
+      ? Object.keys(node.inputs || {}).length
+      : 0;
+    // Base height 100px + ~35px per input property
+    const estimatedHeight = 100 + (inputCount * 35);
+
     nodes.push({
       id,
       data: node, // Pass the full node object as data for ComfyNode rendering
       position: { x: 0, y: 0 }, // To be set by dagre
       type: 'comfy',
     });
-    g.setNode(id, { label, width: 320, height: 140 }); // aumentar o tamanho do node
+    g.setNode(id, { label, width: 360, height: Math.max(160, estimatedHeight) });
   });
 
   // 2. Create edges (based on inputs that reference other node ids)
