@@ -287,6 +287,18 @@ async def scan_folder_and_update_db(
     # Remove images that no longer exist on disk
     db_paths = set(existing_db_images.keys())
     paths_to_remove = db_paths - found_on_disk
+    
+    # SAFETY CHECK: If we found NO files on disk, but the database previously had
+    # files for this folder, it might be a disconnected mapped network drive.
+    # Wiping the DB in this case causes a "0 images" glitch and requires a full rescan later.
+    if len(found_on_disk) == 0 and len(db_paths) > 0:
+        logger.warning(
+            f"Safety check: 0 files found on disk for '{folder.path}', but {len(db_paths)} "
+            f"images exist in DB. Assuming a disconnected mapped network drive. "
+            f"Skipping DB cleanup to prevent accidental wiping."
+        )
+        paths_to_remove = set()
+
     if paths_to_remove:
         logger.info(
             f"Removing {

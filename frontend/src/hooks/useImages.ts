@@ -167,6 +167,15 @@ export function useImages(IMAGES_PER_PAGE: number) {
         );
       }
     } catch (err: unknown) {
+      if (currentFetchId !== fetchIdRef.current) {
+        if (DEBUG_ENABLED) {
+          console.warn(
+            `%c[useImages] FETCH #${currentFetchId} failed but was superseded - NOT updating state!`,
+            'color: #F44336; font-weight: bold;'
+          );
+        }
+        return;
+      }
       const errorMessage = err instanceof Error ? err.message : 'Could not load images.';
       setErrorImages(errorMessage);
       setImages([]);
@@ -181,7 +190,9 @@ export function useImages(IMAGES_PER_PAGE: number) {
         }
       );
     } finally {
-      setIsLoadingImages(false);
+      if (currentFetchId === fetchIdRef.current) {
+        setIsLoadingImages(false);
+      }
     }
   }, [IMAGES_PER_PAGE]);
 
