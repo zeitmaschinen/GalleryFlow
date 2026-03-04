@@ -15,7 +15,6 @@ import { SortField } from './types';
 import { getTheme } from './theme';
 import { SidebarContainer, MobileSidebar } from './components/layout';
 import { MainContent } from './components/layout';
-import { subscribeScanProgress } from './services/websocket';
 
 function App() {
   // Use system preference for initial theme mode
@@ -128,34 +127,15 @@ function App() {
 
   // Reset to page 1 when switching folders so user sees page 1 of new folder
   // This is also called by refresh (userInitiated=true)
-  const lastUserReloadRef = useRef<{ [folderId: number]: number }>({});
-  const lastScanIdRef = useRef<{ [folderId: number]: string }>({});
   const prevFolderIdRef = useRef<number | null | undefined>(undefined);
   const prevReloadKeyRef = useRef<number>(0); // Track reload key changes to detect refresh
-
-  // --- Patch: Debounced but Always Latest Reload ---
-  const suppressionWindowMs = 5000; // 5 seconds (or change as desired)
-  const suppressionTimeoutRef = useRef<number | null>(null);
-  const pendingReloadRef = useRef<{ [folderId: number]: boolean }>({});
 
   const reloadImageGrid = (userInitiated = false) => {
     if (selectedFolder) {
       console.log('[App] reloadImageGrid called, userInitiated:', userInitiated, 'folderId:', selectedFolder.id);
       if (userInitiated) {
         console.log('[App] User-initiated refresh - resetting to page 1');
-        lastUserReloadRef.current[selectedFolder.id] = Date.now();
-        // Start suppression window
-        if (suppressionTimeoutRef.current) clearTimeout(suppressionTimeoutRef.current as unknown as number);
-        pendingReloadRef.current[selectedFolder.id] = false;
-        suppressionTimeoutRef.current = setTimeout(() => {
-          if (pendingReloadRef.current[selectedFolder.id]) {
-            pendingReloadRef.current[selectedFolder.id] = false;
-          }
-        }, suppressionWindowMs);
-        // Reset to page 1 so user sees refreshed page 1 images
-        console.log('[App] Before setCurrentPage(1), currentPage is:', currentPage);
         setCurrentPage(1);
-        console.log('[App] setCurrentPage(1) called');
       }
       console.log('[App] Incrementing reloadKey');
       setReloadKey(k => k + 1);
@@ -177,84 +157,7 @@ function App() {
     [handleRefreshFolder, selectedFolder]
   );
 
-  // Track latest pagination/sort/filter state for WebSocket handler
-  const latestStateRef = useRef({
-    currentPage,
-    sortBy,
-    sortDirection,
-    selectedFileTypes,
-    fetchImages,
-    selectedFolder,
-    setCurrentPage
-  });
-  useEffect(() => {
-    latestStateRef.current = {
-      currentPage,
-      sortBy,
-      sortDirection,
-      selectedFileTypes,
-      fetchImages,
-      selectedFolder,
-      setCurrentPage
-    };
-  }, [currentPage, sortBy, sortDirection, selectedFileTypes, fetchImages, selectedFolder, setCurrentPage]);
 
-  // --- Patch: WebSocket event triggers the SAME code as the sidebar refresh button ---
-  useEffect(() => {
-    if (isLoadingFolders || !selectedFolder || folders.length === 0) return;
-
-    // Debounce WebSocket connection until folders exist and selectedFolder is set
-    const debounceTimeout = setTimeout(() => {
-      const handleWsEvent = (data: unknown) => {
-        if (typeof data !== 'object' || data === null) return;
-        const eventData = data as { folder_id?: number; event?: string; scan_id?: string };
-        const { selectedFolder: sf } = latestStateRef.current;
-        if (sf && eventData.folder_id === sf.id && eventData.event === 'folder_change') {
-          const lastUserReload = lastUserReloadRef.current[sf.id] || 0;
-          if (Date.now() - lastUserReload < suppressionWindowMs) {
-            // Within suppression window: mark pending reload
-            pendingReloadRef.current[sf.id] = true;
-            return;
-          }
-          if (eventData.scan_id && lastScanIdRef.current[sf.id] !== eventData.scan_id) {
-            handleRefreshFolderAndImages(sf.id);
-            lastScanIdRef.current[sf.id] = eventData.scan_id;
-          }
-        }
-      };
-
-      // Set up polling as fallback in case WebSocket fails
-      let pollingInterval: ReturnType<typeof setInterval> | null = null;
-
-      try {
-        const unsubscribe = subscribeScanProgress(selectedFolder.id, handleWsEvent);
-
-        // Return cleanup function
-        return () => {
-          unsubscribe();
-          if (pollingInterval) clearInterval(pollingInterval);
-        };
-      } catch (error) {
-        console.error('[WebSocket] Failed to connect:', error);
-
-        // Set up polling as fallback
-        pollingInterval = setInterval(() => {
-          if (selectedFolder) {
-            const folderId = selectedFolder.id;
-            handleRefreshFolderAndImages(folderId);
-          }
-        }, 10000); // Poll every 10 seconds
-
-        return () => {
-          if (pollingInterval) clearInterval(pollingInterval);
-        };
-      }
-    }, 400); // 400ms debounce
-
-    return () => {
-      clearTimeout(debounceTimeout as unknown as number);
-    };
-  }, [isLoadingFolders, folders.length, selectedFolder, handleRefreshFolderAndImages, suppressionWindowMs]);
 
   // Backend now returns only the requested page, so use images directly
   // No need for local slicing - removed paginatedImages since it was causing double pagination

@@ -1,6 +1,6 @@
 # GalleryFlow 1.4.0
 
-A modern web application for browsing and managing <a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" rel="noopener noreferrer">ComfyUI</a>-generated images with advanced metadata support.
+A modern web application for browsing and managing <a href="https://github.com/Comfy-Org/ComfyUI" target="_blank" rel="noopener noreferrer">ComfyUI</a>-generated images with advanced metadata support.
 
 Effortlessly connect to your ComfyUI output directory and instantly sort and filter your images, dive deep into advanced metadata extraction and visualize complete workflow nodes and their connections.
 
@@ -17,7 +17,6 @@ Effortlessly connect to your ComfyUI output directory and instantly sort and fil
 - ⚡ Fast and responsive interface
 - 🌓 Light/Dark theme support
 - 🔗 Direct integration with ComfyUI workflows
-- 🔄 WebSocket support for real-time updates
 
 <br>
 
@@ -40,7 +39,7 @@ Effortlessly connect to your ComfyUI output directory and instantly sort and fil
 ## Tech Stack
 - **Frontend:** React 18, TypeScript, Material UI
 - **Backend:** FastAPI, SQLAlchemy, Python 3.10+
-- **Other:** WebSockets, React Flow, custom theming, responsive design
+- **Other:** React Flow, custom theming, responsive design
 
 ---
 

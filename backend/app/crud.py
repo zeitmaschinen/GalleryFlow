@@ -180,8 +180,7 @@ async def remove_image_by_path(db: AsyncSession, full_path: str):
 # --- Scan Logic --- (Modify scan_folder_and_update_db)
 async def scan_folder_and_update_db(
     db: AsyncSession,
-    folder: models.Folder,
-    progress_callback=None
+    folder: models.Folder
 ) -> schemas.ScanStatus:
     logger.info(f"Starting scan for folder: {folder.path}")
     base_path = Path(folder.path)
@@ -216,6 +215,10 @@ async def scan_folder_and_update_db(
     # Gather all image files to process
     image_files = [item for item in base_path.rglob(
         '*') if item.is_file() and item.suffix.lower() in SUPPORTED_EXTENSIONS]
+
+    # PRE-POPULATE found_on_disk with all existing files
+    # This guarantees we never accidentally delete a file just because it was 'skipped' during metadata extraction
+    found_on_disk = {str(item.resolve()) for item in image_files}
 
     def process_image(item):
         full_path_str = str(item.resolve())
@@ -262,15 +265,8 @@ async def scan_folder_and_update_db(
         for idx, future in enumerate(concurrent.futures.as_completed(futures)):
             image_data, status = future.result()
             stats['processed_count'] += 1
-            if progress_callback:
-                await progress_callback({
-                    'current': stats['processed_count'],
-                    'total': stats['total_files'],
-                    **stats
-                })
             if image_data:
                 batch.append(image_data)
-                found_on_disk.add(image_data.full_path)
                 if status == 'added':
                     stats['added_count'] += 1
                 elif status == 'updated':
@@ -303,8 +299,9 @@ async def scan_folder_and_update_db(
         logger.info(
             f"Removing {
                 len(paths_to_remove)} images no longer found on disk.")
-        for i in range(0, len(paths_to_remove), BATCH_SIZE):
-            batch_paths = list(paths_to_remove)[i:i + BATCH_SIZE]
+        paths_list = list(paths_to_remove)
+        for i in range(0, len(paths_list), BATCH_SIZE):
+            batch_paths = paths_list[i:i + BATCH_SIZE]
             await db.execute(
                 delete(models.Image).where(models.Image.full_path.in_(batch_paths))
             )

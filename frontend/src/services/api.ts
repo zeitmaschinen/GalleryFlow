@@ -4,13 +4,12 @@ import { imageCache } from './cache';
 import type { Image, Folder, ScanProgress } from '../types/index';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
 });
 
 // --- Interfaces for expected API data shapes ---
@@ -24,17 +23,17 @@ export interface ImageListResponse {
 
 // Folders (Keep existing)
 export const getFolders = async (): Promise<Folder[]> => {
-  const response = await apiClient.get<Folder[]>('/folders');
-  return response.data;
+    const response = await apiClient.get<Folder[]>('/folders');
+    return response.data;
 };
 
 export const addFolder = async (path: string): Promise<Folder> => {
-  const response = await apiClient.post<Folder>('/folders', { path });
-  return response.data;
+    const response = await apiClient.post<Folder>('/folders', { path });
+    return response.data;
 };
 
 export const deleteFolder = async (folderId: number): Promise<void> => {
-  await apiClient.delete(`/folders/${folderId}`);
+    await apiClient.delete(`/folders/${folderId}`);
 };
 
 export const refreshFolder = async (folderId: number): Promise<ScanProgress> => {
@@ -67,17 +66,17 @@ export const getImages = async (
         sort_by: sortBy,
         sort_dir: sortDir,
     });
-    
+
     if (fileTypes && fileTypes.length > 0) {
         fileTypes.forEach(type => params.append('file_types', type));
     }
-    
+
     const requestUrl = `/images?${params.toString()}`;
     const response = await apiClient.get<ImageListResponse>(requestUrl);
-    
+
     // Cache the response
     imageCache.set(folderId, page, sortBy, sortDir, fileTypes, response.data);
-    
+
     return response.data;
 };
 
@@ -104,21 +103,6 @@ export const getThumbnailUrl = (imagePath: string, _size: 'small' | 'medium' = '
 export const revealInExplorer = async (filePath: string): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>(`/reveal-in-explorer?file_path=${encodeURIComponent(filePath)}`);
     return response.data;
-};
-
-// WebSocket connection for scan progress
-export const connectToScanProgress = (
-    folderId: number,
-    onProgress: (data: ScanProgress) => void
-): WebSocket => {
-    const ws = new WebSocket(`${WS_BASE_URL}/ws/scan-progress/${folderId}`);
-    
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        onProgress(data);
-    };
-    
-    return ws;
 };
 
 // Add export for Image, Folder, ScanProgress from types

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import (
-    FastAPI, Depends, HTTPException, BackgroundTasks, Query, WebSocket
+    FastAPI, Depends, HTTPException, BackgroundTasks, Query
 )
 from pathlib import Path
 import subprocess
@@ -41,163 +41,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-watchdog_observers = {}
 
-# Store the main event loop for cross-thread scheduling
-MAIN_EVENT_LOOP = None
-
-
-async def watchdog_event_consumer():
-    from . import crud, database
-    while True:
-        folder_id, folder_path = await watchdog_event_queue.get()
-        scan_id = str(uuid.uuid4())
-        logger.info(
-            f"Processing folder scan: id={folder_id}, path={folder_path}")
-        async with database.AsyncSessionLocal() as db:
-            try:
-                folder = await crud.get_folder(db, folder_id)
-                if folder:
-                    await crud.scan_folder_and_update_db(db, folder)
-                    logger.info(
-                        f"Scan complete for folder_id={folder_id}"
-                    )
-                    await broadcast_progress(
-                        folder_id,
-                        {
-                            "event": "folder_change",
-                            "folder_id": folder_id,
-                            "scan_id": scan_id
-                        }
-                    )
-                else:
-                    logger.warning(
-                        f"No folder found in DB for folder_id={folder_id} "
-                        "during watchdog-triggered scan."
-                    )
-            except Exception as e:
-                logger.error(
-                    f"Error during watchdog-triggered scan for folder_id="
-                    f"{folder_id}: {e}",
-                    exc_info=True
-                )
-        watchdog_event_queue.task_done()
-
-
-class FolderWatchdogHandler(FileSystemEventHandler):
-    def __init__(self, folder_id, folder_path):
-        self.folder_id = folder_id
-        self.folder_path = folder_path
-        super().__init__()
-
-    def on_any_event(self, event):
-        if not event.is_directory:
-            logger.info(
-                f"Watchdog event detected for folder_id={self.folder_id}: "
-                f"{event.event_type} {event.src_path}"
-            )
-            asyncio.run_coroutine_threadsafe(
-                watchdog_event_queue.put((self.folder_id, self.folder_path)),
-                MAIN_EVENT_LOOP
-            )
-
-
-async def start_watchdog_for_folder(folder_id, folder_path):
-    if folder_id in watchdog_observers:
-        return  # Already watching
-    event_handler = FolderWatchdogHandler(folder_id, folder_path)
-    observer = Observer()
-    observer.schedule(event_handler, folder_path, recursive=True)
-    observer.daemon = True
-    observer.start()
-    watchdog_observers[folder_id] = observer
-    logger.info(
-        f"Started watchdog for folder {folder_path} (ID: {folder_id})"
-    )
-
-
-async def stop_all_watchdogs():
-    for observer in watchdog_observers.values():
-        observer.stop()
-        observer.join()
-    watchdog_observers.clear()
-    logger.info(
-        "Stopped all watchdog observers."
-    )
 
 
 @app.on_event("startup")
 async def on_startup():
-    global MAIN_EVENT_LOOP, watchdog_event_queue
-    MAIN_EVENT_LOOP = asyncio.get_running_loop()
-    watchdog_event_queue = asyncio.Queue()
-
     logger.info("Initializing application...")
     await database.create_db_and_tables()
-
-    # Start watchdogs for all folders in DB
-    db_gen = database.get_db()
-    db = await db_gen.__anext__()
-    try:
-        folders = await crud.get_folders(db)
-        for folder in folders:
-            await start_watchdog_for_folder(folder.id, folder.path)
-    finally:
-        await db_gen.aclose()
-
-    # Start the watchdog event consumer task
-    asyncio.create_task(watchdog_event_consumer())
     logger.info("Application startup complete")
-
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    await stop_all_watchdogs()
-
-# Store active WebSocket connections
-active_connections: Dict[int, List[WebSocket]] = {}
-
-
-@app.websocket("/ws/scan-progress/{folder_id}")
-async def websocket_endpoint(websocket: WebSocket, folder_id: int):
-    await websocket.accept()
-    logger.debug(f"WebSocket connection opened for folder_id={folder_id}")
-    if folder_id not in active_connections:
-        active_connections[folder_id] = []
-    active_connections[folder_id].append(websocket)
-    try:
-        while True:
-            # Accept any message (text or binary) to keep the connection alive
-            try:
-                await websocket.receive_text()
-            except Exception:
-                try:
-                    await websocket.receive_bytes()
-                except Exception:
-                    # If neither text nor bytes, just continue to keep alive
-                    await asyncio.sleep(10)
-    except Exception:
-        logger.debug(f"WebSocket connection closed for folder_id={folder_id}")
-    finally:
-        active_connections[folder_id].remove(websocket)
-        if not active_connections[folder_id]:
-            del active_connections[folder_id]
-
-
-async def broadcast_progress(folder_id: int, data: dict):
-    if folder_id in active_connections:
-        for connection in active_connections[folder_id][:]:
-            try:
-                await connection.send_json(data)
-            except Exception as e:
-                msg = str(e)
-                if "after sending 'websocket.close'" in msg or "already completed" in msg:
-                    logger.debug(f"WebSocket connection already closed: {e}")
-                else:
-                    logger.error(f"WebSocket send failed: {e}")
-                active_connections[folder_id].remove(connection)
-        if not active_connections[folder_id]:
-            del active_connections[folder_id]
 
 # --- API Endpoints ---
 
@@ -280,8 +131,6 @@ async def add_folder(
         )
         background_tasks.add_task(
             crud.scan_folder_and_update_db, db, created_folder)
-        # Start watchdog for new folder
-        await start_watchdog_for_folder(created_folder.id, created_folder.path)
         return created_folder
     except Exception as e:
         logger.error(
@@ -319,14 +168,10 @@ async def refresh_folder(
         raise HTTPException(status_code=404,
                             detail=f"Folder with ID {folder_id} not found")
 
-    async def progress_callback(data: dict):
-        await broadcast_progress(folder_id, {**data, 'folder_id': folder_id})
-
     try:
         scan_result = await crud.scan_folder_and_update_db(
             db,
-            folder,
-            progress_callback=progress_callback
+            folder
         )
         logger.info(
             f"Manual scan completed for folder ID "
@@ -358,12 +203,6 @@ async def remove_folder(
     if not success:
         raise HTTPException(status_code=404,
                             detail=f"Folder with ID {folder_id} not found")
-    # Stop watchdog for deleted folder
-    observer = watchdog_observers.pop(folder_id, None)
-    if observer:
-        observer.stop()
-        observer.join()
-        logger.info(f"Stopped watchdog for folder ID: {folder_id}")
     logger.info(
         f"Folder ID "
         f"{folder_id} "
