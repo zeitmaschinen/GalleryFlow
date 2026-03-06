@@ -59,6 +59,7 @@
   },
   "overrides": {
     "rollup": "^4.59.0",
-    "minimatch": "^9.0.7"
+    "minimatch": "^9.0.7",
+    "immutable": "^5.1.5"
   }
 }
