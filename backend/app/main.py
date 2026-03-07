@@ -1,7 +1,5 @@
 from . import crud, schemas, database
 import uuid
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 import asyncio
 from typing import List, Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession

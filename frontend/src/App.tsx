@@ -142,7 +142,7 @@ function App() {
     }
   };
 
-  // --- Patch: Universal reload function, used by both sidebar and WebSocket ---
+  // --- Patch: Universal reload function, used by sidebar ---
   const handleRefreshFolderAndImages = useCallback(
     async (folderId: number) => {
       // Only refresh the folder metadata without affecting image display

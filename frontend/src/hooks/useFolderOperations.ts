@@ -43,7 +43,7 @@ export const useFolderOperations = (folderId: number | null) => {
       setScanProgress(null);
 
       // Simulate scan completion after a short delay
-      // In a real scenario, this would connect to a WebSocket or call an API endpoint
+      // In a real scenario, this would call an API endpoint
       await new Promise(resolve => setTimeout(resolve, 500));
 
       setIsScanning(false);

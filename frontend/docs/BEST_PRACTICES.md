@@ -17,7 +17,7 @@ frontend/
       common/          # Shared UI components (PaginationControls, etc.)
       layout/          # Layout and navigation components
     hooks/             # Custom React hooks (useFolders, useImages, useGridResize, etc.)
-    services/          # API and websocket services
+    services/          # API services
     theme/             # Theme configuration and constants
     constants.ts       # App-wide constants (e.g., IMAGES_PER_PAGE)
     types.ts           # TypeScript type definitions
