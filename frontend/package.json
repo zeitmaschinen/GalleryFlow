@@ -55,7 +55,7 @@
     "js-yaml": "~4.1.1",
     "typescript": "~5.3.3",
     "typescript-eslint": "^8.31.0",
-    "vite": "~6.4.1"
+    "vite": "~6.4.3"
   },
   "overrides": {
     "rollup": "^4.59.0",
