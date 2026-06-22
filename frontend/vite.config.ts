@@ -10,6 +10,7 @@ export default defineConfig({
     host: true,
   },
   build: {
+    target: 'esnext',
     outDir: 'dist',
     sourcemap: true,
     chunkSizeWarningLimit: 1000,
