@@ -121,10 +121,6 @@ Close your current terminal/command window, download and install Node.js from [n
 ## Contributing
 - For advanced usage, troubleshooting, SSH setup, and contributing, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Contact
-You can follow and send a message here:
-- [hyperink.lab](https://www.instagram.com/hyperink.lab)
-
 If this project is useful to you, please don't forget to give it a star! 🌟 🤗
 
 ## License
