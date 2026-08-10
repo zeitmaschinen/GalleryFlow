@@ -1,3 +1,5 @@
+
+
 # GalleryFlow 1.4.0
 
 A modern web application for browsing and managing <a href="https://github.com/Comfy-Org/ComfyUI" target="_blank" rel="noopener noreferrer">ComfyUI</a>-generated images with advanced metadata support.
@@ -98,8 +100,8 @@ python3 run_galleryflow.py
 ---
 
 ### Troubleshooting
-If you're getting an error when installing npm, you likely need to install nodejs first.
-Close your current terminal/command window, download and install Node.js from [nodejs.org](https://nodejs.org/), then open a new terminal and run `npm install` again.
+- If `npm install` fails with node-gyp or permission errors, ensure Node.js is correctly installed in your system PATH. Restart your terminal after installation and run `npm install` again.
+- If the application fails to launch, verify that the Python virtual environment is activated and that all dependencies listed in `requirements.txt` and `package.json` have been installed successfully.
 
 ---
 
