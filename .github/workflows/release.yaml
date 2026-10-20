@@ -1,20 +1,35 @@
 name: Create Release Package
 
 on:
+  # Runs automatically when a release is published on GitHub
   release:
-    types: [created]
+    types: [published]
+  # Lets you run it by hand from the Actions tab, e.g. to add the zip to an existing release
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to attach the zip to (for example v2.0.0)'
+        required: true
+
+# Needed so the workflow may upload the zip to the release
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
 
-      # Cria o arquivo ZIP excluindo arquivos desnecessários
+      # Build the ZIP, leaving out files end users don't need
       - name: Create ZIP package
         run: |
-          zip -r galleryflow-${{ github.event.release.tag_name }}.zip \
+          zip -r "galleryflow-${TAG}.zip" \
           . \
           -x "node_modules/*" \
           -x "*/node_modules/*" \
@@ -40,11 +55,10 @@ jobs:
           -x "*.db" \
           -x ".git/*" \
           -x ".github/*"
-      
-      # Anexa o ZIP à release 
+
+      # Attach the ZIP to the release
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: galleryflow-${{ github.event.release.tag_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.TAG }}
+          files: galleryflow-${{ env.TAG }}.zip
