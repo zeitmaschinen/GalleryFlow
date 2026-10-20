@@ -1,1 +1,1 @@
-export { getTheme, customLightTheme, customDarkTheme } from './theme/index';
+export { getTheme } from './theme/index';

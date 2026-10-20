@@ -1,60 +1,46 @@
 import React from 'react';
 import IconButton, { IconButtonProps } from '@mui/material/IconButton';
-import { useTheme } from '@mui/material/styles';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 
 interface ModalNavArrowProps extends Omit<IconButtonProps, 'children'> {
   direction: 'left' | 'right';
   'aria-label': string;
 }
 
-const ModalNavArrow: React.FC<ModalNavArrowProps> = ({ direction, 'aria-label': ariaLabel, ...props }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  // Reference light mode hover colors
-  const hoverBg = theme.palette.primary.light;
-  const hoverIcon = theme.palette.primary.contrastText;
-  // Normal state
-  const arrowColor = isDark ? '#ACA5FF' : theme.palette.primary.dark;
-  const arrowBg = isDark ? theme.palette.background.paper : '#fff';
-  return (
-    <IconButton
-      {...props}
-      aria-label={ariaLabel}
-      size="small"
-      sx={{
+/**
+ * Previous / next control pinned to the viewport edge while a dialog is open.
+ * Frosted and neutral so it works over any image or backdrop.
+ */
+const ModalNavArrow: React.FC<ModalNavArrowProps> = ({ direction, 'aria-label': ariaLabel, sx, ...props }) => (
+  <IconButton
+    {...props}
+    aria-label={ariaLabel}
+    sx={[
+      {
         position: 'fixed',
-        [direction === 'left' ? 'left' : 'right']: 24,
+        [direction]: { xs: 8, md: 20 },
         top: '50%',
         transform: 'translateY(-50%)',
         zIndex: 1401,
-        backgroundColor: arrowBg,
-        color: arrowColor,
+        width: 44,
+        height: 44,
         borderRadius: '50%',
-        width: 40,
-        height: 40,
-        minWidth: 40,
-        minHeight: 40,
-        boxShadow: theme.shadows[3],
-        transition: theme.transitions.create(['background-color', 'box-shadow', 'color'], {
-          duration: theme.transitions.duration.short,
-        }),
-        '&:hover': {
-          backgroundColor: hoverBg,
-          color: hoverIcon,
-          boxShadow: theme.shadows[6],
-        },
-        display: 'flex',
-        ...props.sx,
-      }}
-    >
-      {direction === 'left' ? (
-        <ArrowForwardIcon sx={{ fontSize: 20, transform: 'scaleX(-1)' }} />
-      ) : (
-        <ArrowForwardIcon sx={{ fontSize: 20 }} />
-      )}
-    </IconButton>
-  );
-};
+        color: '#fff',
+        bgcolor: 'rgba(20, 20, 18, 0.5)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        transition: 'background-color 160ms, transform 160ms',
+        '&:hover': { bgcolor: 'rgba(20, 20, 18, 0.75)', color: '#fff' },
+        '&:active': { transform: 'translateY(-50%) scale(0.94)' },
+      },
+      ...(Array.isArray(sx) ? sx : [sx]),
+    ]}
+  >
+    {direction === 'left'
+      ? <ChevronLeftRoundedIcon sx={{ fontSize: 26 }} />
+      : <ChevronRightRoundedIcon sx={{ fontSize: 26 }} />}
+  </IconButton>
+);
 
 export default ModalNavArrow;

@@ -1,60 +1,12 @@
 import { useState } from 'react';
 import type { FC, MouseEvent } from 'react';
-import {
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  IconButton,
-  Box,
-  Typography,
-  alpha,
-  CircularProgress,
-} from '@mui/material';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import { Box, ButtonBase, IconButton, Tooltip, Typography, CircularProgress } from '@mui/material';
+import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { Folder } from './types';
-import { styled } from '@mui/system';
-import { colors } from '../../theme/themeConstants';
-import { useTheme } from '@mui/material';
-import type { Transitions } from '@mui/material/styles';
-
-const FolderItem = styled(ListItem)(({ theme }) => {
-  const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
-  return {
-    position: 'relative',
-    width: '100%',
-    margin: 0,
-    padding: 0,
-    '&:hover': {
-      '&::before': {
-        backgroundColor: colors.folderItem[mode].hoverBg(alpha),
-        borderRadius: colors.folderItem[mode].borderRadius,
-      }
-    },
-    '&.selected': {
-      '&::before': {
-        backgroundColor: colors.folderItem[mode].selectedBg(alpha),
-        borderRadius: colors.folderItem[mode].borderRadius,
-      },
-      '&:hover::before': {
-        backgroundColor: colors.folderItem[mode].selectedHoverBg(alpha),
-        borderRadius: colors.folderItem[mode].borderRadius,
-      }
-    },
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      transition: theme.transitions && typeof (theme.transitions as Transitions).create === 'function'
-        ? (theme.transitions as Transitions).create(['background-color'])
-        : undefined,
-      zIndex: 0
-    }
-  };
-});
+import { palette, borders, typography } from '../../theme/themeConstants';
+import { folderName } from '../../utils/fileUtils';
 
 interface FolderListProps {
   folders: Folder[];
@@ -72,8 +24,6 @@ const FolderList: FC<FolderListProps> = ({
   onSelectFolder,
 }) => {
   const [refreshingFolders, setRefreshingFolders] = useState<number[]>([]);
-  const theme = useTheme();
-  const mode = theme.palette.mode === 'dark' ? 'dark' : 'light';
 
   const handleRefresh = async (folderId: number, e: MouseEvent) => {
     e.stopPropagation();
@@ -93,129 +43,101 @@ const FolderList: FC<FolderListProps> = ({
   };
 
   return (
-    <List sx={{ m: 0, p: 0, width: '100%' }}>
+    <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
       {folders.map((folder) => {
         const isSelected = folder.id === selectedFolderId;
         const isRefreshing = refreshingFolders.includes(folder.id);
 
         return (
-          <FolderItem
+          <Box
+            component="li"
             key={folder.id}
-            disablePadding
-            className={isSelected ? 'selected' : ''}
+            sx={(theme) => {
+              const p = palette[theme.palette.mode];
+              return {
+                position: 'relative',
+                borderRadius: borders.radius.md,
+                bgcolor: isSelected ? p.accentSoft : 'transparent',
+                transition: 'background-color 160ms',
+                '&:hover': { bgcolor: isSelected ? p.accentSoft : theme.palette.action.hover },
+                '& .folder-actions': { opacity: isRefreshing ? 1 : 0, transition: 'opacity 160ms' },
+                '&:hover .folder-actions, &:focus-within .folder-actions': { opacity: 1 },
+                '@media (hover: none)': { '& .folder-actions': { opacity: 1 } },
+              };
+            }}
           >
-            <ListItemButton
-              onClick={() => onSelectFolder(folder)}
-              sx={{
-                width: '100%',
-                minWidth: 0,
-                py: 1,
-                px: 1,
-                display: 'flex',
-                alignItems: 'center',
-                bgcolor: 'transparent',
-                '&.Mui-selected': {
-                  bgcolor: 'transparent',
-                  '&:hover': {
-                    bgcolor: 'transparent',
-                  }
-                },
-                '&:hover': {
-                  bgcolor: 'transparent',
-                },
-                '& .MuiTouchRipple-root': {
-                  borderRadius: theme => colors.folderItem[theme.palette.mode === 'dark' ? 'dark' : 'light'].borderRadius,
-                  overflow: 'hidden'
-                }
-              }}
+            <Tooltip title={folder.path} placement="right" enterDelay={700}>
+              <ButtonBase
+                onClick={() => onSelectFolder(folder)}
+                aria-current={isSelected ? 'true' : undefined}
+                sx={{
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  gap: 1.25,
+                  py: 1,
+                  pl: 1.25,
+                  pr: 8,
+                  borderRadius: borders.radius.md,
+                  textAlign: 'left',
+                }}
+              >
+                <FolderRoundedIcon
+                  sx={(theme) => ({
+                    fontSize: 18,
+                    flexShrink: 0,
+                    color: isSelected ? palette[theme.palette.mode].accentText : 'text.disabled',
+                  })}
+                />
+                <Typography
+                  variant="body2"
+                  noWrap
+                  sx={(theme) => ({
+                    fontWeight: isSelected ? typography.fontWeights.semibold : typography.fontWeights.medium,
+                    color: isSelected ? palette[theme.palette.mode].accentText : 'text.primary',
+                  })}
+                >
+                  {folderName(folder.path)}
+                </Typography>
+              </ButtonBase>
+            </Tooltip>
+
+            <Box
+              className="folder-actions"
+              sx={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', display: 'flex' }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, minWidth: 0, pl: 1 }}>
-                <FolderOpenIcon
-                  sx={{
-                    mr: 1,
-                    transition: 'color 0.2s',
-                    color: isSelected ? colors.primary[mode].main : 'text.secondary',
-                  }}
-                />
-                <ListItemText
-                  primary={
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        transition: 'all 0.2s',
-                        fontWeight: isSelected ? '600' : '400',
-                        color: isSelected ? colors.primary[mode].main : 'text.primary',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        maxWidth: '120px',
-                        direction: 'rtl',
-                        textAlign: 'left',
-                        minWidth: 0,
-                        flexShrink: 1
-                      }}
-                    >
-                      {folder.path}
-                    </Typography>
-                  }
-                  sx={{
-                    minWidth: 0,
-                    mr: 0.5
-                  }}
-                />
-              </Box>
-              <Box sx={{
-                display: 'flex',
-                gap: 0.5,
-                ml: 1,
-                alignItems: 'center',
-                flexShrink: 0
-              }}>
+              <Tooltip title="Rescan folder">
+                <span>
+                  <IconButton
+                    size="small"
+                    aria-label={`Rescan ${folderName(folder.path)}`}
+                    onClick={(e) => handleRefresh(folder.id, e)}
+                    disabled={isRefreshing}
+                    sx={{ p: 0.5 }}
+                  >
+                    {isRefreshing
+                      ? <CircularProgress size={14} color="inherit" />
+                      : <RefreshRoundedIcon sx={{ fontSize: 17 }} />}
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Remove from library">
                 <IconButton
-                  edge="end"
                   size="small"
-                  onClick={(e) => handleRefresh(folder.id, e)}
-                  disabled={isRefreshing}
-                  sx={{
-                    color: 'text.secondary',
-                    p: '2px',
-                    '&:hover': {
-                      color: colors.primary[mode].main,
-                      bgcolor: alpha(colors.primary[mode].main, 0.08),
-                    }
-                  }}
-                >
-                  {isRefreshing ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : (
-                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                      refresh
-                    </span>
-                  )}
-                </IconButton>
-                <IconButton
-                  edge="end"
-                  size="small"
+                  aria-label={`Remove ${folderName(folder.path)} from library`}
                   onClick={(e) => handleDelete(folder.id, e)}
-                  sx={{
-                    color: 'text.secondary',
-                    p: '2px',
-                    '&:hover': {
-                      color: colors.common.error,
-                      bgcolor: alpha(colors.common.error, 0.08),
-                    }
-                  }}
+                  sx={(theme) => ({
+                    p: 0.5,
+                    '&:hover': { color: theme.palette.error.main },
+                  })}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                    delete
-                  </span>
+                  <CloseRoundedIcon sx={{ fontSize: 17 }} />
                 </IconButton>
-              </Box>
-            </ListItemButton>
-          </FolderItem>
+              </Tooltip>
+            </Box>
+          </Box>
         );
       })}
-    </List>
+    </Box>
   );
 };
 

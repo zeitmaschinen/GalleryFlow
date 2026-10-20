@@ -61,4 +61,4 @@ This will launch both servers. Access the frontend at [http://localhost:5173](ht
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0), the same license as the project.

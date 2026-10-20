@@ -1,7 +1,7 @@
 {
   "name": "galleryflow",
   "private": false,
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "A modern web application for browsing and managing ComfyUI-generated images with advanced metadata support",
   "type": "module",
   "repository": {
@@ -34,14 +34,11 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
-    "axios": "^1.18.0",
+    "axios": "^1.20.0",
     "dagre": "^0.8.5",
-    "litegraph.js": "^0.7.18",
-    "path-browserify": "^1.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "reactflow": "^11.11.4",
-    "sass": "^1.69.7"
+    "reactflow": "^11.11.4"
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
@@ -52,7 +49,7 @@
     "eslint": "^9.25.1",
     "eslint-plugin-react-refresh": "^0.4.5",
     "globals": "^13.24.0",
-    "js-yaml": "^4.2.0",
+    "js-yaml": "^4.3.2",
     "typescript": "~5.3.3",
     "typescript-eslint": "^8.31.0",
     "vite": "~6.4.3"
@@ -60,9 +57,14 @@
   "overrides": {
     "rollup": "^4.59.0",
     "minimatch": "^9.0.7",
-    "immutable": "^5.1.5",
+    "immutable": "^5.1.8",
     "lodash": "^4.18.1",
     "follow-redirects": "^1.16.0",
-    "esbuild": "~0.28.1"
+    "esbuild": "~0.28.1",
+    "postcss": "^8.5.18",
+    "brace-expansion": "^2.1.2",
+    "@humanfs/node": "^0.16.8",
+    "browserslist": "^4.28.7",
+    "baseline-browser-mapping": "^2.11.0"
   }
 }

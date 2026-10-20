@@ -1,177 +1,179 @@
-/* Workflow visualization wrapper for background and grid */
+/* Workflow canvas and ComfyUI node cards — "Quiet gallery" styling */
+
 .workflow-visualization-wrapper {
-  width: 100%;
-  height: 100%;
-  min-height: 300px;
-  border-radius: 8px;
-  background: var(--workflow-bg, #F4F5FA);
-  position: relative;
+  position: absolute;
+  inset: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Light mode workflow background */
 .workflow-visualization-light {
-  --workflow-bg: #F5F5F7;
-  --workflow-grid: #CCCCCC;
+  --workflow-bg: #ECEAE5;
+  --workflow-dot: rgba(29, 28, 26, 0.13);
+  --edge-color: rgba(108, 92, 231, 0.55);
 }
 
-/* Dark mode workflow background */
 .workflow-visualization-dark {
-  --workflow-bg: #1A1A1A;
-  --workflow-grid: #333333;
+  --workflow-bg: #0E0E0D;
+  --workflow-dot: rgba(238, 236, 232, 0.08);
+  --edge-color: rgba(169, 156, 255, 0.5);
 }
 
-.react-flow__background {
+.workflow-visualization-wrapper .react-flow__background {
   background: var(--workflow-bg) !important;
 }
 
-/* Connections (edges) styling */
-.react-flow__edge-path,
-.react-flow__connection-path {
-  stroke: var(--edge-color, #9C8EFA) !important;
-  stroke-width: 3;
+/* Connections */
+.workflow-visualization-wrapper .react-flow__edge-path,
+.workflow-visualization-wrapper .react-flow__connection-path {
+  stroke: var(--edge-color) !important;
+  stroke-width: 1.75;
+  stroke-linecap: round;
 }
 
-/* ComfyUI-style node styling */
+/* Node card */
 .comfy-node {
-  border-radius: 6px;
-  padding: 0;
-  min-width: 180px;
+  min-width: 190px;
   max-width: 300px;
   font-size: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--comfy-node-border);
+  border-radius: 12px;
   overflow: hidden;
-  transition: box-shadow 0.2s ease-in-out;
+  background: var(--comfy-node-bg);
+  color: var(--comfy-node-color);
+  border: 1px solid var(--comfy-node-border);
+  box-shadow: var(--comfy-node-shadow);
+  transition: box-shadow 200ms ease, transform 200ms ease;
 }
 
 .comfy-node:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--comfy-node-shadow-hover);
 }
 
+/* Header: a colour dot and the node name on a faint tint of the node's colour */
 .comfy-node-header {
-  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
   font-weight: 600;
-  font-size: 13px;
-  background: var(--comfy-node-header-bg);
-  color: var(--comfy-node-header-color);
+  font-size: 12px;
+  letter-spacing: -0.005em;
+  color: var(--comfy-node-color);
+  background: color-mix(in srgb, var(--node-hue) 12%, var(--comfy-node-bg));
   border-bottom: 1px solid var(--comfy-node-border);
 }
 
+.comfy-node-header::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--node-hue);
+}
+
 .comfy-node-content {
-  padding: 10px;
-  background: var(--comfy-node-bg);
-  color: var(--comfy-node-color);
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .comfy-node-property {
-  margin-bottom: 4px;
   display: flex;
   flex-direction: column;
+  gap: 3px;
 }
 
 .comfy-node-property-label {
-  font-weight: 600;
-  font-size: 11px;
+  font-size: 10.5px;
+  font-weight: 500;
   color: var(--comfy-node-label-color);
-  margin-bottom: 2px;
 }
 
 .comfy-node-property-value {
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
   word-break: break-word;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  max-height: 80px;
+  max-height: 84px;
   overflow-y: auto;
-  padding: 4px 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
   background: var(--comfy-node-value-bg);
-  border-radius: 4px;
 }
 
 .comfy-node-handle {
-  width: 12px;
-  height: 12px;
-  border-radius: 6px;
-  background: var(--comfy-node-handle-bg);
-  border: 2px solid var(--comfy-node-handle-border);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--comfy-node-bg) !important;
+  border: 2px solid var(--node-hue) !important;
 }
 
 .comfy-node-handle-input {
   top: 50%;
-  left: -6px;
+  left: -5px;
 }
 
 .comfy-node-handle-output {
   top: 50%;
-  right: -6px;
+  right: -5px;
 }
 
-/* Node type-specific colors */
-.comfy-node-checkpoint {
-  --comfy-node-header-bg: #3A2DB3;
-  --comfy-node-header-color: #FFFFFF;
-}
+/* Node type colours: muted, distinct hues */
+.comfy-node-checkpoint { --node-hue: #6C5CE7; }
+.comfy-node-lora       { --node-hue: #B067E9; }
+.comfy-node-latent     { --node-hue: #E5737A; }
+.comfy-node-clip       { --node-hue: #3FA672; }
+.comfy-node-sampler    { --node-hue: #3E8EF7; }
+.comfy-node-vae        { --node-hue: #E39B3A; }
+.comfy-node-save       { --node-hue: #D9609E; }
+.comfy-node-image      { --node-hue: #2AA5B8; }
+.comfy-node-default    { --node-hue: #8C887F; }
 
-.comfy-node-lora {
-  --comfy-node-header-bg: #7B61FF;
-  --comfy-node-header-color: #FFFFFF;
-}
-
-.comfy-node-latent {
-  --comfy-node-header-bg: #FF6B6B;
-  --comfy-node-header-color: #FFFFFF;
-}
-
-.comfy-node-clip {
-  --comfy-node-header-bg: #4CAF50;
-  --comfy-node-header-color: #FFFFFF;
-}
-
-.comfy-node-sampler {
-  --comfy-node-header-bg: #2196F3;
-  --comfy-node-header-color: #FFFFFF;
-}
-
-.comfy-node-vae {
-  --comfy-node-header-bg: #FF9800;
-  --comfy-node-header-color: #FFFFFF;
-}
-
-.comfy-node-save {
-  --comfy-node-header-bg: #9C27B0;
-  --comfy-node-header-color: #FFFFFF;
-}
-
-.comfy-node-image {
-  --comfy-node-header-bg: #00ACC1; /* Cyan color for image nodes */
-  --comfy-node-header-color: #FFFFFF;
-}
-
-.comfy-node-default {
-  --comfy-node-header-bg: #607D8B;
-  --comfy-node-header-color: #FFFFFF;
-}
-
-/* Light mode palette */
+/* Light mode */
 .comfy-node-light {
   --comfy-node-bg: #FFFFFF;
-  --comfy-node-color: #333333;
-  --comfy-node-border: rgba(0, 0, 0, 0.1);
-  --comfy-node-handle-bg: #FFFFFF;
-  --comfy-node-handle-border: #666666;
-  --comfy-node-label-color: #555555;
-  --comfy-node-value-bg: #F5F5F7;
-  --edge-color: #9C8EFA;
+  --comfy-node-color: #1D1C1A;
+  --comfy-node-border: rgba(29, 28, 26, 0.08);
+  --comfy-node-label-color: #6F6B64;
+  --comfy-node-value-bg: #F6F5F2;
+  --comfy-node-shadow: 0 1px 2px rgba(29, 28, 26, 0.06), 0 4px 12px rgba(29, 28, 26, 0.05);
+  --comfy-node-shadow-hover: 0 2px 4px rgba(29, 28, 26, 0.08), 0 10px 24px rgba(29, 28, 26, 0.1);
 }
 
-/* Dark mode palette */
+/* Dark mode */
 .comfy-node-dark {
-  --comfy-node-bg: #252525;
-  --comfy-node-color: #EEEEEE;
-  --comfy-node-border: rgba(255, 255, 255, 0.1);
-  --comfy-node-handle-bg: #333333;
-  --comfy-node-handle-border: #AAAAAA;
-  --comfy-node-label-color: #BBBBBB;
-  --comfy-node-value-bg: #333333;
-  --edge-color: #9C8EFA;
+  --comfy-node-bg: #1C1C1A;
+  --comfy-node-color: #EEECE8;
+  --comfy-node-border: rgba(238, 236, 232, 0.08);
+  --comfy-node-label-color: #A19D95;
+  --comfy-node-value-bg: #262624;
+  --comfy-node-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.3);
+  --comfy-node-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+/* Zoom controls */
+.comfyui-controls {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--comfy-controls-bg, rgba(255, 255, 255, 0.85));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(29, 28, 26, 0.08);
+  box-shadow: 0 4px 16px rgba(29, 28, 26, 0.08);
+}
+
+.workflow-visualization-dark .comfyui-controls {
+  --comfy-controls-bg: rgba(28, 28, 26, 0.85);
+  border-color: rgba(238, 236, 232, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.workflow-visualization-wrapper .react-flow__attribution {
+  background: transparent;
+  opacity: 0.4;
 }

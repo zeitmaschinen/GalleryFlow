@@ -7,12 +7,13 @@ import {
   useMediaQuery
 } from '@mui/material';
 import TabPerformanceManager from './components/common/TabPerformanceManager';
-import { BurgerMenu } from './components/layout/Navigation';
 import { useFolders } from './hooks/useFolders';
 import { useImages } from './hooks/useImages';
 import { IMAGES_PER_PAGE } from './constants';
 import { SortField } from './types';
 import { getTheme } from './theme';
+import { getImageCount } from './services/api';
+import { imageCache } from './services/cache';
 import { SidebarContainer, MobileSidebar } from './components/layout';
 import { MainContent } from './components/layout';
 
@@ -87,13 +88,8 @@ function App() {
 
   // Handle thumbnail size change
   const handleThumbnailSizeChange = (_event: Event | React.SyntheticEvent<Element, Event>, newValue: number | number[]) => {
-    console.log('[App] handleThumbnailSizeChange RECEIVED:', newValue);
     if (typeof newValue === 'number') {
-      console.log('[App] About to call setThumbnailSize with:', newValue);
       setThumbnailSize(newValue);
-      console.log('[App] setThumbnailSize called, thumbnailSize state should update');
-    } else {
-      console.log('[App] newValue is not a number:', newValue);
     }
   };
 
@@ -132,12 +128,9 @@ function App() {
 
   const reloadImageGrid = (userInitiated = false) => {
     if (selectedFolder) {
-      console.log('[App] reloadImageGrid called, userInitiated:', userInitiated, 'folderId:', selectedFolder.id);
       if (userInitiated) {
-        console.log('[App] User-initiated refresh - resetting to page 1');
         setCurrentPage(1);
       }
-      console.log('[App] Incrementing reloadKey');
       setReloadKey(k => k + 1);
     }
   };
@@ -159,6 +152,62 @@ function App() {
 
 
 
+  // --- Scan watching: after a folder is added, the server indexes it in the
+  // background. Poll the image count and refresh the grid as images arrive,
+  // until the count stops changing.
+  const [scanningFolderId, setScanningFolderId] = useState<number | null>(null);
+  const latestQueryRef = useRef({ selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes });
+  latestQueryRef.current = { selectedFolder, currentPage, sortBy, sortDirection, selectedFileTypes };
+
+  const handleAddFolderAndScan = useCallback(async (path: string) => {
+    const folder = await handleAddFolder(path);
+    setScanningFolderId(folder.id);
+  }, [handleAddFolder]);
+
+  useEffect(() => {
+    if (scanningFolderId === null) return;
+    const folderId = scanningFolderId;
+    let lastCount = -1;
+    let stableTicks = 0;
+    let cancelled = false;
+    const startedAt = Date.now();
+
+    const refreshGrid = () => {
+      const q = latestQueryRef.current;
+      if (q.selectedFolder?.id === folderId) {
+        fetchImages(folderId, q.currentPage, q.sortBy, q.sortDirection, q.selectedFileTypes, true);
+      }
+    };
+
+    const tick = async () => {
+      try {
+        const count = await getImageCount(folderId);
+        if (cancelled) return;
+        if (count !== lastCount) {
+          lastCount = count;
+          stableTicks = 0;
+          imageCache.invalidate(folderId);
+          refreshGrid();
+        } else {
+          stableTicks += 1;
+        }
+      } catch {
+        stableTicks += 1;
+      }
+      // Done once the count has held still for ~6 seconds (or after 15 minutes)
+      if (!cancelled && (stableTicks >= 4 || Date.now() - startedAt > 15 * 60 * 1000)) {
+        setScanningFolderId(null);
+      }
+    };
+
+    tick();
+    const interval = window.setInterval(tick, 1500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [scanningFolderId, fetchImages]);
+
   // Backend now returns only the requested page, so use images directly
   // No need for local slicing - removed paginatedImages since it was causing double pagination
   const paginatedImages = images; // images is already the current page from backend
@@ -173,7 +222,6 @@ function App() {
     // Check if reloadKey changed (user clicked refresh) - if so, always fetch page 1
     const reloadKeyChanged = reloadKey !== prevReloadKeyRef.current;
     if (reloadKeyChanged) {
-      console.log('[App] Reload detected! Forcing page 1 fetch');
       pageToFetch = 1;
       prevReloadKeyRef.current = reloadKey;
     }
@@ -221,34 +269,29 @@ function App() {
             gap: 2,
             bgcolor: 'background.default'
           }}>
-            <img src={mode === 'dark' ? "/images/symbol-darkmode.png" : "/images/symbol.png"} alt="Logo" style={{ width: 45, height: 45, animation: 'spin 1s linear infinite' }} />
-            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+            <img src={mode === 'dark' ? "/images/symbol-darkmode.png" : "/images/symbol.png"} alt="Loading GalleryFlow" style={{ width: 36, height: 36, animation: 'gf-breathe 1.6s ease-in-out infinite' }} />
+            <style>{`@keyframes gf-breathe { 0%, 100% { opacity: 0.35; transform: scale(0.94); } 50% { opacity: 1; transform: scale(1); } }`}</style>
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', height: '100vh', width: '100%' }}>
+          <Box sx={{ display: 'flex', height: '100vh', width: '100%', bgcolor: 'background.default' }}>
             {isMobile ? (
-              <>
-                {!sidebarOpen && (
-                  <BurgerMenu onClick={handleDrawerOpen} sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1301 }} />
-                )}
-                <MobileSidebar
-                  open={sidebarOpen}
-                  onClose={handleDrawerClose}
-                  folders={folders}
-                  isLoadingFolders={isLoadingFolders}
-                  selectedFolderId={selectedFolder?.id ?? null}
-                  onAddFolder={handleAddFolder}
-                  onDeleteFolder={handleDeleteFolder}
-                  onRefreshFolder={handleRefreshFolderAndImages}
-                  onSelectFolder={handleSelectFolder}
-                />
-              </>
+              <MobileSidebar
+                open={sidebarOpen}
+                onClose={handleDrawerClose}
+                folders={folders}
+                isLoadingFolders={isLoadingFolders}
+                selectedFolderId={selectedFolder?.id ?? null}
+                onAddFolder={handleAddFolderAndScan}
+                onDeleteFolder={handleDeleteFolder}
+                onRefreshFolder={handleRefreshFolderAndImages}
+                onSelectFolder={handleSelectFolder}
+              />
             ) : (
               <SidebarContainer
                 folders={folders}
                 isLoadingFolders={isLoadingFolders}
                 selectedFolderId={selectedFolder?.id ?? null}
-                onAddFolder={handleAddFolder}
+                onAddFolder={handleAddFolderAndScan}
                 onDeleteFolder={handleDeleteFolder}
                 onRefreshFolder={handleRefreshFolderAndImages}
                 onSelectFolder={handleSelectFolder}
@@ -257,6 +300,9 @@ function App() {
 
             <MainContent
               mode={mode}
+              isMobile={isMobile}
+              isScanning={scanningFolderId !== null && scanningFolderId === selectedFolder?.id}
+              onOpenSidebar={handleDrawerOpen}
               toggleColorMode={toggleColorMode}
               selectedFolder={selectedFolder}
               images={paginatedImages}

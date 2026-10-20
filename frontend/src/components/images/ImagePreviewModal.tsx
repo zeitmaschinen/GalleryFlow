@@ -1,14 +1,10 @@
 import React from 'react';
-import {
-  Dialog,
-  IconButton,
-  Box,
-  Tooltip,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import InfoIcon from '@mui/icons-material/InfoOutlined';
-import WorkflowIcon from '@mui/icons-material/AccountTree';
+import { Dialog, IconButton, Box, Tooltip, Typography } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import { getImageUrl } from '../../services/api';
+import { palette } from '../../theme/themeConstants';
 
 import ModalSlideTransition from '../common/ModalSlideTransition';
 import ModalNavArrow from '../../theme/ModalNavArrow';
@@ -25,6 +21,17 @@ interface ImagePreviewModalProps {
   setSelectedImage?: (img: Image) => void;
 }
 
+const viewerButtonSx = {
+  width: 40,
+  height: 40,
+  color: 'rgba(255, 255, 255, 0.85)',
+  borderRadius: '50%',
+  '&:hover': { color: '#fff', bgcolor: 'rgba(255, 255, 255, 0.1)' },
+};
+
+/**
+ * Full-screen, distraction-free image viewer.
+ */
 const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   open,
   selectedImage,
@@ -35,15 +42,16 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   setSelectedImage,
 }) => {
   // IMPORTANT: Call hooks BEFORE any conditional returns
-  const { hasPrev, hasNext, goPrev, goNext } = useImageModalNavigationHelpers(
+  const { currentIdx, hasPrev, hasNext, goPrev, goNext } = useImageModalNavigationHelpers(
     open,
     images,
     selectedImage,
     setSelectedImage
   );
 
-  // Now safe to return early if no image selected
   if (!selectedImage) return null;
+
+  const hasMetadata = !!selectedImage.metadata_ && Object.keys(selectedImage.metadata_).length > 0;
 
   return (
     <Dialog
@@ -51,108 +59,62 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
       onClose={onClose}
       fullScreen
       TransitionComponent={ModalSlideTransition}
-      BackdropProps={{
-        timeout: 500,
-        sx: theme => ({
-          transition: 'opacity 500ms cubic-bezier(0.3, 0, 0.3, 1) !important',
-          backgroundColor: 
-            theme.palette.mode === 'dark' 
-              ? 'rgba(0,0,0,0.7)' 
-              : 'rgba(44, 40, 73, 0.85)', // Purple tint for light mode with 0.85 opacity
-        }),
-      }}
+      aria-label={`Viewing ${selectedImage.filename}`}
+      BackdropProps={{ sx: (theme) => ({ bgcolor: palette[theme.palette.mode].viewer, backdropFilter: 'blur(12px)' }) }}
       PaperProps={{
-        component: 'div', // Remove MUI Paper entirely
-        sx: {
-          background: 'none', // No background
-          boxShadow: 'none',
-          margin: 0,
-          maxWidth: '100%',
-          maxHeight: '100%',
-          border: 'none', // Explicitly remove border
-          outline: 'none', // Explicitly remove outline
-          '&:focus-visible, &::before, &::after': { 
-            outline: 'none !important',
-            border: 'none !important'
-          },
-          '& .MuiDialog-paper': {
-            border: 'none',
-            outline: 'none',
-            '&::before, &::after': {
-              display: 'none !important'
-            }
-          }
-        },
+        component: 'div',
+        sx: { background: 'none', boxShadow: 'none', border: 'none', borderRadius: 0, outline: 'none' },
       }}
     >
-      {/* Navigation arrows */}
-      {hasPrev && (
-        <ModalNavArrow direction="left" aria-label="Previous image" onClick={goPrev} />
-      )}
-      {hasNext && (
-        <ModalNavArrow direction="right" aria-label="Next image" onClick={goNext} />
-      )}
+      {hasPrev && <ModalNavArrow direction="left" aria-label="Previous image" onClick={goPrev} />}
+      {hasNext && <ModalNavArrow direction="right" aria-label="Next image" onClick={goNext} />}
 
-      {/* Close button */}
-      <IconButton
-        onClick={onClose}
-        sx={{
-          top: 16,
-          right: 16,
-          zIndex: 1500,
-          bgcolor: '#23272E',
-          color: '#fff',
-          '&:hover': { bgcolor: '#444' },
-          p: 1,
-          borderRadius: '50%',
-          position: 'fixed',
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
-
-      {/* Action buttons */}
+      {/* Top bar */}
       <Box
         sx={{
-          position: 'absolute',
-          top: 16,
-          right: 72,
-          display: 'flex',
-          gap: 1,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
           zIndex: 1500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          px: { xs: 1.5, sm: 2.5 },
+          height: 64,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.45), transparent)',
         }}
       >
-        <Tooltip title="Metadata preview" arrow placement="bottom" enterDelay={300}>
-          <IconButton
-            onClick={onSeeMetadata}
-            sx={{
-              bgcolor: '#23272E',
-              color: '#fff',
-              '&:hover': { bgcolor: '#444' },
-              p: 1,
-              borderRadius: '50%',
-            }}
-          >
-            <InfoIcon />
+        <Box sx={{ flex: 1, minWidth: 0, color: '#fff' }}>
+          <Typography noWrap sx={{ fontSize: 14, fontWeight: 600 }}>
+            {selectedImage.filename}
+          </Typography>
+          {images && currentIdx >= 0 && (
+            <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontVariantNumeric: 'tabular-nums' }}>
+              {currentIdx + 1} of {images.length}
+            </Typography>
+          )}
+        </Box>
+        <Tooltip title="Details">
+          <IconButton onClick={onSeeMetadata} aria-label="Show details" sx={viewerButtonSx}>
+            <InfoOutlinedIcon sx={{ fontSize: 21 }} />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Workflow preview" arrow placement="bottom" enterDelay={300}>
-          <IconButton
-            onClick={onSeeWorkflow}
-            sx={{
-              bgcolor: '#23272E',
-              color: '#fff',
-              '&:hover': { bgcolor: '#444' },
-              p: 1,
-              borderRadius: '50%',
-            }}
-          >
-            <WorkflowIcon />
+        {hasMetadata && (
+          <Tooltip title="Workflow">
+            <IconButton onClick={onSeeWorkflow} aria-label="Show workflow" sx={viewerButtonSx}>
+              <AccountTreeOutlinedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Tooltip title="Close (Esc)">
+          <IconButton onClick={onClose} aria-label="Close viewer" sx={viewerButtonSx}>
+            <CloseRoundedIcon />
           </IconButton>
         </Tooltip>
       </Box>
 
-      {/* Full-size image */}
+      {/* Image */}
       <Box
         onClick={onClose}
         sx={{
@@ -161,17 +123,24 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          
+          p: { xs: '72px 8px 16px', sm: '72px 88px 32px' },
+          boxSizing: 'border-box',
         }}
       >
-        <img
-          onClick={e => e.stopPropagation()}
+        <Box
+          component="img"
+          key={selectedImage.id}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
           src={`${getImageUrl(selectedImage.full_path)}&t=${selectedImage.last_modified || Date.now()}`}
           alt={selectedImage.filename}
-          style={{
+          sx={{
             maxWidth: '100%',
             maxHeight: '100%',
             objectFit: 'contain',
+            borderRadius: '4px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            animation: 'gf-viewer-in 280ms cubic-bezier(0.16, 1, 0.3, 1)',
+            '@keyframes gf-viewer-in': { from: { opacity: 0, transform: 'scale(0.985)' }, to: { opacity: 1, transform: 'none' } },
           }}
         />
       </Box>

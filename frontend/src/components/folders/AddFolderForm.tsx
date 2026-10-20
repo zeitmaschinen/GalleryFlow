@@ -1,61 +1,55 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  TextField,
-  CircularProgress,
-  Alert,
-  Tooltip,
-  IconButton,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import CloseIcon from '@mui/icons-material/Close';
-import { borders, typography } from '../../theme/themeConstants';
+import { Box, Button, TextField, CircularProgress, Typography, IconButton, InputAdornment } from '@mui/material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { typography } from '../../theme/themeConstants';
 
 interface AddFolderFormProps {
   onAddFolder: (path: string) => Promise<void>;
 }
 
+const examplePath = () =>
+  navigator.platform.includes('Win') ? 'C:\\Users\\you\\ComfyUI\\output' : '/Users/you/ComfyUI/output';
+
+const parseErrorMessage = (err: unknown): string => {
+  try {
+    const errorObj = err as { response?: { data?: { detail?: string }; status?: number }; message?: string };
+    const detail = errorObj.response?.data?.detail;
+    if (detail) return detail;
+
+    if (errorObj.message?.includes('Network Error')) {
+      return 'Cannot connect to the GalleryFlow server. Is it running?';
+    }
+    if (errorObj.response?.status === 404) {
+      return 'The folder does not exist. Please check the path and try again.';
+    }
+    if (errorObj.response?.status === 403) {
+      return 'Cannot access this folder. Please check permissions.';
+    }
+    if (errorObj.response?.status === 409) {
+      return 'This folder is already in your library.';
+    }
+
+    return errorObj.message || 'Failed to add folder. Please try again.';
+  } catch {
+    return 'An unexpected error occurred. Please try again.';
+  }
+};
+
+/**
+ * "Add folder" control: a quiet button that opens into a path field.
+ */
 const AddFolderForm: React.FC<AddFolderFormProps> = ({ onAddFolder }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [path, setPath] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getHelpText = () => {
-    if (navigator.platform.includes('Win')) {
-      return "Enter a full folder path (e.g., C:\\Users\\YourName\\Pictures)";
-    }
-    return "Enter a full folder path (e.g., /Users/YourName/Pictures)";
-  };
-
-  const parseErrorMessage = (err: unknown): string => {
-    try {
-      // Try to parse the error response
-      const errorObj = err as { response?: { data?: { detail?: string }; status?: number }; message?: string };
-      const detail = errorObj.response?.data?.detail;
-      if (detail) return detail;
-
-      // Handle network errors
-      if (errorObj.message?.includes('Network Error')) {
-        return 'Cannot connect to the server. Please check your connection.';
-      }
-
-      // Handle other common errors
-      if (errorObj.response?.status === 404) {
-        return 'The folder does not exist. Please check the path and try again.';
-      }
-      if (errorObj.response?.status === 403) {
-        return 'Cannot access this folder. Please check permissions.';
-      }
-      if (errorObj.response?.status === 409) {
-        return 'This folder is already in your library.';
-      }
-
-      return errorObj.message || 'Failed to add folder. Please try again.';
-    } catch {
-      return 'An unexpected error occurred. Please try again.';
-    }
+  const close = () => {
+    setIsOpen(false);
+    setPath('');
+    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -67,7 +61,7 @@ const AddFolderForm: React.FC<AddFolderFormProps> = ({ onAddFolder }) => {
 
     try {
       await onAddFolder(path.trim());
-      setPath('');
+      close();
     } catch (err) {
       setError(parseErrorMessage(err));
     } finally {
@@ -75,117 +69,74 @@ const AddFolderForm: React.FC<AddFolderFormProps> = ({ onAddFolder }) => {
     }
   };
 
-  return (
-    <Box component="form" onSubmit={handleSubmit}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Add folder path..."
-          value={path}
-          onChange={(e) => setPath(e.target.value)}
-          disabled={isSubmitting}
-          error={!!error}
-          sx={(theme) => {
-            const palette = theme.palette;
-            return {
-              '& .MuiOutlinedInput-root': {
-                borderRadius: borders.radius.sm,
-                fontSize: typography.sizes.sm,
-                backgroundColor: palette.background.paper,
-                border: `1px solid ${palette.divider}`,
-              },
-              '& .MuiOutlinedInput-input': {
-                color: palette.text.primary,
-                backgroundColor: palette.background.paper,
-                borderRadius: borders.radius.sm,
-              },
-              '& .MuiInputBase-input': {
-                borderRadius: borders.radius.sm,
-              },
-              '& .MuiInputBase-input::placeholder': {
-                color: palette.text.secondary,
-                opacity: 0.7,
-              },
-            };
-          }}
-        />
-        <Tooltip title={getHelpText()} placement="top">
-          <IconButton 
-            size="small" 
-            sx={(theme) => ({
-              ml: 1,
-              color: theme.palette.text.primary
-            })}
-          >
-            <HelpOutlineIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {error && (
-        <Box sx={{ position: 'relative', mb: 2 }}>
-          <Alert 
-            severity="error" 
-            sx={(theme) => {
-              return {
-                borderRadius: borders.radius.sm,
-                pr: 4, 
-                overflow: 'visible', 
-                background: theme.palette.error.main,
-                color: theme.palette.error.contrastText,
-                '& .MuiAlert-message': {
-                  fontSize: typography.sizes.sm
-                }
-              };
-            }}
-          >
-            {error}
-          </Alert>
-          <IconButton
-            aria-label="close"
-            size="small"
-            onClick={() => setError(null)}
-            sx={{
-              position: 'absolute',
-              top: 2,
-              right: 2,
-              zIndex: 1,
-              color: 'inherit',
-              background: 'none',
-              p: 0.5,
-              '& svg': {
-                fontSize: { xs: '1.25rem', sm: '1rem', md: '0.9rem' },
-              },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      )}
-
+  if (!isOpen) {
+    return (
       <Button
         fullWidth
-        variant="contained"
-        type="submit"
-        disabled={!path.trim() || isSubmitting}
-        startIcon={isSubmitting ? <CircularProgress size={20} /> : <AddIcon />}
-        sx={(theme) => {
-          return {
-            borderRadius: borders.radius.sm,
-            textTransform: 'none',
-            fontWeight: typography.fontWeights.medium,
-            transition: 'none !important',
-            background: theme.palette.primary.main,
-            color: theme.palette.primary.contrastText,
-            '&:hover': {
-              background: theme.palette.mode === 'dark' ? '#554ee6' : '#4a3ab3',
-            },
-          };
-        }}
+        onClick={() => setIsOpen(true)}
+        startIcon={<AddRoundedIcon />}
+        sx={{ justifyContent: 'flex-start', color: 'text.secondary', px: 1.25, '&:hover': { color: 'text.primary' } }}
       >
-        Add Folder
+        Add folder
       </Button>
+    );
+  }
+
+  return (
+    <Box component="form" onSubmit={handleSubmit}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, px: 0.5 }}>
+        <Typography variant="body2" sx={{ fontWeight: typography.fontWeights.semibold }}>
+          Add a folder
+        </Typography>
+        <IconButton size="small" aria-label="Cancel" onClick={close} sx={{ p: 0.5 }}>
+          <CloseRoundedIcon sx={{ fontSize: 16 }} />
+        </IconButton>
+      </Box>
+      <TextField
+        autoFocus
+        fullWidth
+        size="small"
+        placeholder={examplePath()}
+        aria-label="Full folder path"
+        value={path}
+        onChange={(e) => setPath(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Escape') close(); }}
+        disabled={isSubmitting}
+        error={!!error}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                type="submit"
+                edge="end"
+                size="small"
+                aria-label="Add folder"
+                disabled={!path.trim() || isSubmitting}
+                sx={(theme) => ({
+                  bgcolor: path.trim() ? theme.palette.primary.main : 'transparent',
+                  color: path.trim() ? theme.palette.primary.contrastText : 'text.disabled',
+                  width: 26,
+                  height: 26,
+                  '&:hover': { bgcolor: theme.palette.primary.dark, color: theme.palette.primary.contrastText },
+                  '&.Mui-disabled': { color: path.trim() ? theme.palette.primary.contrastText : 'text.disabled' },
+                })}
+              >
+                {isSubmitting
+                  ? <CircularProgress size={14} color="inherit" />
+                  : <ArrowForwardRoundedIcon sx={{ fontSize: 16 }} />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+        sx={{ '& .MuiInputBase-input': { fontSize: typography.sizes.sm } }}
+      />
+      <Typography
+        variant="caption"
+        role={error ? 'alert' : undefined}
+        sx={{ display: 'block', mt: 0.75, px: 0.5, lineHeight: 1.45, color: error ? 'error.main' : 'text.secondary' }}
+      >
+        {error ?? 'Paste the full path to your ComfyUI output folder. Subfolders are included.'}
+      </Typography>
     </Box>
   );
 };

@@ -1,23 +1,16 @@
 import React from 'react';
-import { Slide, SlideProps } from '@mui/material';
-import './ModalSlideTransition.css';
+import { Fade } from '@mui/material';
+import type { FadeProps } from '@mui/material';
 
-// direction: 'up' | 'down' | 'left' | 'right'
+// Shared dialog transition: a quick fade. Dialog panels add a small rise
+// (see MuiDialog in theme/index.ts), so opening feels light rather than heavy.
 const ModalSlideTransition = React.forwardRef(function ModalSlideTransition(
-  props: SlideProps & { direction?: 'up' | 'down' | 'left' | 'right' },
+  props: FadeProps & { direction?: 'up' | 'down' | 'left' | 'right' },
   ref: React.Ref<unknown>
 ) {
-  // Default direction is 'up'
-  return (
-    <Slide
-      ref={ref}
-      direction={props.direction || 'up'}
-      {...props}
-      timeout={{ enter: 400, exit: 350 }} // slightly slower for smoothness
-      // Add a className for custom easing
-      className={['modal-slide-ease', props.className].filter(Boolean).join(' ')}
-    />
-  );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { direction, ...rest } = props;
+  return <Fade ref={ref} {...rest} timeout={{ enter: 240, exit: 180 }} />;
 });
 
 export default ModalSlideTransition;

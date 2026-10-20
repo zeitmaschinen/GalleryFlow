@@ -112,9 +112,11 @@ function renderProperties(classType: string, inputs: Record<string, unknown>) {
       }
       break;
     default:
-      // Show all inputs for unknown types
+      // Show the settings of unknown node types. Inputs that are connections to
+      // other nodes ([nodeId, outputIndex]) are already drawn as edges, so skip them.
       Object.entries(inputs || {}).forEach(([key, value]) => {
-        properties.push({ label: key, value: String(value) });
+        const isLink = Array.isArray(value) && value.length === 2 && typeof value[1] === 'number';
+        if (!isLink) properties.push({ label: key, value: String(value) });
       });
       break;
   }

@@ -29,4 +29,7 @@ export interface Image {
   last_modified: string;
   metadata_: Record<string, unknown> | null;
   folder_id: number;
+  width?: number | null;
+  height?: number | null;
+  file_size?: number | null;
 }

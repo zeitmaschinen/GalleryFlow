@@ -1,9 +1,11 @@
 import React from 'react';
-import { Box, styled, Typography, useTheme, IconButton } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
+import { Box, Typography, useTheme, IconButton, Link } from '@mui/material';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import logoLight from '../../images/logo.png';
 import logoDark from '../../images/logo-darkmode.png';
+import { layout } from '../../theme/themeConstants';
+import { APP_VERSION } from '../../constants';
 
 // ===== BurgerMenu Component =====
 interface BurgerMenuProps {
@@ -12,108 +14,57 @@ interface BurgerMenuProps {
 }
 
 export const BurgerMenu: React.FC<BurgerMenuProps> = ({ onClick, sx }) => (
-  <IconButton
-    color="inherit"
-    aria-label="open sidebar"
-    edge="start"
-    onClick={onClick}
-    sx={sx}
-  >
-    <MenuIcon />
+  <IconButton aria-label="Open folders" edge="start" onClick={onClick} sx={sx}>
+    <MenuRoundedIcon />
   </IconButton>
 );
+
+export const Logo: React.FC = () => {
+  const theme = useTheme();
+  return (
+    <img
+      src={theme.palette.mode === 'dark' ? logoDark : logoLight}
+      alt="GalleryFlow"
+      style={{ height: 24, width: 'auto', display: 'block' }}
+    />
+  );
+};
 
 // ===== DrawerHeaderMobile Component =====
 interface DrawerHeaderMobileProps {
   onClose: () => void;
 }
 
-export const DrawerHeaderMobile: React.FC<DrawerHeaderMobileProps> = ({ onClose }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, pb: 0 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pl: 1 }}>
-        <img
-          src={isDark ? logoDark : logoLight}
-          alt="Logo"
-          style={{ height: 32, width: 'auto', display: 'block' }}
-        />
-      </Box>
-      <IconButton onClick={onClose} aria-label="Close sidebar" sx={{ ml: 1 }}>
-        <CloseIcon />
-      </IconButton>
-    </Box>
-  );
-};
+export const DrawerHeaderMobile: React.FC<DrawerHeaderMobileProps> = ({ onClose }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: layout.headerHeight, px: 2.5, flexShrink: 0 }}>
+    <Logo />
+    <IconButton onClick={onClose} aria-label="Close folders" edge="end">
+      <CloseRoundedIcon />
+    </IconButton>
+  </Box>
+);
 
 // ===== SidebarHeader Component =====
-export const SidebarHeader: React.FC = () => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2, pb: 4, width: '100%', mt: '4px' }}>
-      <img
-        src={isDark ? logoDark : logoLight}
-        alt="Logo"
-        style={{ height: 36, width: 'auto', display: 'block', margin: '0 auto' }}
-      />
-    </Box>
-  );
-};
-
-// ===== Sidebar Container =====
-export const SidebarContainer = styled(Box)(({ theme }) => ({
-  width: '280px',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  borderRight: `1px solid ${theme.palette.divider}`,
-  padding: 0,
-  backgroundColor: theme.palette.background.paper,
-  overflow: 'hidden',
-  position: 'relative'
-}));
+export const SidebarHeader: React.FC = () => (
+  <Box sx={{ display: 'flex', alignItems: 'center', height: layout.headerHeight, px: 2.5, flexShrink: 0 }}>
+    <Logo />
+  </Box>
+);
 
 // ===== SidebarFooter Component =====
-
-export const SidebarFooter: React.FC = () => {
-  const theme = useTheme();
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderTop: `1px solid ${theme.palette.divider}`,
-        py: 1.5,
-        px: 2,
-        mt: 'auto',
-      }}
-    >
-      <Typography
-        variant="caption"
-        sx={{
-          color: 'text.secondary',
-          fontSize: '0.75rem',
-        }}
+export const SidebarFooter: React.FC = () => (
+  <Box sx={{ px: 2.5, py: 1.75, flexShrink: 0, borderTop: 1, borderColor: 'divider' }}>
+    <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 11.5 }}>
+      <Link
+        href="https://github.com/zeitmaschinen/galleryflow"
+        target="_blank"
+        rel="noopener noreferrer"
+        color="inherit"
+        underline="hover"
       >
-        &copy; 2025{' '}
-        <a 
-          href="https://github.com/zeitmaschinen/galleryflow" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          style={{ 
-            color: 'inherit', 
-            textDecoration: 'underline',
-            textUnderlineOffset: '2px'
-          }}
-        >
-          GalleryFlow
-        </a>{' '}
-        v.1.4.0 zeitmaschinen
-      </Typography>
-    </Box>
-  );
-};
+        GalleryFlow
+      </Link>
+      {' '}{APP_VERSION} · zeitmaschinen
+    </Typography>
+  </Box>
+);

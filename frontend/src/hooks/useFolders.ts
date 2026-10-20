@@ -42,9 +42,12 @@ export function useFolders() {
     }
   }, []);
 
+  // Adds a folder and opens it right away. Returns the new folder.
   const handleAddFolder = async (path: string) => {
-    await api.addFolder(path);
+    const folder = await api.addFolder(path);
     await fetchFolders();
+    setSelectedFolder(folder);
+    return folder;
   };
 
   const handleDeleteFolder = async (folderId: number) => {

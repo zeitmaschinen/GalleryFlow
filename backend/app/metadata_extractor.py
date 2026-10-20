@@ -1,9 +1,61 @@
 import json
-from PIL import Image as PILImage  # Use alias to avoid conflict with model name
+import struct
+import zlib
 import logging
 from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
+
+PNG_SIGNATURE = b'\x89PNG\r\n\x1a\n'
+MAX_TEXT_CHUNK = 64 * 1024 * 1024  # Generous cap; ComfyUI workflows are usually well under 1 MB
+
+
+def read_png_info(image_path: str) -> Optional[Dict[str, Any]]:
+    """Read a PNG's size and text chunks (tEXt, zTXt, iTXt) without checking CRCs.
+
+    ComfyUI stores its prompt and workflow as PNG text chunks. Some files in
+    the wild (for example images re-saved by websites) carry text chunks with a
+    bad checksum. Browsers and ComfyUI ignore that, but Pillow rejects the whole
+    file, so we read the chunks ourselves. Returns None if the file isn't a PNG.
+    """
+    texts: Dict[str, str] = {}
+    width = height = None
+    with open(image_path, 'rb') as f:
+        if f.read(8) != PNG_SIGNATURE:
+            return None
+        while True:
+            header = f.read(8)
+            if len(header) < 8:
+                break
+            length, ctype = struct.unpack('>I4s', header)
+            if ctype == b'IHDR':
+                data = f.read(length)
+                width, height = struct.unpack('>II', data[:8])
+            elif ctype in (b'tEXt', b'zTXt', b'iTXt') and length <= MAX_TEXT_CHUNK:
+                data = f.read(length)
+                try:
+                    key, rest = data.split(b'\0', 1)
+                    keyword = key.decode('latin-1')
+                    if ctype == b'tEXt':
+                        texts[keyword] = rest.decode('latin-1')
+                    elif ctype == b'zTXt':  # compression method byte, then zlib data
+                        texts[keyword] = zlib.decompress(rest[1:]).decode('latin-1')
+                    else:  # iTXt: flag, method, language\0, translated keyword\0, text
+                        compressed, rest = rest[0], rest[2:]
+                        _lang, rest = rest.split(b'\0', 1)
+                        _translated, text = rest.split(b'\0', 1)
+                        texts[keyword] = (zlib.decompress(text) if compressed else text).decode('utf-8')
+                except Exception as e:
+                    logger.debug(f"Skipping unreadable text chunk in {image_path}: {e}")
+            elif ctype == b'IEND' or (ctype == b'IDAT' and texts):
+                # ComfyUI writes its text before the image data, so stop there once
+                # we have it; otherwise keep looking (some tools append text at the end)
+                break
+            else:
+                f.seek(length + 4, 1)  # Skip image data and other chunks, plus their CRC
+                continue
+            f.seek(4, 1)  # Skip the CRC (deliberately not verified)
+    return {'width': width, 'height': height, 'texts': texts}
 
 
 def extract_comfyui_metadata(image_path: str) -> Optional[Dict[str, Any]]:
@@ -111,28 +163,22 @@ def extract_comfyui_metadata(image_path: str) -> Optional[Dict[str, Any]]:
 
 
     try:
-        img = PILImage.open(image_path)
-        if img.format == "PNG":
-            prompt_data = img.info.get('prompt')
-            workflow_data = img.info.get('workflow')
-            raw_metadata = None
-            if prompt_data:
-                raw_metadata = prompt_data
-            elif workflow_data:
-                raw_metadata = workflow_data
-            if raw_metadata:
-                try:
-                    metadata = json.loads(raw_metadata)
-                    # Extract flattened generation params
-                    gen_params = extract_generation_params(metadata)
-                    # Merge extracted fields into metadata dict for frontend
-                    if isinstance(metadata, dict):
-                        metadata.update(gen_params)
-                    return metadata  # Return the node graph as top-level dict, as frontend expects
-                except Exception:
-                    pass
-        else:
-            pass  # Only handle PNG for now
+        png = read_png_info(image_path)
+        if png is None:
+            return None  # Only PNGs carry ComfyUI metadata
+        texts = png['texts']
+        raw_metadata = texts.get('prompt') or texts.get('workflow')
+        if raw_metadata:
+            try:
+                metadata = json.loads(raw_metadata)
+                # Extract flattened generation params
+                gen_params = extract_generation_params(metadata)
+                # Merge extracted fields into metadata dict for frontend
+                if isinstance(metadata, dict):
+                    metadata.update(gen_params)
+                return metadata  # Return the node graph as top-level dict, as frontend expects
+            except Exception:
+                pass
     except FileNotFoundError:
         pass
     except Exception:

@@ -30,3 +30,9 @@ export const copyToClipboard = async (text: string): Promise<boolean> => {
     return false;
   }
 };
+
+/** Last segment of a folder path, for display (works with / and \ separators). */
+export const folderName = (path: string): string => {
+  const parts = path.replace(/\\/g, '/').split('/').filter(Boolean);
+  return parts[parts.length - 1] || path;
+};
