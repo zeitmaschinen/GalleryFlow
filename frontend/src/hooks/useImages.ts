@@ -1,11 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
+import { DEFAULT_ROW_HEIGHT } from '../constants';
 import * as api from '../services/api';
 
 export function useImages(IMAGES_PER_PAGE: number) {
   const [images, setImages] = useState<api.Image[]>([]);
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [errorImages, setErrorImages] = useState<string | null>(null);
-  const [thumbnailSize, setThumbnailSize] = useState<number>(150);
+  const [thumbnailSize, setThumbnailSize] = useState<number>(DEFAULT_ROW_HEIGHT);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalImages, setTotalImages] = useState(0);
   const [sortBy, setSortBy] = useState<'filename' | 'date' | 'folder'>('folder');
@@ -19,10 +20,11 @@ export function useImages(IMAGES_PER_PAGE: number) {
     page: number,
     currentSortBy: 'filename' | 'date' | 'folder',
     currentSortDir: 'asc' | 'desc',
-    fileTypes?: string[]
+    fileTypes?: string[],
+    silent = false // Refresh in place, without showing the loading skeleton
   ) => {
     // DEBUG: Set to false to reduce console noise
-    const DEBUG_ENABLED = true;
+    const DEBUG_ENABLED = false;
 
     const currentFetchId = ++fetchIdRef.current;
     const fetchStartTime = performance.now();
@@ -63,7 +65,7 @@ export function useImages(IMAGES_PER_PAGE: number) {
       );
     }
 
-    setIsLoadingImages(true);
+    if (!silent) setIsLoadingImages(true);
     setErrorImages(null);
 
     if (DEBUG_ENABLED) {

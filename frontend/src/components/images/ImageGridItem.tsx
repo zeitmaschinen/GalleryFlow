@@ -1,139 +1,157 @@
-import React from 'react';
-import { Box, CircularProgress, IconButton } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 import { getThumbnailUrl } from '../../services/api';
+import { palette } from '../../theme/themeConstants';
 import type { Image } from './types';
-import InfoIcon from '@mui/icons-material/InfoOutlined';
-import WorkflowIcon from '@mui/icons-material/AccountTree';
 
 interface ImageGridItemProps {
   image: Image;
-  thumbnailSize: number; // Kept for future use even if not currently used
-  loadedImages: Set<string>;
+  rowHeight: number;
   handleImageClick: (image: Image) => void;
   handleOpenWorkflowModal?: (image: Image) => void;
   handleOpenMetadata?: (image: Image) => void;
 }
 
+/** Width ÷ height, from the scan data; square when the size is unknown. */
+const aspectRatioOf = (image: Image) =>
+  image.width && image.height ? Math.min(Math.max(image.width / image.height, 0.4), 3) : 1;
+
+const overlayButtonSx = {
+  width: 30,
+  height: 30,
+  color: '#fff',
+  bgcolor: 'rgba(20, 20, 18, 0.45)',
+  backdropFilter: 'blur(8px)',
+  '&:hover': { bgcolor: 'rgba(20, 20, 18, 0.7)', color: '#fff' },
+};
+
 const ImageGridItem: React.FC<ImageGridItemProps> = ({
   image,
-  loadedImages,
+  rowHeight,
   handleImageClick,
   handleOpenWorkflowModal,
-  handleOpenMetadata = handleImageClick, // Default to handleImageClick for backward compatibility
+  handleOpenMetadata = handleImageClick,
 }) => {
-  // Use thumbnail for grid display, full image for preview
-  const thumbnailUrl = getThumbnailUrl(image.full_path, 'medium');
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const thumbnailUrl = getThumbnailUrl(image.full_path);
+  const ratio = aspectRatioOf(image);
+  const hasMetadata = !!image.metadata_ && Object.keys(image.metadata_).length > 0;
 
   return (
     <Box
-      sx={{
-        position: 'relative',
-        aspectRatio: '1 / 1',
-        width: '100%',
-        height: '0',
-        paddingBottom: '100%', // This creates a square box
-        borderRadius: 1,
-        overflow: 'hidden',
-        boxShadow: 1,
-        bgcolor: 'background.paper',
-        cursor: 'pointer',
-        display: 'block', // Changed to block for padding-bottom to work
-        transition: 'box-shadow 0.2s, transform 0.18s cubic-bezier(0.4,0,0.2,1)',
-        '&:hover': {
-          boxShadow: 4,
-          transform: 'translateY(-6px)',
-        },
-        '&:hover .image-action-icons': {
-          opacity: 1,
-          pointerEvents: 'auto',
-        },
-      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open ${image.filename}`}
       onClick={() => handleImageClick(image)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleImageClick(image);
+        }
+      }}
+      sx={(theme) => ({
+        position: 'relative',
+        flexGrow: ratio,
+        flexBasis: `${ratio * rowHeight}px`,
+        // Let rows stretch to fill the width, but never blow one image up
+        maxWidth: `min(100%, ${Math.round(ratio * rowHeight * 1.8)}px)`,
+        aspectRatio: `${ratio}`,
+        borderRadius: '6px',
+        overflow: 'hidden',
+        cursor: 'zoom-in',
+        bgcolor: palette[theme.palette.mode].sunken,
+        outlineOffset: 2,
+        '& img': {
+          transition: 'transform 500ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms ease',
+        },
+        '& .tile-overlay': { opacity: 0, transition: 'opacity 200ms ease' },
+        '&:hover img': { transform: 'scale(1.025)' },
+        '&:hover .tile-overlay, &:focus-visible .tile-overlay, &:focus-within .tile-overlay': { opacity: 1 },
+        '@media (hover: none)': { '& .tile-overlay': { display: 'none' } },
+      })}
     >
-      <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {status !== 'error' ? (
         <img
           src={thumbnailUrl}
           alt={image.filename}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setStatus('loaded')}
+          onError={() => setStatus('error')}
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: 'center',
-            opacity: loadedImages.has(thumbnailUrl) ? 1 : 0,
-            transition: 'opacity 0.3s ease-in-out',
-            borderRadius: 'inherit',
             display: 'block',
-          }}
-          onLoad={() => {
-            // The parent's preload effect handles updating loadedImages Set
-            // Direct mutation here won't trigger parent re-renders anyway
-          }}
-          // Fixed: Handle image load failures (e.g., deleted files, 404 errors)
-          // Mark as loaded even on error to prevent infinite loading spinner
-          onError={() => {
-            // The parent's preload effect handles updating loadedImages Set
+            opacity: status === 'loaded' ? 1 : 0,
           }}
         />
-        {!loadedImages.has(thumbnailUrl) && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-            }}
-          >
-            <CircularProgress size={18} sx={{ color: '#ccc' }} />
-          </Box>
-        )}
-        <Box
-          className="image-action-icons"
-          sx={{
-            position: 'absolute',
-            bottom: 8,
-            right: 4, // Decreased right value to move icons more to the right side
-            display: 'flex',
-            gap: 0.5, // Keeping icons close together
-            zIndex: 2,
-            opacity: 0,
-            pointerEvents: 'none',
-            transition: 'opacity 0.2s',
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <IconButton
-            size="medium"
-            sx={{
-              bgcolor: '#23272E',
-              color: '#fff',
-              '&:hover': { bgcolor: '#444' },
-              p: 1
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenMetadata(image);
-            }}
-          >
-            <InfoIcon sx={{ fontSize: 20 }} />
-          </IconButton>
+      ) : (
+        <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: 'text.disabled' }}>
+          <BrokenImageOutlinedIcon aria-label="Image could not be loaded" />
+        </Box>
+      )}
 
-          {handleOpenWorkflowModal && (
-            <IconButton
-              size="medium"
-              sx={{
-                bgcolor: '#23272E',
-                color: '#fff',
-                '&:hover': { bgcolor: '#444' },
-                p: 1
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenWorkflowModal(image);
-              }}
-            >
-              <WorkflowIcon sx={{ fontSize: 20 }} />
-            </IconButton>
-          )}
+      {status === 'loading' && (
+        <Box
+          aria-hidden
+          sx={(theme) => ({
+            position: 'absolute',
+            inset: 0,
+            background: `linear-gradient(100deg, transparent 30%, ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.5)'} 50%, transparent 70%)`,
+            backgroundSize: '200% 100%',
+            animation: 'gf-shimmer 1.4s ease-in-out infinite',
+            '@keyframes gf-shimmer': { from: { backgroundPosition: '150% 0' }, to: { backgroundPosition: '-50% 0' } },
+          })}
+        />
+      )}
+
+      {/* Hover overlay: filename and quick actions */}
+      <Box
+        className="tile-overlay"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'flex-end',
+          gap: 1,
+          p: 1,
+          background: 'linear-gradient(to top, rgba(10,10,9,0.62) 0%, rgba(10,10,9,0.18) 38%, transparent 60%)',
+          pointerEvents: 'none',
+        }}
+      >
+        <Typography
+          noWrap
+          sx={{ flex: 1, minWidth: 0, color: '#fff', fontSize: 12, fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.4)', pb: 0.5, pl: 0.25 }}
+        >
+          {image.filename}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 0.5, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <Tooltip title="Details">
+              <IconButton
+                size="small"
+                aria-label={`Details for ${image.filename}`}
+                sx={overlayButtonSx}
+                onClick={() => handleOpenMetadata(image)}
+              >
+                <InfoOutlinedIcon sx={{ fontSize: 17 }} />
+              </IconButton>
+            </Tooltip>
+            {handleOpenWorkflowModal && hasMetadata && (
+              <Tooltip title="Workflow">
+                <IconButton
+                  size="small"
+                  aria-label={`Workflow for ${image.filename}`}
+                  sx={overlayButtonSx}
+                  onClick={() => handleOpenWorkflowModal(image)}
+                >
+                  <AccountTreeOutlinedIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+            )}
         </Box>
       </Box>
     </Box>

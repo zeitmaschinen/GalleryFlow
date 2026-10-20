@@ -1,4 +1,4 @@
-# Backend-specific gitignore for comfyui-browser
+# Backend-specific gitignore for GalleryFlow
 
 # Node dependencies (if any)
 node_modules/

@@ -22,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 app = FastAPI(
     title="GalleryFlow API",
-    version="1.3.0",
+    version="2.0.0",
     description=(
         "API for browsing and managing ComfyUI-generated images "
         "with advanced metadata support"

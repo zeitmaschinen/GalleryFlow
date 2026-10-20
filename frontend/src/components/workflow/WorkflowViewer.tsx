@@ -127,26 +127,26 @@ const WorkflowViewer: React.FC<WorkflowViewerProps> = ({ workflowJson, height = 
         panOnScroll
         connectionLineType={ConnectionLineType.Bezier}
         className={`comfyui-flow ${mode}`}
-        style={{ borderRadius: 8, width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%' }}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
       >
-        <Background gap={25} size={1} color={darkMode ? 'rgba(70, 70, 70, 0.15)' : 'rgba(0, 0, 0, 0.06)'} />
+        <Background gap={22} size={1.2} color={darkMode ? 'rgba(238, 236, 232, 0.08)' : 'rgba(29, 28, 26, 0.13)'} />
         
         {/* Custom controls panel */}
         <Panel position="top-right" className="comfyui-controls">
           <Tooltip title="Zoom In">
-            <IconButton onClick={handleZoomIn} size="small" sx={{ color: darkMode ? '#fff' : '#555' }}>
+            <IconButton onClick={handleZoomIn} size="small" sx={{ width: 30, height: 30 }}>
               <ZoomInIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Zoom Out">
-            <IconButton onClick={handleZoomOut} size="small" sx={{ color: darkMode ? '#fff' : '#555' }}>
+            <IconButton onClick={handleZoomOut} size="small" sx={{ width: 30, height: 30 }}>
               <ZoomOutIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Fit View">
-            <IconButton onClick={handleFitView} size="small" sx={{ color: darkMode ? '#fff' : '#555' }}>
+            <IconButton onClick={handleFitView} size="small" sx={{ width: 30, height: 30 }}>
               <FitScreenIcon fontSize="small" />
             </IconButton>
           </Tooltip>

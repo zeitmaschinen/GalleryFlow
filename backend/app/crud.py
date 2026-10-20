@@ -201,11 +201,14 @@ async def scan_folder_and_update_db(
 
     # Get existing images for this folder
     result = await db.execute(
-        select(models.Image.full_path, models.Image.last_modified)
+        select(models.Image.full_path, models.Image.last_modified, models.Image.width)
         .filter(models.Image.folder_id == folder.id)
     )
-    existing_db_images = {
-        row.full_path: row.last_modified for row in result.all()}
+    rows = result.all()
+    existing_db_images = {row.full_path: row.last_modified for row in rows}
+    # Images we couldn't fully read last time (no size stored). They're read again
+    # even if unchanged, so improvements to the reader reach existing libraries.
+    incomplete_paths = {row.full_path for row in rows if row.width is None}
     found_on_disk = set()
 
     # First, count total files for progress tracking
@@ -230,7 +233,8 @@ async def scan_folder_and_update_db(
             if existing_mod_time is not None and existing_mod_time.tzinfo is None:
                 existing_mod_time = existing_mod_time.replace(
                     tzinfo=timezone.utc)
-            if existing_mod_time is not None and last_modified_dt <= existing_mod_time:
+            if (existing_mod_time is not None and last_modified_dt <= existing_mod_time
+                    and full_path_str not in incomplete_paths):
                 return None, 'skipped'
             metadata = metadata_extractor.extract_comfyui_metadata(
                 full_path_str)

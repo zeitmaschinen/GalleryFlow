@@ -1,4 +1,4 @@
-# Global gitignore for comfyui-browser
+# GalleryFlow gitignore
 # Covers frontend, backend, and general project files
 
 # Node dependencies
@@ -40,6 +40,9 @@ coverage/
 
 # Ignore local test snapshots
 *.snap
+
+# Generated thumbnails
+backend/thumbnails/
 
 # SQLite and other database files
 *.db

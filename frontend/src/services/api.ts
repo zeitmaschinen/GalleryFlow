@@ -74,15 +74,19 @@ export const getImages = async (
     const requestUrl = `/images?${params.toString()}`;
     const response = await apiClient.get<ImageListResponse>(requestUrl);
 
-    // Cache the response
-    imageCache.set(folderId, page, sortBy, sortDir, fileTypes, response.data);
+    // Cache the response, unless it's empty: an empty folder may still be scanning
+    if (response.data.total_count > 0) {
+        imageCache.set(folderId, page, sortBy, sortDir, fileTypes, response.data);
+    }
 
     return response.data;
 };
 
-// Delete image by ID
-export const deleteImage = async (imageId: number): Promise<void> => {
-    await apiClient.delete(`/images/${imageId}`);
+// Number of images indexed so far for a folder (never cached; used while a scan runs)
+export const getImageCount = async (folderId: number): Promise<number> => {
+    const params = new URLSearchParams({ folder_id: folderId.toString(), skip: '0', limit: '1' });
+    const response = await apiClient.get<ImageListResponse>(`/images?${params.toString()}`);
+    return response.data.total_count;
 };
 
 // Function to get the direct image URL with browser caching
@@ -91,13 +95,10 @@ export const getImageUrl = (imagePath: string): string => {
     return `${API_BASE_URL}/image?file_path=${encodeURIComponent(imagePath)}&cache=true`;
 };
 
-// Function to get optimized thumbnail URL for faster grid loading
-export const getThumbnailUrl = (imagePath: string, _size: 'small' | 'medium' = 'medium'): string => {
-    // For now, fallback to regular image URL until thumbnails are generated
-    // TODO: Switch back to thumbnail endpoint once database is migrated and uncomment _size parameter
-    return getImageUrl(imagePath);
-    // return `${API_BASE_URL}/thumbnail?file_path=${encodeURIComponent(imagePath)}&size=${_size}`;
-};
+// Image URL used in the gallery grid. This serves the original file: the
+// backend's /api/thumbnail names thumbnails by filename + modified time, so two
+// same-named images in different subfolders could share a thumbnail.
+export const getThumbnailUrl = (imagePath: string): string => getImageUrl(imagePath);
 
 // Function to reveal file in system's file explorer
 export const revealInExplorer = async (filePath: string): Promise<{ message: string }> => {

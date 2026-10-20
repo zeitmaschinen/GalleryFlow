@@ -1,10 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Box,
-  Snackbar,
-  Alert,
-} from '@mui/material';
-import { revealInExplorer, getThumbnailUrl } from '../../services/api';
+import { Box, Snackbar } from '@mui/material';
+import { revealInExplorer } from '../../services/api';
 import ImageGridItem from './ImageGridItem';
 import ImagePreviewModal from './ImagePreviewModal';
 import ImageModal from './ImageModal';
@@ -25,38 +21,8 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const modalImageRef = useRef<HTMLImageElement>(null);
   const [isRevealing, setIsRevealing] = useState(false);
-  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [workflowModalOpen, setWorkflowModalOpen] = React.useState(false);
   const [workflowModalImage, setWorkflowModalImage] = React.useState<Image | null>(null);
-
-  // Clear loaded images when the image list changes (e.g., after file deletion)
-  // This ensures new images don't show loading spinner because they're not in the stale loadedImages Set
-  useEffect(() => {
-    setLoadedImages(new Set());
-  }, [images]);
-
-  // Preload all thumbnails for current page (pagination already limits to ~100 images)
-  useEffect(() => {
-    const preloadThumbnail = (src: string) => {
-      const img = new Image();
-      img.onload = () => {
-        setLoadedImages(prev => new Set(prev).add(src));
-      };
-      // Handle failed image loads (e.g., deleted files, 404 errors)
-      // Mark as loaded even on error to prevent infinite loading spinner
-      img.onerror = () => {
-        setLoadedImages(prev => new Set(prev).add(src));
-      };
-      img.src = src;
-    };
-
-    images.forEach(image => {
-      const thumbnailUrl = getThumbnailUrl(image.full_path, 'medium');
-      if (!loadedImages.has(thumbnailUrl)) {
-        preloadThumbnail(thumbnailUrl);
-      }
-    });
-  }, [images]);
 
   // Helper function to get field ignoring case
   function getFieldInsensitive(obj: Record<string, unknown> | null, key: string) {
@@ -170,18 +136,6 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     }
   };
 
-  const handlePrevImage = () => {
-    if (!selectedImage || images.length === 0) return;
-    const idx = images.findIndex(img => img.id === selectedImage.id);
-    if (idx > 0) setSelectedImage(images[idx - 1]);
-  };
-
-  const handleNextImage = () => {
-    if (!selectedImage || images.length === 0) return;
-    const idx = images.findIndex(img => img.id === selectedImage.id);
-    if (idx < images.length - 1) setSelectedImage(images[idx + 1]);
-  };
-
   // Add loading tracking for transitions
   const transitioning = useRef(false);
 
@@ -202,104 +156,28 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
     setWorkflowModalOpen(false);
   };
 
-  // Calculate columns based on container width and thumbnail size dynamically
-  // Calculate grid columns based on thumbnail size dynamically
-  const calculateColumns = () => {
-    const containerWidth = window.innerWidth - 16 * 2; // excluding padding
-    const columnWidth = thumbnailSize + 8; // thumbnail size + gap
-    return Math.max(1, Math.floor(containerWidth / columnWidth));
-  };
-
-  const gridTemplateColumns = `repeat(${calculateColumns()}, 1fr)`;
-
   return (
     <>
-      <Box sx={{
-        width: '100%',
-        p: 1,
-        overflowX: 'hidden' // Prevent horizontal scrollbar
-      }}>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns,
-            gap: '8px',
-            width: '100%',
-          }}
-        >
-          {images.map((image) => (
-            <ImageGridItem
-              key={image.id}
-              image={image}
-              thumbnailSize={thumbnailSize}
-              loadedImages={loadedImages}
-              handleImageClick={handleImageClick}
-              handleOpenWorkflowModal={handleOpenWorkflowModal}
-              handleOpenMetadata={handleOpenMetadata}
-            />
-          ))}
-        </Box>
+      {/* Justified rows: every image keeps its real shape, rows fill the width */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: { xs: '4px', sm: '6px' },
+          '&::after': { content: '""', flexGrow: 1e9 },
+        }}
+      >
+        {images.map((image) => (
+          <ImageGridItem
+            key={image.id}
+            image={image}
+            rowHeight={thumbnailSize}
+            handleImageClick={handleImageClick}
+            handleOpenWorkflowModal={handleOpenWorkflowModal}
+            handleOpenMetadata={handleOpenMetadata}
+          />
+        ))}
       </Box>
-
-      {/* OUTSIDE THE DIALOG: Render navigation arrows absolutely on the viewport when modal is open */}
-      {(isPreviewOpen || isModalOpen) && selectedImage && (
-        <>
-          <Box sx={{
-            position: 'fixed',
-            top: '50%',
-            left: 16,
-            zIndex: 1400,
-            transform: 'translateY(-50%)',
-            pointerEvents: 'auto',
-          }}>
-            <Box
-              aria-label="Previous image"
-              onClick={handlePrevImage}
-              sx={{
-                bgcolor: 'background.paper',
-                boxShadow: 2,
-                m: 1,
-                transition: 'background 0.2s',
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                },
-                '&:active': {
-                  bgcolor: 'primary.dark',
-                  color: 'primary.contrastText',
-                }
-              }}
-            />
-          </Box>
-          <Box sx={{
-            position: 'fixed',
-            top: '50%',
-            right: 16,
-            zIndex: 1400,
-            transform: 'translateY(-50%)',
-            pointerEvents: 'auto',
-          }}>
-            <Box
-              aria-label="Next image"
-              onClick={handleNextImage}
-              sx={{
-                bgcolor: 'background.paper',
-                boxShadow: 2,
-                m: 1,
-                transition: 'background 0.2s',
-                '&:hover': {
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                },
-                '&:active': {
-                  bgcolor: 'primary.dark',
-                  color: 'primary.contrastText',
-                }
-              }}
-            />
-          </Box>
-        </>
-      )}
 
       <ImagePreviewModal
         open={isPreviewOpen}
@@ -373,19 +251,11 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, thumbnailSize }) => {
 
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={4000}
+        autoHideDuration={2500}
         onClose={handleCloseSnackbar}
         message={snackbarMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+      />
     </>
   );
 };

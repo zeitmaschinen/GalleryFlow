@@ -1,10 +1,9 @@
 import type { FC } from 'react';
-import { Card, Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip, Divider } from '@mui/material';
 import { ThumbnailSizeSlider } from './UIControls';
 import { FileTypeFilter, SortButton } from './FilterControls';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { spacing } from '../../theme/themeConstants';
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
+import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 
 interface ControlsCardProps {
   thumbnailSize: number;
@@ -17,6 +16,9 @@ interface ControlsCardProps {
   onSortDirectionToggle: () => void;
 }
 
+/**
+ * The gallery toolbar: thumbnail size, file-type filter and sort controls in one row.
+ */
 const ControlsCard: FC<ControlsCardProps> = ({
   thumbnailSize,
   onThumbnailSizeChange,
@@ -27,47 +29,25 @@ const ControlsCard: FC<ControlsCardProps> = ({
   sortDirection,
   onSortDirectionToggle,
 }) => (
-  <Card sx={{ p: spacing.md }}>
-    <Box sx={{
-      display: 'flex',
-      flexDirection: { xs: 'column', sm: 'row' },
-      gap: { xs: '8px', sm: '16px' },
-      width: { xs: '100%', sm: 'auto' },
-      alignItems: { xs: 'stretch', sm: 'center' }
-    }}>
-      <Box sx={{ display: 'flex', flexDirection: 'row', gap: { xs: 3, sm: 5 }, alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
-        <ThumbnailSizeSlider value={thumbnailSize} onChange={onThumbnailSizeChange} />
-      </Box>
-      <Box sx={{ display: { xs: 'flex', sm: 'flex' }, gap: { xs: 2, sm: 3 }, flexDirection: 'row', alignItems: 'center' }}>
-        <FileTypeFilter
-          selectedTypes={selectedFileTypes}
-          onChange={onFileTypeChange}
-        />
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '4px' }}>
-          <SortButton
-            value={sortBy}
-            onChange={onSortByChange}
-          />
-          <Tooltip title={sortDirection === 'asc' ? 'Sort by descending' : 'Sort by ascending'} arrow>
-            <IconButton
-              aria-label="Toggle sort direction"
-              onClick={onSortDirectionToggle}
-              sx={{
-                ml: 0,
-                bgcolor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'grey.300',
-                color: 'text.primary',
-                transition: 'none !important',
-              }}
-            >
-              {sortDirection === 'asc' ? <ArrowDownwardIcon /> : <ArrowUpwardIcon />}
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
+  <Box role="toolbar" aria-label="Gallery controls" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+    <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center' }}>
+      <ThumbnailSizeSlider value={thumbnailSize} onChange={onThumbnailSizeChange} />
+      <Divider orientation="vertical" flexItem sx={{ mx: 1.5, my: 1 }} />
     </Box>
-  </Card>
+    <FileTypeFilter selectedTypes={selectedFileTypes} onChange={onFileTypeChange} />
+    <SortButton value={sortBy} onChange={onSortByChange} />
+    <Tooltip title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}>
+      <IconButton
+        aria-label={`Sort direction: ${sortDirection === 'asc' ? 'ascending' : 'descending'}. Click to reverse.`}
+        onClick={onSortDirectionToggle}
+        sx={{ width: 34, height: 34, color: 'text.primary' }}
+      >
+        {sortDirection === 'asc'
+          ? <ArrowUpwardRoundedIcon sx={{ fontSize: 18 }} />
+          : <ArrowDownwardRoundedIcon sx={{ fontSize: 18 }} />}
+      </IconButton>
+    </Tooltip>
+  </Box>
 );
 
 export default ControlsCard;

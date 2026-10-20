@@ -69,6 +69,14 @@ class ThumbnailGenerator:
             with PILImage.open(image_path) as img:
                 return img.width, img.height
         except Exception as e:
+            # Pillow rejects PNGs with a bad text-chunk checksum; read the header directly
+            try:
+                from .metadata_extractor import read_png_info
+                png = read_png_info(image_path)
+                if png and png['width'] and png['height']:
+                    return png['width'], png['height']
+            except Exception:
+                pass
             logger.error(f"Failed to get dimensions for {image_path}: {e}")
             return None, None
 

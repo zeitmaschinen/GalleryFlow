@@ -1,26 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   IconButton,
   Button,
   Box,
-  Paper,
   Typography,
   useTheme,
+  useMediaQuery,
   Snackbar,
-  Alert
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import WorkflowViewer from './WorkflowViewer';
 import './WorkflowModal.css';
 import ModalSlideTransition from '../common/ModalSlideTransition';
 import type { Image } from '../images/types';
-import { borders, spacing, typography } from '../../theme/themeConstants';
-import { modalActionButtonSx, modalSecondaryActionButtonSx } from '../../theme/modalStyles';
+import { palette, typography } from '../../theme/themeConstants';
 import ModalNavArrow from '../../theme/ModalNavArrow';
 
 interface WorkflowModalProps {
@@ -74,6 +70,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
   const isValid = !!workflowJson && typeof workflowJson === 'object' && Object.keys(workflowJson).length > 0;
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const isNarrow = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleSeeMetadataPreview = () => {
     onClose();
@@ -87,7 +84,7 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
   const copyWorkflowJson = () => {
     if (workflowJson) {
       navigator.clipboard.writeText(JSON.stringify(workflowJson, null, 2));
-      setSnackbarMessage('Workflow JSON copied to clipboard');
+      setSnackbarMessage('Workflow JSON copied');
       setSnackbarOpen(true);
     }
   };
@@ -102,151 +99,73 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
         open={open}
         onClose={onClose}
         maxWidth={false}
-        fullWidth
+        fullScreen={isNarrow}
         TransitionComponent={ModalSlideTransition}
         aria-labelledby="workflow-modal-title"
-        BackdropProps={{
-          timeout: 500, // Moderate backdrop transition (faster than 600ms but slower than default)
-          sx: theme => ({
-            transition: 'opacity 500ms cubic-bezier(0.3, 0, 0.3, 1) !important',
-            backgroundColor:
-              theme.palette.mode === 'dark'
-                ? 'rgba(0,0,0,0.7)'
-                : 'rgba(44, 40, 73, 0.85)' // Purple tint for light mode with 0.85 opacity
-          })
-        }}
         PaperProps={{
           sx: {
-            borderRadius: borders.radius.lg,
-            width: 'calc(100vw - 120px)',
-            maxWidth: 'none',
-            height: 'calc(100vh - 80px)',
-            maxHeight: 'none',
-            m: 2
+            width: isNarrow ? '100%' : 'calc(100vw - 160px)',
+            height: isNarrow ? '100%' : 'calc(100vh - 64px)',
+            m: 0,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            borderRadius: isNarrow ? 0 : undefined,
           }
         }}
       >
-        <DialogTitle
-          sx={{
-            m: 0,
-            p: spacing.sm,
-            pr: spacing.xl,
-            fontSize: typography.sizes.lg,
-            fontWeight: typography.fontWeights.semibold,
-          }}
-        >
-          Workflow preview
-          <IconButton
-            onClick={onClose}
-            sx={{
-              position: 'absolute',
-              right: spacing.xs,
-              top: spacing.xs,
-              color: 'text.secondary',
-              bgcolor: 'action.hover',
-              borderRadius: borders.radius.sm,
-              '&:hover': { bgcolor: 'action.selected' },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        {/* Subtitle with filename */}
-        {image?.filename && (
-          <Typography
-            variant="body2"
-            sx={{
-              px: spacing.md,
-              pt: 0,
-              pb: 1,
-              mt: '-8px',
-              color: 'text.secondary',
-              wordBreak: 'break-all',
-              letterSpacing: 0.2,
-            }}
-          >
-            {image.filename}
-          </Typography>
-        )}
-
-        <DialogContent
-          sx={{
-            p: spacing.md,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            flexGrow: 1,
-            bgcolor: 'background.paper',
-            overflow: 'hidden'
-          }}
-        >
-          <Paper
-            elevation={0}
-            sx={{
-              width: '100%',
-              height: '100%',
-              overflow: 'hidden',
-              bgcolor: 'background.paper',
-              borderRadius: borders.radius.md,
-              border: 1,
-              borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
-              '& .workflow-visualization-wrapper': {
-                height: '100%',
-                width: '100%'
-              }
-            }}
-          >
-            {isValid ? (
-              <div className={`workflow-visualization-wrapper workflow-visualization-${isDarkMode ? 'dark' : 'light'}`}>
-                <WorkflowViewer workflowJson={workflowJson} height="100%" />
-              </div>
-            ) : (
-              <Box sx={{
-                textAlign: 'center',
-                mt: 6,
-                color: 'text.secondary',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Typography>
-                  There is no information on the workflow used for this specific image.
-                </Typography>
-              </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 3, py: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography id="workflow-modal-title" component="h2" sx={{ fontWeight: typography.fontWeights.semibold, fontSize: 15 }}>
+              Workflow
+            </Typography>
+            {image?.filename && (
+              <Typography variant="caption" noWrap component="p" sx={{ color: 'text.secondary' }}>
+                {image.filename}
+              </Typography>
             )}
-          </Paper>
-        </DialogContent>
-
-        <DialogActions
-          sx={{
-            p: spacing.sm,
-            bgcolor: isDarkMode ? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.03)',
-            display: 'flex',
-            justifyContent: 'space-between'
-          }}
-        >
+          </Box>
           <Button
             onClick={copyWorkflowJson}
-            startIcon={<ContentCopyIcon />}
+            startIcon={<ContentCopyRoundedIcon sx={{ fontSize: '16px !important' }} />}
             disabled={!isValid}
-            variant="text"
+            variant="outlined"
             size="small"
-            sx={modalSecondaryActionButtonSx}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           >
-            Copy workflow JSON
+            Copy JSON
           </Button>
-
           <Button
-            variant="contained"
+            variant="outlined"
             size="small"
-            sx={modalActionButtonSx}
+            startIcon={<InfoOutlinedIcon sx={{ fontSize: '16px !important' }} />}
             onClick={handleSeeMetadataPreview}
           >
-            See metadata preview
+            Details
           </Button>
-        </DialogActions>
+          <IconButton onClick={onClose} aria-label="Close workflow" sx={{ mr: -1 }}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ flex: 1, minHeight: 0, position: 'relative', bgcolor: palette[theme.palette.mode].sunken }}>
+          {isValid ? (
+            <div className={`workflow-visualization-wrapper workflow-visualization-${isDarkMode ? 'dark' : 'light'}`}>
+              <WorkflowViewer workflowJson={workflowJson} height="100%" />
+            </div>
+          ) : (
+            <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', textAlign: 'center', px: 3 }}>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: typography.fontWeights.semibold, mb: 0.5 }}>
+                  No workflow saved in this image
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Only PNGs saved by ComfyUI carry their workflow.
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Box>
       </Dialog>
 
       {/* Navigation arrows outside the dialog */}
@@ -267,22 +186,13 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
         />
       )}
 
-      {/* Snackbar notification */}
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={4000}
+        autoHideDuration={2500}
         onClose={handleCloseSnackbar}
         message={snackbarMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+      />
     </>
   );
 };
