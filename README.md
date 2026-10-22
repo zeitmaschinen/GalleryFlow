@@ -47,7 +47,7 @@ GalleryFlow 2.0 is a full redesign of the interface. Your images are now the foc
 
 ## Tech Stack
 - **Frontend:** React 18, TypeScript, Material UI, Vite
-- **Backend:** FastAPI, SQLAlchemy, Python 3.10+
+- **Backend:** FastAPI, SQLAlchemy, Python 3.11+
 - **Other:** React Flow, light/dark mode, responsive design
 
 ---
@@ -56,7 +56,7 @@ GalleryFlow 2.0 is a full redesign of the interface. Your images are now the foc
 
 ### Prerequisites
 - **Git** (or download the zip from the [latest release](https://github.com/zeitmaschinen/GalleryFlow/releases/latest) instead of cloning)
-- **Python 3.10 or newer** (3.13 recommended)
+- **Python 3.11 or newer** (3.13 recommended)
 - **Node.js 18.18 or newer** (the current LTS version is recommended), which includes **npm**
 
 ---

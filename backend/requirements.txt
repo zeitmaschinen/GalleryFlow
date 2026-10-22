@@ -1,14 +1,8 @@
-fastapi>=0.100.0
+# Minimum versions are the oldest without known security issues.
+# Pillow 13 needs Python 3.11 or newer.
+fastapi>=0.109.1
 uvicorn[standard]>=0.22.0
 sqlalchemy[asyncio]>=2.0.0
-pydantic>=2.0.0
-pillow>=9.0.0
-
-# Optional: for SQLite async support
+pydantic>=2.4.0
+pillow>=13.0.0
 aiosqlite>=0.18.0
-
-# If you use CORS middleware (as seen in main.py)
-python-multipart>=0.0.5
-
-# If you want to use dotenv for environment variables (recommended for local dev)
-python-dotenv>=1.0.0
