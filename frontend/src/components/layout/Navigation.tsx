@@ -56,7 +56,7 @@ export const SidebarFooter: React.FC = () => (
   <Box sx={{ px: 2.5, py: 1.75, flexShrink: 0, borderTop: 1, borderColor: 'divider' }}>
     <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: 11.5 }}>
       <Link
-        href="https://github.com/zeitmaschinen/galleryflow"
+        href="https://github.com/zeitmaschinen/GalleryFlow"
         target="_blank"
         rel="noopener noreferrer"
         color="inherit"

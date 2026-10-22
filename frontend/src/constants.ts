@@ -1,5 +1,5 @@
 // Shown in the sidebar footer. Keep in sync with package.json when releasing.
-export const APP_VERSION = '2.0.0';
+export const APP_VERSION = '2.0.1';
 
 export const IMAGES_PER_PAGE = 100;
 

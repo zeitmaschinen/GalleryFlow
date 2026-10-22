@@ -1,4 +1,4 @@
-# GalleryFlow 2.0
+# GalleryFlow 2.0.1
 
 A modern web application for browsing and managing <a href="https://github.com/Comfy-Org/ComfyUI" target="_blank" rel="noopener noreferrer">ComfyUI</a>-generated images with advanced metadata support.
 
@@ -55,16 +55,16 @@ GalleryFlow 2.0 is a full redesign of the interface. Your images are now the foc
 ## Quick Start
 
 ### Prerequisites
-- **Git**
-- **Python 3.10+** (3.13 recommended)
-- **Node.js** and **npm**
+- **Git** (or download the zip from the [latest release](https://github.com/zeitmaschinen/GalleryFlow/releases/latest) instead of cloning)
+- **Python 3.10 or newer** (3.13 recommended)
+- **Node.js 18.18 or newer** (the current LTS version is recommended), which includes **npm**
 
 ---
 
 ### 1. Clone the Repository
 
 ```bash
-git clone git@github.com:zeitmaschinen/galleryflow.git
+git clone git@github.com:zeitmaschinen/GalleryFlow.git
 cd galleryflow
 ```
 
@@ -130,16 +130,24 @@ Close your current terminal/command window, download and install Node.js from [n
 
 ### Updating from an earlier version
 
-From the project root, get the latest code and reinstall the frontend packages (2.0 changes them):
+First stop GalleryFlow if it's running (**Ctrl + C** in its terminal window).
+
+**If you installed with git**, run these from the project root:
 
 ```bash
 git pull
+source backend/venv/bin/activate     # or backend\venv\Scripts\activate on Windows
+pip install -r backend/requirements.txt
 cd frontend
 npm install
 cd ..
 ```
 
-Your library (the folders you've added) is kept. If you're coming from 1.2 or older, also run `python3 migrate_db.py` from the project root once.
+**If you installed from a zip download:** unzip the new version into a new folder and follow the Quick Start steps 2 and 3 there. Then copy the file `galleryflow.db` from your old GalleryFlow folder into the new one (same place, next to `run_galleryflow.py`). That file is your library: without it you'd have to add your folders again.
+
+Either way, your library is kept. If you're coming from 1.2 or older, also run `python3 migrate_db.py` from the project root once. After updating to 2.0 or newer, click **Rescan** on your folders once so GalleryFlow can read images that older versions skipped.
+
+---
 
 ## Configuration
 - See `.env.example` for available configuration options.

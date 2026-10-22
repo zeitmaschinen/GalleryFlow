@@ -81,12 +81,15 @@ const WorkflowModal: React.FC<WorkflowModalProps> = ({
     }
   };
 
-  const copyWorkflowJson = () => {
-    if (workflowJson) {
-      navigator.clipboard.writeText(JSON.stringify(workflowJson, null, 2));
+  const copyWorkflowJson = async () => {
+    if (!workflowJson) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(workflowJson, null, 2));
       setSnackbarMessage('Workflow JSON copied');
-      setSnackbarOpen(true);
+    } catch {
+      setSnackbarMessage("Couldn't copy. Your browser blocked access to the clipboard.");
     }
+    setSnackbarOpen(true);
   };
 
   const handleCloseSnackbar = () => {

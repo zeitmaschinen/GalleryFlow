@@ -1,6 +1,6 @@
 # File: backend/app/schemas.py
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
@@ -18,8 +18,7 @@ class FolderCreate(FolderBase):
 class Folder(FolderBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Image Schemas --- (Updated with performance fields)
@@ -44,8 +43,7 @@ class ImageCreate(ImageBase):
 class Image(ImageBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Scan Status Schema --- (Keep existing ScanStatus schema)

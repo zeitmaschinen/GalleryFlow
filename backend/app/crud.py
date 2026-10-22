@@ -186,8 +186,7 @@ async def scan_folder_and_update_db(
     base_path = Path(folder.path)
     if not base_path.is_dir():
         logger.error(
-            f"Folder path does not exist or is not a directory: {
-                folder.path}")
+            f"Folder path does not exist or is not a directory: {folder.path}")
         raise FileNotFoundError(f"Directory not found: {folder.path}")
 
     stats = {
@@ -301,8 +300,7 @@ async def scan_folder_and_update_db(
 
     if paths_to_remove:
         logger.info(
-            f"Removing {
-                len(paths_to_remove)} images no longer found on disk.")
+            f"Removing {len(paths_to_remove)} images no longer found on disk.")
         paths_list = list(paths_to_remove)
         for i in range(0, len(paths_list), BATCH_SIZE):
             batch_paths = paths_list[i:i + BATCH_SIZE]

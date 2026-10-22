@@ -1,5 +1,6 @@
 from . import crud, schemas, database
 import uuid
+from contextlib import asynccontextmanager
 import asyncio
 from typing import List, Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,9 +21,19 @@ logging.basicConfig(
 
 
 logger = logging.getLogger(__name__)
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Runs once when the server starts: make sure the database tables exist
+    logger.info("Initializing application...")
+    await database.create_db_and_tables()
+    logger.info("Application startup complete")
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="GalleryFlow API",
-    version="2.0.0",
+    version="2.0.1",
     description=(
         "API for browsing and managing ComfyUI-generated images "
         "with advanced metadata support"
@@ -42,11 +53,6 @@ app.add_middleware(
 
 
 
-@app.on_event("startup")
-async def on_startup():
-    logger.info("Initializing application...")
-    await database.create_db_and_tables()
-    logger.info("Application startup complete")
 
 # --- API Endpoints ---
 
